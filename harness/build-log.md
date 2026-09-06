@@ -187,3 +187,8 @@
 - 最终 `.venv/bin/ruff check .`、`.venv/bin/ruff format --check .`、`git diff --check` 均退出0；`.venv/bin/pytest -q` 为92 passed、3 deselected、7.35秒。新评估文档本地链接、9段素材哈希和原始计划基线SHA均核对通过。
 - 路线图修正为本地识别质量仍有未解决问题，不能再概括成仅剩用户实机；没有降低90%目标。审查见 [扩展视频识别](code_review/recognition-survey-review.md)。本轮是完成诊断与测评，持续误分类/漏检尚未修复，USB和Windows11实机项继续开放。
 - 提交前只读核对远程main仍为a8b4fcf，无未知新提交。以下将正常提交同步；远程CI结果在实际返回后核对，不预填通过。
+
+## 2026-09-07T05:37:44+08:00 — 扩展测评同步与CI
+
+- 测评里程碑c025f25已正常推送。GitHub [run34061467134](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34061467134) 的macOS和Windows两个job均completed/success；本机92项离线测试通过。未产生新的百炼请求。该结果验证源码与工具检查，不关闭报告中的识别质量问题或实机验收。
+- 本条为仅文档记录，使用skip ci提交；源码检查结果仍对应c025f25。
