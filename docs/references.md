@@ -16,11 +16,11 @@
 
 | 组件 | 官方来源 | 首版用途 | 许可与验证状态 |
 |---|---|---|---|
-| OpenAI Agents SDK | [仓库](https://github.com/openai/openai-agents-python)、[示例](https://github.com/openai/openai-agents-python/tree/main/examples)、[模型适配](https://developers.openai.com/api/docs/guides/agents/models) | 单 Agent、函数工具、执行结果、会话与用量 | MIT；选定版本待阶段 00/01 核验 |
+| OpenAI Agents SDK | [仓库](https://github.com/openai/openai-agents-python)、[示例](https://github.com/openai/openai-agents-python/tree/main/examples)、[模型适配](https://developers.openai.com/api/docs/guides/agents/models) | 单 Agent、函数工具、执行结果、会话与用量 | MIT；0.22.0 已安装并离线验证 |
 | Supervision | [仓库](https://github.com/roboflow/supervision)、[许可](https://github.com/roboflow/supervision/blob/develop/LICENSE.md) | 检测结果统一表示、框/标签与区域辅助 | MIT；不引入 Roboflow 云端作为前置条件 |
-| Ultralytics YOLO26n | [模型说明](https://docs.ultralytics.com/models/yolo26/)、[类别](https://docs.ultralytics.com/datasets/detect/coco/) | 预训练模型与 ONNX 导出 | AGPL-3.0/企业许可；导出不会改变原许可；权重与校验待记录 |
-| ONNX Runtime | [Python API](https://onnxruntime.ai/docs/api/python/api_summary)、[线程控制](https://onnxruntime.ai/docs/performance/tune-performance/threading.html) | CPU 推理、低线程数与禁用自旋 | 实际 wheel/版本与双平台支持待核验 |
-| Streamlit | [局部刷新](https://docs.streamlit.io/develop/api-reference/execution-flow/st.fragment) | 本地 UI，刷新不重建工作实例 | 实际版本待核验 |
+| Ultralytics YOLO26n | [模型说明](https://docs.ultralytics.com/models/yolo26/)、[类别](https://docs.ultralytics.com/datasets/detect/coco/) | 预训练模型与 ONNX 导出 | AGPL-3.0/企业许可；导出不会改变原许可；实际校验见模型清单 |
+| ONNX Runtime | [Python API](https://onnxruntime.ai/docs/api/python/api_summary)、[线程控制](https://onnxruntime.ai/docs/performance/tune-performance/threading.html) | CPU 推理、低线程数与禁用自旋 | 1.29.0；本机验证与远程平台结果见 build-log |
+| Streamlit | [局部刷新](https://docs.streamlit.io/develop/api-reference/execution-flow/st.fragment) | 本地 UI，刷新不重建工作实例 | 1.63.0；本机页面与 AppTest 已验证 |
 
 OpenCV 用于本地采集与图像处理；SQLite 使用 Python 标准库接入；uv 用于环境及锁文件。依赖选定后补充版本、来源和第三方许可清单，不以本文的摘要替代原许可证。
 
