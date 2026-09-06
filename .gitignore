@@ -36,3 +36,9 @@ harness/artifacts/*
 # Operating system metadata
 .DS_Store
 Thumbs.db
+
+# Local build tool bootstrap
+.tools/
+.python/
+.uv-cache/
+.export-venv/

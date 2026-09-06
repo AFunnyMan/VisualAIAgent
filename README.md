@@ -2,7 +2,7 @@
 
 普通 USB 摄像头 + 本地视觉记忆 + 真实工具调用 Agent。
 
-**当前状态：文档准备阶段，业务代码尚未开发。** 本次仅建立文档和 Git 里程碑，后续开发由用户主动启动。尚无可运行应用、已安装依赖、已下载模型或通过的产品测试。
+**当前状态：全路线实施中。** 已建立 Python 3.11 隔离环境、配置和基础验证，视觉、记忆、Agent 与页面正在开发；实机和真实 API 结果另行记录。
 
 ## 计划中的首版
 
@@ -34,3 +34,9 @@
 远程目标：[AFunnyMan/VisualAIAgent](https://github.com/AFunnyMan/VisualAIAgent)。重要且经过验证的步骤使用 Git 提交记录。私人摄像头数据、Key、运行数据库、模型权重和虚拟环境不进入仓库。
 
 项目自身的发布许可证尚未选择，不默认声明整个项目为 MIT。各复用组件保留自身许可，尤其模型转为 ONNX 不改变原模型许可。商业闭源发行不属于当前任务。
+
+## 已建立的开发入口
+
+安装 uv 后在项目根目录执行 `uv sync --locked --group dev`，使用 `uv run pytest tests/foundation` 验证基础配置。当前开发机的项目专用 uv 位于 `.tools/bin/uv`；通过 `UV_CACHE_DIR=.uv-cache UV_PYTHON_INSTALL_DIR=.python .tools/bin/uv run --locked python scripts/doctor.py` 查看不含秘密的环境摘要。
+
+复制 `.env.example` 为 `.env` 填写本地配置，API 的地址、模型和 Key 三项齐全才启用 Agent。未提供时仍允许开发和离线验证。
