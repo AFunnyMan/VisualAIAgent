@@ -29,7 +29,7 @@ pytest 默认排除 `live_api` 和 `camera`。离线 fixture 拒绝 socket 连�
 | tests/watches | 建立后事件、事务认领、并发提醒去重、取消/到期、重启、每日额度并发 |
 | tests/ui | AppTest 创建/取消、重运行、缺模型、后台模型不阻塞记忆、资源释放与恢复队列 |
 
-GitHub Actions 的 [offline.yml](../.github/workflows/offline.yml) 使用 macOS/Windows 托管 runner 安装锁定环境并运行上述离线检查。提交 ebe241a 的双平台工作流已实际通过（run 34055205112）；托管 Windows 不等同 Windows 11 USB 实机。
+GitHub Actions 的 [offline.yml](../.github/workflows/offline.yml) 使用 macOS/Windows 托管 runner 安装锁定环境并运行上述离线检查。提交 c58a169 的双平台工作流已实际通过（[run 34058017128](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34058017128)）；托管 Windows 不等同 Windows 11 USB 实机。
 
 ## 模型和持续运行
 
@@ -79,8 +79,8 @@ uv run --locked python scripts/benchmark.py --camera 0 --duration 1800
 
 | 平台 | 锁定安装 | 离线测试 | 实际摄像头 | 三十分钟运行 |
 |---|---|---|---|---|
-| 当前 Apple M2 Pro Mac | 已执行 | 已执行，数量见日志 | 待用户辅助 | 待用户辅助 |
-| GitHub macOS / Windows 托管 runner | 均通过 | 均通过，run 34055205112 | 不适用 | 未运行 |
+| 当前 Apple M2 Pro Mac | 已执行 | 92项通过，数量见日志 | 待用户辅助 | 视频回放1800秒通过；USB待用户 |
+| GitHub macOS / Windows 托管 runner | 均通过 | 均通过，run 34058017128 | 不适用 | 未运行 |
 | Windows 11 x64、8GB 无独显基线 | 未实机执行 | 不以托管CI代替实机 | 待用户辅助 | 待用户辅助 |
 
 识别事件正确率定义、90% 目标和额外误报单列要求保持不变，详见 [GOALS](../GOALS.md) 与 [验收步骤](user-acceptance.md)。性能记录需包括 OS/CPU/内存、摄像头、实际分辨率、版本、档位、推理、CPU/RSS和提醒延迟。

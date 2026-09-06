@@ -159,3 +159,18 @@
 - 远程main只读核对仍为303a94c，无未知新提交；以下里程碑将正常推送并运行macOS/Windows离线CI。30分钟待机仍运行，稍后追加实际结果。
 
 - 同期本地故障入口 `.venv/bin/python scripts/failure_acceptance.py --video harness/artifacts/wikimedia-squeezing-open-bottle.webm` 退出0：真实SDK收到本机TCP连接拒绝后1次请求、无重试、fallback成功；额度0时请求数0、fallback成功；两种情况提醒后真实视频仍fresh/current。无外部云请求，非百炼故障或系统断网；证据failure-acceptance-0953b785/summary.json，审查见 [回放故障](code_review/replay-failure-review.md)。
+
+## 2026-09-07T04:29:00+08:00 — 双平台CI与请求费用核对
+
+- 里程碑c58a169已正常同步。公开GitHub API确认 [run 34058017128](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34058017128) 的Windows/macOS两个job均completed/success；包含锁定安装、Ruff、格式、92项离线用例和doctor。托管Windows仍不代替Windows11 USB实机。
+- 提交前133个Markdown本地链接目标存在且跟踪；全部跟踪文件与本地真实Key做精确字节对照，无凭据泄露；.env被忽略、mode0600；无运行数据库/视频/权重/环境纳入Git；计划基线SHA不变。首次diff-check发现新审查文档一处尾随空格，去除后复验通过再提交。
+- 本轮所有百炼请求（含初始失败、修复复验、三个完整视频短流程及UI，不漏掉失败成本）累计115次，input163408/output5799 Tokens。按qwen-flash北京短上下文原价输入0.15/输出1.5元每百万Token估算0.0332097元，非实际扣款且不含开发Agent用量；缓存/赠送额度以账户账单为准。明细在harness/artifacts/qwen-test-cost-summary.json，来源见千问说明。
+- 30分钟进程继续运行，已超过20分钟，等待期新增Agent及HTTP请求均为0；全部付费操作已结束，下一条只追加运行完成证据。
+
+## 2026-09-07T04:38:00+08:00 — 三十分钟等待完成与最终交接
+
+- `VAA_RUN_LIVE_API=1 .venv/bin/python scripts/live_acceptance.py --video harness/artifacts/wikimedia-squeezing-open-bottle.webm --category bottle --idle-category 'cell phone' --idle-seconds 1800` 正常退出0。真实视频与ONNX、实际配置千问Agent保持连接，完整等待1800.013秒；360次检查、invalid0、新Agent运行0、新HTTP请求0，峰值RSS356.90625MiB，平均CPU36.5567%（单核100%）。
+- 证据harness/artifacts/live-video-0bdb843d/summary.json、idle-samples.json、completion-audit.json。每5秒抓取的推理耗时快照p50为74.93ms、p95为81.91ms；这是快照采样，不冒充逐帧性能分布。长进程在最后一次答案提示增强之前启动，仅证明未改动的视觉/等待链路；最终文本事实核验以live-video-5102f9b9严格短测为准。
+- 运行后独立核对：26次HTTP请求与12条Agent运行记录的26次请求完全一致，usage全部完整；两条通知仍为Agent来源，无重复。runtime_error为null，最后观察状态为stopped，进程退出0。所有临时UI及回放进程均已结束，没有访问物理摄像头。
+- 软件修复代码固定于c58a169并已双平台CI通过；本条及相关结果页仅文档更新，不重复执行相同软件检查。最终交接审查见 [千问与视频交接](code_review/qwen-video-handoff.md)。完成后正常提交同步并核对远程引用。
+- 剩余用户辅助：真实USB三类各10次放入/移出及遮挡/多个候选/断开恢复，Apple芯片Mac和Windows11原生USB各30分钟，完整UI实物提醒。公开视频只有瓶子素材通过，不能声称手机/杯子视频或三类现场识别率达标；其他未执行实机项不关闭。
