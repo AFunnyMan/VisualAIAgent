@@ -15,8 +15,8 @@ __pycache__/
 .coverage
 htmlcov/
 *.egg-info/
-dist/
-build/
+/dist/
+/build/
 
 # Private runtime data, generated evidence, and model binaries
 data/
