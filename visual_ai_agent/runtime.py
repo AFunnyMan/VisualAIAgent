@@ -218,6 +218,9 @@ class ApplicationRuntime:
         worker = self._vision
         if worker:
             worker.stop()
+            if worker.running:
+                self.last_error = "摄像头工作线程尚未停止，请退出进程后检查设备。"
+                return ToolResult(ok=False, error=self.last_error)
         self.memory.ingest(
             SceneObservation(
                 observed_at=utcnow(),

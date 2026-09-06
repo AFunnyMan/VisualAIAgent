@@ -1,6 +1,7 @@
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
+from threading import Event
 
 import pytest
 
@@ -463,3 +464,52 @@ def test_cleanup_removes_crash_orphan_files(tmp_path) -> None:
     removed = store.cleanup(now=BASE)
     assert removed["evidence"] == 2
     assert not orphan.exists() and not temporary.exists()
+
+
+def test_cleanup_holds_store_lock_through_file_scan_while_ingest_waits(
+    tmp_path, monkeypatch
+) -> None:
+    clock = Clock(BASE)
+    store = MemoryStore(tmp_path, clock=clock)
+    store.ingest(observation(0), b"old-evidence")
+    clock.value = BASE + timedelta(days=8)
+
+    scan_reached = Event()
+    allow_scan = Event()
+    ingest_started = Event()
+    ingest_lock_acquired = Event()
+    real_remove = store._remove_evidence_files
+    real_ingest_locked = store._ingest_locked
+
+    def paused_remove(removed_files, indexed_paths):
+        scan_reached.set()
+        assert allow_scan.wait(timeout=2)
+        return real_remove(removed_files, indexed_paths)
+
+    monkeypatch.setattr(store, "_remove_evidence_files", paused_remove)
+
+    def observed_ingest_locked(observation_value, jpeg):
+        ingest_lock_acquired.set()
+        return real_ingest_locked(observation_value, jpeg)
+
+    monkeypatch.setattr(store, "_ingest_locked", observed_ingest_locked)
+
+    def ingest_new_evidence():
+        ingest_started.set()
+        return store.ingest(observation(8 * 24 * 60 * 60), b"new-evidence")
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        cleanup_future = pool.submit(store.cleanup, 7, clock.value)
+        assert scan_reached.wait(timeout=2)
+        ingest_future = pool.submit(ingest_new_evidence)
+        assert ingest_started.wait(timeout=2)
+        assert not ingest_lock_acquired.wait(timeout=0.1)
+        allow_scan.set()
+        cleanup_future.result(timeout=2)
+        ingest_future.result(timeout=2)
+        assert ingest_lock_acquired.is_set()
+
+    found = store.find_object("cup")
+    evidence_path = store.evidence_path(found.data["evidence_id"])
+    assert evidence_path is not None
+    assert evidence_path.read_bytes() == b"new-evidence"

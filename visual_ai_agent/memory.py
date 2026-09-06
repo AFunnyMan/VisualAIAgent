@@ -606,8 +606,12 @@ class MemoryStore:
         if retention_days < 1:
             raise ValueError("retention_days must be positive")
         cutoff = _iso((now or self.clock()) - timedelta(days=retention_days))
+        with self._lock:
+            return self._cleanup_locked(cutoff)
+
+    def _cleanup_locked(self, cutoff: str) -> dict[str, int]:
         removed_files: list[Path] = []
-        with self._lock, self._transaction(immediate=True) as connection:
+        with self._transaction(immediate=True) as connection:
             observations = connection.execute(
                 "DELETE FROM observations WHERE observed_at < ?", (cutoff,)
             ).rowcount
@@ -640,6 +644,10 @@ class MemoryStore:
                 row["relative_path"]
                 for row in connection.execute("SELECT relative_path FROM evidence").fetchall()
             }
+        removed_count = self._remove_evidence_files(removed_files, indexed_paths)
+        return {"observations": observations, "events": events, "evidence": removed_count}
+
+    def _remove_evidence_files(self, removed_files: list[Path], indexed_paths: set[str]) -> int:
         for candidate in self._evidence_dir.iterdir():
             relative_path = candidate.relative_to(self.data_dir).as_posix()
             if candidate.is_file() and relative_path not in indexed_paths:
@@ -651,7 +659,7 @@ class MemoryStore:
                 removed_count += 1
             except OSError:
                 pass
-        return {"observations": observations, "events": events, "evidence": removed_count}
+        return removed_count
 
     def append_chat_interaction(
         self,

@@ -162,3 +162,33 @@ def test_repeated_start_reuses_model_and_camera_worker(tmp_path, monkeypatch):
         assert runtime.memory.max_gap_seconds == 5
     finally:
         runtime.close()
+
+
+def test_stop_timeout_is_visible_and_does_not_claim_stopped(tmp_path):
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path))
+
+    class BlockedWorker:
+        running = True
+
+        def stop(self):
+            runtime.memory.ingest(
+                SceneObservation(
+                    observed_at=utcnow(),
+                    monotonic_at=0,
+                    status="error",
+                    fresh=False,
+                    error="worker did not stop",
+                )
+            )
+
+    worker = BlockedWorker()
+    runtime._vision = worker
+    try:
+        result = runtime.stop_camera()
+        assert not result.ok
+        assert "尚未停止" in result.error
+        assert runtime.memory.get_current_scene().data["effective_status"] == "error"
+        assert runtime.start_camera().data["status"] == "already_running"
+    finally:
+        worker.running = False
+        runtime.close()

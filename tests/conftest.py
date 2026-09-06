@@ -4,6 +4,7 @@ import os
 import socket
 from pathlib import Path
 from tempfile import gettempdir
+from threading import local
 
 os.environ.setdefault("MPLCONFIGDIR", str(Path(gettempdir()) / "vaa-matplotlib"))
 os.environ.setdefault("AGENTS_DISABLE_TRACING", "1")
@@ -19,7 +20,27 @@ def offline_boundaries(request, monkeypatch):
     def denied(*args, **kwargs):
         raise AssertionError("Offline test attempted external network or physical camera access")
 
-    monkeypatch.setattr(socket.socket, "connect", denied)
+    original_connect = socket.socket.connect
+    original_socketpair = socket.socketpair
+    internal_pair = local()
+
+    def guarded_connect(sock, address):
+        if getattr(internal_pair, "active", False):
+            # Windows implements the stdlib socketpair using its own loopback listener.
+            # The allowance exists only inside that trusted constructor on this thread.
+            return original_connect(sock, address)
+        return denied(sock, address)
+
+    def local_socketpair(*args, **kwargs):
+        previous = getattr(internal_pair, "active", False)
+        internal_pair.active = True
+        try:
+            return original_socketpair(*args, **kwargs)
+        finally:
+            internal_pair.active = previous
+
+    monkeypatch.setattr(socket, "socketpair", local_socketpair)
+    monkeypatch.setattr(socket.socket, "connect", guarded_connect)
     monkeypatch.setattr(socket, "create_connection", denied)
     import cv2
 

@@ -116,3 +116,11 @@
 - 公开 API 和未登录浏览器只能读取“exit code 1”，详细日志需要登录。为在无需用户凭据条件下继续修复，加入 ci_checks.py：保持原测试不变，仅在 CI 失败时把有界的无凭据测试失败详情写入可读检查注解；不扩大 workflow 权限。
 - 十分钟实际回放已结束，601.12 秒、120 次检查、无无效采样、Agent/model 均零调用，峰值 RSS 353.94 MiB，平均 CPU 12.74%（单核100%），无运行错误。证据 `harness/artifacts/soak-5e0b530a/soak-summary.json`。该进程在阶段02最终停止边界修复前启动，验证当时的正常等待/推理链路；停止边界由后续失败用例验证。
 - `sh scripts/start-mac.sh` 已实际完成锁定同步并启动最新页面，浏览器确认未连接页面正常；退出时服务返回0，未启用摄像头或真实API。
+
+## 2026-09-07T03:31:00+08:00 — Windows CI 根因与并发边界修复
+
+- CI 诊断提交 6a9e203 已同步。run 34054875358 的注解指出：Windows Python 的 asyncio Proactor 用 socket.socketpair() 建立内部唤醒管道，而该平台的标准库用 loopback connect 实现，被离线 fixture 一并拦截。
+- 修复测试隔离：仅在当前线程调用标准库 socketpair 构造期间允许其内部连接；普通 loopback/外部连接仍拒绝。新增用例实际传递唤醒字节并确认构造后两类连接仍拒绝。未放开真实 API，也未删去任何用例。
+- 集成复查发现每小时cleanup提交事务后释放锁再扫描文件，可能删除并发新建截图；将锁覆盖整个数据库/扫描/删除流程，新增线程事件控制的确定性交错回归，证据引用与文件均保留。
+- 摄像头停止超时由VisionWorker报告后，runtime之前仍写stopped；改为返回明确失败并保留error，防止UI误称已释放。新增停止超时的运行时回归。
+- `.venv/bin/pytest` 退出0：83 passed，3 deselected，7.53秒；Ruff及格式检查均退出0。后续再次推送验证Windows，尚不预填通过。

@@ -9,7 +9,7 @@
 | opencv-python | 4.14.0.94 | Apache 2.0 | [LICENSE-3RD-PARTY.txt](../third_party/licenses/opencv-python/LICENSE-3RD-PARTY.txt), [LICENSE.txt](../third_party/licenses/opencv-python/LICENSE.txt) |
 | onnxruntime | 1.29.0 | MIT License | [LICENSE](../third_party/licenses/onnxruntime/LICENSE) |
 | supervision | 0.30.2 | MIT | [licenses/LICENSE.md](../third_party/licenses/supervision/licenses/LICENSE.md) |
-| streamlit | 1.63.0 | Apache-2.0 | 见安装包 dist-info |
+| streamlit | 1.63.0 | Apache-2.0 | [官方版本 LICENSE](../third_party/licenses/streamlit/LICENSE) |
 | pydantic | 2.13.5 | MIT | [licenses/LICENSE](../third_party/licenses/pydantic/licenses/LICENSE) |
 | python-dotenv | 1.2.3 | BSD-3-Clause | [licenses/LICENSE](../third_party/licenses/python-dotenv/licenses/LICENSE) |
 | psutil | 7.2.2 | BSD-3-Clause | [LICENSE](../third_party/licenses/psutil/LICENSE) |
@@ -33,3 +33,5 @@ Ultralytics 8.4.142、PyTorch 2.14.0、ONNX 1.22.0、onnxslim 0.1.96 在独立 `
 项目自身发布许可证尚未选择，不能将依赖 MIT 许可解读为整个项目 MIT。商业闭源发行不在当前范围。公开验证图片来源仅用于本地比较，出处记于阶段 02 上下文，不分发图片。
 
 导出链随安装包保存的许可证副本：[ultralytics/LICENSE](../third_party/licenses/ultralytics/LICENSE)、[torch/LICENSE](../third_party/licenses/torch/LICENSE)、[torch/LICENSE.txt](../third_party/licenses/torch/LICENSE.txt)、[onnx/LICENSE](../third_party/licenses/onnx/LICENSE)、[onnxslim/LICENSE](../third_party/licenses/onnxslim/LICENSE)。
+
+Streamlit许可证来自官方1.63.0标签：https://raw.githubusercontent.com/streamlit/streamlit/1.63.0/LICENSE。
