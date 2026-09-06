@@ -31,6 +31,49 @@
 | 杯子 | `https://www.publicdomainpictures.net/pictures/610000/velka/coffee-mugs-1714587640DWA.jpg` | 1920×1440 | `5b28ce28f80b7b30a3eda26e546ac810c29da70086e04bffb8d8ca11c595e9ee` |
 | 两个水瓶场景 | `https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Two_water_bottles_on_table_at_final_Wikimania_2016_dinner.jpg/1920px-Two_water_bottles_on_table_at_final_Wikimania_2016_dinner.jpg` | 1920×2975 | `63358f81a13b295461318faa4f249b8349acd974af2c302eab15277e47bdf54b` |
 
+### 真实动态视频回放
+
+另使用 Wikimedia Commons 的实拍视频
+[《Сжимаем открытую бутылку》](https://commons.wikimedia.org/wiki/File:%D0%A1%D0%B6%D0%B8%D0%BC%D0%B0%D0%B5%D0%BC_%D0%BE%D1%82%D0%BA%D1%80%D1%8B%D1%82%D1%83%D1%8E_%D0%B1%D1%83%D1%82%D1%8B%D0%BB%D0%BA%D1%83.webm)
+验证动态输入。视频由 Flexmanru 拍摄并以
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) 发布；本次下载并原样回放，
+没有剪辑或画面合成。原文件为 WebM、720×1280、30 FPS、625 帧、20.833 秒，下载后的
+SHA-256 为 `1b032b7e29c95897dc1f47e8c8fb1e68dacc84057f184ef3c2e6442109bb6adc`，
+本地路径为被 Git 忽略的 `harness/artifacts/wikimedia-squeezing-open-bottle.webm`。
+
+新增的 `scripts/video_acceptance.py` 不读取 `.env`、不实例化 Agent、也不访问摄像头；它校验
+视频哈希后，通过 `ReplaySource(realtime=True)`、真实 `YoloOnnxDetector` 和 `MemoryStore`
+原速运行，并在 EOF 后继续观察至少六秒。默认间隔为产品标准的一秒，也可显式传入两秒验证
+省电模式。2026-09-07 04:02—04:06（Asia/Shanghai）实际执行：
+
+```text
+.venv/bin/python scripts/video_acceptance.py \
+  --video harness/artifacts/wikimedia-squeezing-open-bottle.webm \
+  --expected-sha256 1b032b7e29c95897dc1f47e8c8fb1e68dacc84057f184ef3c2e6442109bb6adc \
+  --category bottle
+```
+
+上面的默认一秒模式得到 22 个新鲜推理观察，其中 21 个检出瓶子、共 22 个瓶子候选，最高
+置信度 0.9041，机器可读证据为 `harness/artifacts/video-acceptance-c0bd9876/summary.json`。
+显式增加 `--interval 2` 的省电模式得到 12 个新鲜观察，全部检出瓶子、共 13 个候选，最高
+置信度 0.8965，证据为 `harness/artifacts/video-acceptance-8848816b/summary.json`。两种产品模式
+都恰好生成一次 `bottle:appeared`；视频期间和 EOF 后的 `missing` 分别计数且均为零，EOF 后
+当前画面转为非当前，Agent 请求计数为零。此前 0.5 秒诊断运行的 43 个新鲜观察结果仍保存在
+`harness/artifacts/video-acceptance-03c83790/summary.json`，没有被覆盖。
+
+限时补充筛选了两段同样许可明确的真实视频：Queen Asali 的 CC BY-SA 4.0
+[《A cup of Kenyan Coffee》](https://commons.wikimedia.org/wiki/File:A_cup_of_Kenyan_Coffee.webm)
+和 Derek J Moore 的 CC BY 4.0
+[《1 Me and my phone》](https://commons.wikimedia.org/wiki/File:1_Me_and_my_phone.webm)。前者原文件
+SHA-256 为 `8ec9c0b030f6df28fcf48f615b3e89086fd490342f5f1b350f5d61c8e23d3b5c`，抽取九帧均
+未检出杯子；后者 SHA-256 为 `51302ba9475e5660785d928f3e306fae64553ebb682a66c7bbaee2520020cd6a`，
+30 秒视频逐秒抽帧均未检出手机。因此两者只作为被 Git 忽略的候选留在 `harness/artifacts/`，
+没有把主题标签当作模型通过证据，也没有为凑齐类别而降低阈值。
+
+这些结果说明公开视频输入能贯通真实 ONNX、低频采样、证据存储和出现事件，并验证 EOF 不会
+被解释为消失；当前合格素材仍只有瓶子一类，不能替代三类物品、固定摄像头视角、真实 USB
+断开恢复或提醒延迟验收。
+
 实际执行命令摘要：
 
 ```text

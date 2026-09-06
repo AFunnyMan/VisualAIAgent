@@ -24,3 +24,11 @@ MemoryStore/WatchService 的阶段 03/04 接口集成；依赖现场版本为 `o
 `.venv/bin/pytest -q tests/agent -m 'not live_api and not camera'` 为 12 passed、3 deselected；
 显式 live 命令在未设置 `VAA_RUN_LIVE_API=1` 时为 3 skipped，未产生付费请求。真实 API 与 Windows
 平台未执行，因此阶段 01 的真实模型验收仍未完成。当前离线范围未发现阻断下游集成的问题。
+
+## 2026-09-07 百炼实测后追加审查
+
+真实API初测的假取消修复为首轮required+零工具失败保护；明确工具执行后SDK恢复auto。带时区当前时间和事件查询窗口消除start=end的错误输入，保留三次请求限制。原live用例复验3 passed，具体usage见build-log。
+
+独立复查live_acceptance发现只看工具成功不足以证明答案正确，现增加实际返回的类别/区域/时间/证据锚点、未发生missing不能补写的校验；最初漏区域和附加不存在missing类型说明的回答被记为失败发现。事件请求usage必须完整，HTTP请求计数必须与SQLite记录一致。六项验收器离线用例覆盖漏区域、错区域、错时间、编造证据、未知与缺失事件伪造。最终视频短测通过但不能代替USB识别质量，普通聊天依然可能有模型表达误差，不把字符串校验当作通用事实保证。
+
+没有扩大工具集合或记录Key；所有素材、真实API数据库和全文回复只放忽略目录。首轮工具要求对普通闲聊的额外请求成本在千问说明中明确。

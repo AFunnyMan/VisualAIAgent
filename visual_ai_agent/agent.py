@@ -6,7 +6,7 @@ import asyncio
 import inspect
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Literal, cast
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -207,6 +207,7 @@ class AgentService:
                 model=self._model,
                 tools=self._tools,
                 model_settings=ModelSettings(
+                    tool_choice="required",
                     parallel_tool_calls=False,
                     include_usage=True,
                     preserve_raw_usage=True,
@@ -252,18 +253,25 @@ class AgentService:
         if self._client is not None:
             await self._client.close()
 
-    @staticmethod
-    def _instructions(context: RunContextWrapper[_AgentContext], agent) -> str:
+    def _instructions(self, context: RunContextWrapper[_AgentContext], agent) -> str:
+        now = utcnow().astimezone(ZoneInfo(self.config.timezone))
         base = (
             "你是本机视觉记忆助手。只能根据七个业务工具返回的文字事实回答；未知就明确说未知。"
             "物品类别不是身份，多个同类必须展示候选。当前状态必须依据get_current_scene，历史位置必须依据"
-            "find_object，历史事件必须依据search_events。不得声称看过图片，也不得推测谁移动了物品。"
+            "find_object，且答复必须引用工具返回的类别、时间、区域和证据编号；多个候选必须逐项列出，"
+            "不得认定为同一件或特定身份。历史事件必须依据search_events，答复必须引用事件时间和证据。"
+            "不得声称看过图片，也不得推测谁移动了物品。对于missing事件只能表述为“持续未检测到”，"
+            "不得推断物品被拿走、发生物理消失或由某人移动。"
+            "历史事件只能列出search_events实际返回的记录，不能为凑齐用户问到的事件类型而补写事件。"
+            "若结果没有missing记录，必须明确说未找到持续未检测到事件，不得把类型说明写成已发生。"
             "创建、取消和通知只有工具返回ok才算成功。不要输出本地路径。"
+            f"当前时间是{now.isoformat()}，时区是{self.config.timezone}。"
+            "处理最近一小时等相对时间查询时，以这个当前时间计算带时区的start和end，并确保start<end。"
         )
         if context.context.kind == "event":
             return base + (
-                "这是自动事件复查。必须先调用get_current_scene，并用search_events或find_object核验目标"
-                "事件证据；确认后只能用notify_user提醒给定watch_id/event_id。工具会强制检查这些条件。"
+                "这是自动事件复查。必须先调用get_current_scene，再用search_events核验目标事件证据；"
+                "确认后只能用notify_user提醒给定watch_id/event_id。工具会强制检查这些条件。"
                 "如果事实不支持提醒，解释原因，不要调用其他任务的通知。"
             )
         return base
@@ -322,6 +330,7 @@ class AgentService:
             def reviewed(result: ToolResult) -> None:
                 if (
                     result.ok
+                    and ctx.context.reviewed_scene
                     and ctx.context.event_id
                     and category == ctx.context.event_category
                     and result.data.get("evidence_id") == ctx.context.event_evidence_id
@@ -342,10 +351,10 @@ class AgentService:
             start: datetime,
             end: datetime,
         ) -> str:
-            """Search a bounded time range for up to twenty persisted visual events."""
+            """Search up to 20 events. Use aware datetimes and require start strictly before end."""
 
             def reviewed(result: ToolResult) -> None:
-                if result.ok and ctx.context.event_id:
+                if result.ok and ctx.context.reviewed_scene and ctx.context.event_id:
                     events = result.data.get("events", [])
                     if any(
                         isinstance(item, dict) and item.get("event_id") == ctx.context.event_id
@@ -491,12 +500,17 @@ class AgentService:
                 reserved=False,
                 local_date=local_date,
             )
+        search_start = event.confirmed_at - timedelta(minutes=2)
+        search_end = max(event.confirmed_at + timedelta(minutes=2), now + timedelta(seconds=1))
         prompt = (
             "复查并处理以下已匹配关注事件。"
             f"watch_id={watch.watch_id}; event_id={event.event_id}; category={event.category}; "
             f"condition={event.kind}; confirmed_at={event.confirmed_at.isoformat()}; "
-            f"evidence_id={event.evidence_id or 'none'}。"
-            "先读取当前场景，再查询并核验这个事件；仅当工具事实支持时创建一次提醒。"
+            f"evidence_id={event.evidence_id or 'none'}; current_time={now.isoformat()}; "
+            f"search_start={search_start.isoformat()}; search_end={search_end.isoformat()}。"
+            "最多只有三次模型请求，必须按请求顺序完成：第一轮get_current_scene；第二轮用上述"
+            "search_start和search_end调用search_events核验目标event_id（时间均带时区且start<end）；"
+            "第三轮仅当工具事实支持时调用notify_user创建一次提醒。"
         )
         return await self._run(
             kind="event",
@@ -601,6 +615,19 @@ class AgentService:
             responses = sdk_result.raw_responses
             usage = _usage_from_responses(responses)
             message = str(sdk_result.final_output).strip() or "模型未返回文字答复。"
+            if kind == "user" and not context.tool_calls:
+                return await self._finish_local(
+                    context,
+                    status="failed",
+                    message="模型未执行业务工具，无法确认请求结果。",
+                    started_at=started_at,
+                    attempts=hooks.attempts,
+                    usage=usage,
+                    usage_complete=_usage_is_complete(responses, hooks.attempts),
+                    error="model_completed_without_tool",
+                    user_message=user_message,
+                    local_date=local_date,
+                )
             if kind == "event" and not context.notification_created and watch and event:
                 return await self._fallback(
                     run_id=run_id,

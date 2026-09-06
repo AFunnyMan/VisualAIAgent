@@ -12,12 +12,12 @@
 |---|---|---|
 | 文档准备 | 完成 | 21 份 Markdown 和忽略规则已检查、提交并同步；最终交接记录随本条后续提交保存 |
 | 00 项目基础 | 完成 | 锁定安装、关键依赖导入与 8 项基础测试通过；见下方实际命令 |
-| 01 Agent 核心 | 进行中 | 实现/离线验收完成；仅待用户配置真实 API 验收 |
+| 01 Agent 核心 | 完成 | 离线边界与真实千问查询/创建/列表/取消/事件用例通过 |
 | 02 本地视觉 | 进行中 | 实现/模型/公开图/CI通过；仅待USB与Windows11实机 |
 | 03 视觉记忆 | 进行中 | 状态机/数据库/证据与失败恢复通过；待摄像头联合验收 |
-| 04 事件驱动 Agent | 进行中 | 实现/离线/十分钟等待通过；仅待真实模型事件闭环 |
-| 05 用户界面 | 进行中 | 页面/浏览器/后台集成通过；仅待真实API+USB演示 |
-| 06 验证与交接 | 进行中 | 软件交接与双平台CI完成；仅剩用户辅助实机/API验收 |
+| 04 事件驱动 Agent | 进行中 | 真实千问与视频提醒闭环通过；USB联合实测待补齐 |
+| 05 用户界面 | 进行中 | 页面/浏览器真实千问创建取消通过；仅待USB完整演示 |
+| 06 验证与交接 | 进行中 | 软件/真实API/回放验证持续补齐；用户辅助USB及Windows11实机待做 |
 
 ## 2026-09-07T02:19:56+08:00 — 初始现场与 Git 检查
 
@@ -134,3 +134,28 @@
 - 外部验收保持未完成：用户配置真实API并运行三类工具场景，USB三类各10次放入/移出及遮挡/故障/恢复，Apple芯片Mac与Windows11各30分钟实机性能，完整Agent提醒延迟。托管Windows CI不代替Windows11 USB验收。
 - 审查：[最终软件交付](code_review/phase-06-handoff.md)。后续只需按 [用户辅助验收](../docs/user-acceptance.md) 补齐证据并对发现问题定向修复，不重建已完成的代码或篡改验收条件。
 - 本条及最终状态文档将形成仅文档的交接提交；代码已由ebe241a双平台CI验证，文档提交不重复触发同一套CI。最终提交与远程一致性在交付回复前核对。
+
+## 2026-09-07T04:20:00+08:00 — 百炼授权、真实失败与修复
+
+- 用户提供百炼Key，授权查官方文档、用公开视频替代摄像头完成可自动流程。Key写入被忽略的.env，权限0600，未写入版本库、命令输出或摘要。接入地址/模型/官方依据见 [千问说明](../docs/qwen.md)。
+- 北京Chat兼容端点qwen-flash短文本探测成功：1次请求，input14/output2。随后 `VAA_RUN_LIVE_API=1 .venv/bin/pytest tests/agent/test_agent_live.py -m live_api -q --tb=short --junitxml=harness/artifacts/qwen-live-initial.xml`：1 passed、2 failed、6.89秒。实际10次请求、11419 Tokens。取消场景模型零工具却声称成功；事件场景start=end，修正后耗尽三轮，正确降级但不能算Agent成功。证据qwen-live-initial.json/xml（忽略目录）。
+- 修复首轮required与零工具失败保护，提供当前aware时间及事件检索窗口，不放宽三轮、不改原用例。相同入口输出到qwen-live-fixed.xml复验3 passed、9.50秒；11次请求，input13916/output454，全部usage完整。另新增零工具假取消与反序事件失败回归。
+- 浏览器127.0.0.1:8502使用独立qwen-ui目录，真实千问创建杯子关注、自然语言取消，实际工具及数据库状态均一致；页面显示已取消。4次请求，input4619/output158。临时页面关闭，Streamlit退出0，没有启动USB。
+- 标准1s/省电2s原速实拍瓶子视频均通过出现与EOF测试；杯/手机候选素材未检出，不算通过。素材许可、hash、命令和证据见 [阶段02context](context/phase-02-local-vision.md)。
+- 完整runtime视频流程首轮已完成出现与合成空白missing的真实Agent提醒（2.318s/2.567s）、断流7秒不误报、重复事件无新提醒、重启保留历史和waiting任务。30分钟已连接模型等待从04:06开始，截至本条仍在运行，不能预填通过。
+- 对答案内容追加审查发现最后位置漏区域、某次历史答复在没有missing记录时附加了未检测到类型说明。增强事实引用提示，并将live_acceptance扩展为捕获真实工具返回、检查类别/时间/区域/证据锚点、拒绝补写不存在missing事件，以及事件usage和HTTP请求对账。早期脚本的passed不能替代追加文本验收；后续结果另记。
+
+## 2026-09-07T04:22:00+08:00 — 严格视频闭环复验
+
+- `VAA_RUN_LIVE_API=1 .venv/bin/python scripts/live_acceptance.py --video harness/artifacts/wikimedia-squeezing-open-bottle.webm --category bottle --idle-category 'cell phone' --idle-seconds 5` 最终退出0；证据 `harness/artifacts/live-video-5102f9b9/summary.json`。实际工具返回与答案类别/时间/区域/证据锚点匹配，没有补写不存在missing事件；HTTP请求全部为文字和7个工具，和持久化run请求数对账一致。
+- 两条Agent来源提醒分别为真实视频appeared、显式合成空白missing，确认到通知延迟2.776502秒/3.250473秒；断流7秒不产生missing，重启恢复历史和waiting任务，重复事件不重发。5秒等待仅作为修复定向复验，30分钟结果由另一个尚在运行的进程单独补记。
+- 更早 `live-video-aff6c43a` 的脚本当时退出0，但人工复查发现历史回复附加未发生的missing说明；原证据保留，不作为最终文本通过记录。当前断言已能拒绝该问题，未通过删除标准处理。
+
+## 2026-09-07T04:25:00+08:00 — 最终软件回归与真实API确认
+
+- `VAA_RUN_LIVE_API=1 .venv/bin/pytest tests/agent/test_agent_live.py -m live_api -q --tb=short --junitxml=harness/artifacts/qwen-live-final.xml`：3 passed、9.17秒，11次请求，input15228/output484，证据qwen-live-final.json/xml。
+- 补齐find_object与search_events两条证据核验路径都必须先复查scene；两条反序失败用例均拒绝Agent通知。此追加只修复异常顺序，正常真实视频调用路径不变。
+- 本机 `.venv/bin/ruff check .`、`.venv/bin/ruff format --check .` 退出0，82份Python已格式化；`.venv/bin/pytest -q`：92 passed、3 deselected、6.73秒。原live用例未被删除或降低标准。
+- 远程main只读核对仍为303a94c，无未知新提交；以下里程碑将正常推送并运行macOS/Windows离线CI。30分钟待机仍运行，稍后追加实际结果。
+
+- 同期本地故障入口 `.venv/bin/python scripts/failure_acceptance.py --video harness/artifacts/wikimedia-squeezing-open-bottle.webm` 退出0：真实SDK收到本机TCP连接拒绝后1次请求、无重试、fallback成功；额度0时请求数0、fallback成功；两种情况提醒后真实视频仍fresh/current。无外部云请求，非百炼故障或系统断网；证据failure-acceptance-0953b785/summary.json，审查见 [回放故障](code_review/replay-failure-review.md)。

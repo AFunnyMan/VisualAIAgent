@@ -28,4 +28,12 @@ Agent 必须调用当前场景工具，并由历史查询命中目标 event 或�
 
 官方依据：[Agents 模型与工具编排](https://developers.openai.com/api/docs/guides/agents/models)、
 [Responses function tools](https://developers.openai.com/api/reference/cli/resources/responses/methods/create)。
-真实提供商、模型能力和实际 usage 尚未验证，留待显式 `live_api` 条件具备后执行。
+最初无凭据时的真实验证限制已由下述百炼接入补齐。
+
+## 百炼真实验证追加
+
+2026-09-07 用户明确提供 Key 并授权测试，使用北京兼容 Chat API 和 qwen-flash。初测真实发现零工具假称取消，以及 search_events 时间窗口无效；不是 SDK 模拟用例的失败。现要求首轮 tool_choice=required，SDK 在工具后恢复 auto，并在服务端拒绝零工具业务完成。普通闲聊也可能调用只读工具并使用两轮请求，属于已知交互成本。
+
+事件输入给出当前 aware 时间及包含确认时间的明确检索窗口，保留三轮上限。系统提示提供配置时区当前时间，约束历史位置包含区域/时间/证据、历史事件不得补写不存在的类型、未检测到不能推断被拿走。严格视频验收会捕获实际工具返回并验证回答的事实锚点；完整自然语言质量仍结合人工查看，不把字符串锚点当成通用事实证明。
+
+真实模型原始返回使用量，已完成3项live用例；视频与UI真实工具执行证据、后续更严格复验和待机结果见 [build-log](../build-log.md)，配置和官方来源见 [千问说明](../../docs/qwen.md)。凭据只在被忽略的.env，API URL/Key不进入业务日志。

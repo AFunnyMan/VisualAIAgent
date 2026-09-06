@@ -2,7 +2,7 @@
 
 普通 USB 摄像头、本地物品记忆和一个真正调用业务工具的 Agent。识别手机、杯子、瓶子，保留最后看到的时间、区域和截图；通过对话或页面建立关注，相关事件触发一次提醒。
 
-**源码功能、本机83项离线测试及macOS/Windows远程CI已通过。真实 API、USB 摄像头场景和 Windows 11 实机验收仍待用户提供条件。** 具体证据与状态以 [build-log](harness/build-log.md) 为准，不把公开图片或假模型测试视为实机通过。
+**源码功能、离线回归及千问真实工具调用已通过；公开视频已贯通本地视觉与 Agent 提醒。USB 摄像头场景和 Windows 11 实机验收仍待用户辅助。** 具体证据与状态以 [build-log](harness/build-log.md) 为准，不把公开图片或假模型测试视为实机通过。
 
 ## 启动
 
@@ -52,7 +52,7 @@ Remove-Item Env:UV_PROJECT_ENVIRONMENT
 
 ## Agent 配置
 
-复制 `.env.example` 为本机 `.env`，填写以下三项，随后重启应用：
+本开发机已在被忽略的 `.env` 配置阿里云百炼 `qwen-flash`，可直接启动。接入方式及自动验证见 [千问说明](docs/qwen.md)。新克隆请复制 `.env.example` 为本机 `.env`，填写以下三项，随后重启应用：
 
 ```dotenv
 VAA_API_KEY=你的本地密钥

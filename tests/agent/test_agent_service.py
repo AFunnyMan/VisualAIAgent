@@ -60,6 +60,7 @@ class ScriptedModel(Model):
         index = len(self.calls)
         self.calls.append(
             {
+                "system_instructions": system_instructions,
                 "input": input,
                 "tools": [item.name for item in tools],
                 "model_settings": model_settings,
@@ -155,6 +156,18 @@ async def test_sdk_executes_one_of_exactly_seven_business_tools_and_records_usag
     )
     assert len(model.calls) == 2
     assert model.calls[0]["tools"] == [tool.name for tool in service.tools]
+    assert model.calls[0]["model_settings"].tool_choice == "required"
+    assert model.calls[1]["model_settings"].tool_choice is None
+    assert "当前时间是" in model.calls[0]["system_instructions"]
+    assert "时区是Asia/Shanghai" in model.calls[0]["system_instructions"]
+    assert "最近一小时" in model.calls[0]["system_instructions"]
+    assert "类别、时间、区域和证据编号" in model.calls[0]["system_instructions"]
+    assert "多个候选必须逐项列出" in model.calls[0]["system_instructions"]
+    assert "不得认定为同一件或特定身份" in model.calls[0]["system_instructions"]
+    assert "历史事件必须依据search_events" in model.calls[0]["system_instructions"]
+    assert "事件时间和证据" in model.calls[0]["system_instructions"]
+    assert "只能表述为“持续未检测到”" in model.calls[0]["system_instructions"]
+    assert "不得推断物品被拿走、发生物理消失" in model.calls[0]["system_instructions"]
     assert store.list_chat_interactions()[-1]["assistant_message"] == "没有杯子的历史记录。"
 
     await service.close()
@@ -205,13 +218,43 @@ async def test_three_model_attempts_are_a_hard_limit(tmp_path, services):
 @pytest.mark.asyncio
 async def test_missing_provider_usage_remains_none(tmp_path, services):
     store, watches = services
-    model = ScriptedModel([[message("完成")]], include_usage=False)
+    model = ScriptedModel(
+        [
+            [tool_call("get_current_scene", "{}", "call-scene")],
+            [message("当前没有有效画面。")],
+        ],
+        include_usage=False,
+    )
     service = AgentService(configured(tmp_path), store, watches, model=model)
 
     result = await service.run_user("当前情况", "request-no-usage")
 
     assert result.status == "completed"
     assert (result.input_tokens, result.output_tokens, result.total_tokens) == (None, None, None)
+
+
+@pytest.mark.asyncio
+async def test_user_business_success_without_any_tool_is_rejected(tmp_path, services):
+    store, watches = services
+    created = watches.create_watch("bottle", "appeared", request_id="create-before-cancel")
+    assert created.ok
+    watch_id = created.data["watch"]["watch_id"]
+    model = ScriptedModel([[message("关注任务已取消。")]])
+    service = AgentService(configured(tmp_path), store, watches, model=model)
+
+    result = await service.run_user(f"请取消关注任务 {watch_id}。", "request-false-cancel")
+
+    assert result.status == "failed"
+    assert result.message == "模型未执行业务工具，无法确认请求结果。"
+    assert result.tool_calls == ()
+    assert watches.list_watches().data["watches"][0]["status"] == "waiting"
+    assert model.calls[0]["model_settings"].tool_choice == "required"
+    with store._connect() as connection:
+        row = connection.execute(
+            "SELECT status, error FROM agent_runs WHERE request_id = ?",
+            ("request-false-cancel",),
+        ).fetchone()
+    assert (row["status"], row["error"]) == ("failed", "model_completed_without_tool")
 
 
 @pytest.mark.asyncio
@@ -331,6 +374,15 @@ async def test_event_requires_scene_and_target_evidence_before_agent_notificatio
     assert len(notifications) == 1
     assert notifications[0]["source"] == "agent"
     assert result.request_attempts == 3
+    first_input = model.calls[0]["input"]
+    assert isinstance(first_input, list)
+    event_prompt = first_input[-1]["content"]
+    assert "current_time=" in event_prompt
+    assert "search_start=" in event_prompt and "search_end=" in event_prompt
+    assert "时间均带时区且start<end" in event_prompt
+    assert "最多只有三次模型请求" in event_prompt
+    assert "aware datetimes" in service.tools[2].description
+    assert "start strictly before end" in service.tools[2].description
 
 
 @pytest.mark.asyncio
@@ -372,6 +424,47 @@ async def test_event_third_turn_notification_is_success_even_without_fourth_fina
     assert result.request_attempts == 3
     assert result.usage_complete is True
     assert watches.list_notifications().data["notifications"][0]["source"] == "agent"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("evidence_tool", ["search_events", "find_object"])
+async def test_event_evidence_review_cannot_precede_scene_review(tmp_path, services, evidence_tool):
+    store, watches = services
+    watch, event = make_claimed_event(store, watches)
+    start = (event.confirmed_at - timedelta(minutes=1)).isoformat()
+    end = (event.confirmed_at + timedelta(minutes=1)).isoformat()
+    notify_arguments = (
+        f'{{"watch_id":"{watch.watch_id}","event_id":"{event.event_id}",'
+        '"message":"反序核验不应创建 Agent 提醒。"}'
+    )
+    model = ScriptedModel(
+        [
+            [
+                tool_call(
+                    evidence_tool,
+                    f'{{"category":"cup","start":"{start}","end":"{end}"}}'
+                    if evidence_tool == "search_events"
+                    else '{"category":"cup"}',
+                    "call-events-first",
+                )
+            ],
+            [tool_call("get_current_scene", "{}", "call-scene-second")],
+            [tool_call("notify_user", notify_arguments, "call-notify-third")],
+        ]
+    )
+    service = AgentService(configured(tmp_path), store, watches, model=model)
+
+    result = await service.run_event(watch, event)
+
+    assert result.status == "fallback_notified"
+    agent_notify = next(call for call in result.tool_calls if call["tool"] == "notify_user")
+    assert agent_notify == {
+        "tool": "notify_user",
+        "ok": False,
+        "error": "event scene and evidence were not reviewed",
+    }
+    notification = watches.list_notifications().data["notifications"][0]
+    assert notification["source"] == "fallback"
 
 
 @pytest.mark.asyncio
