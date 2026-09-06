@@ -108,3 +108,11 @@
 - 软件实现与离线检查已完成；阶段 01—06 保留真实模型/摄像头/Windows 等验收项为进行中，未删改原验收条件。审查见各阶段 code_review 和阶段05集成审查。
 
 - 暂存检查补充：原样保存的 NumPy/PyTorch 许可证包含上游尾随空格/文件尾空行，首次 staged diff-check 因此失败。使用仅作用于 third_party/licenses 的 .gitattributes 保留原许可证字节，业务源码仍执行正常空白检查；复验后再提交。
+
+## 2026-09-07T03:25:00+08:00 — 远程 CI 首轮与诊断改进
+
+- 源码提交 7692ac9 已正常推送，远程引用与本地一致。
+- GitHub run 34054619017：macOS 托管 runner 安装、Ruff、格式、pytest、doctor 全部成功；Windows 安装和静态检查成功，pytest 失败。
+- 公开 API 和未登录浏览器只能读取“exit code 1”，详细日志需要登录。为在无需用户凭据条件下继续修复，加入 ci_checks.py：保持原测试不变，仅在 CI 失败时把有界的无凭据测试失败详情写入可读检查注解；不扩大 workflow 权限。
+- 十分钟实际回放已结束，601.12 秒、120 次检查、无无效采样、Agent/model 均零调用，峰值 RSS 353.94 MiB，平均 CPU 12.74%（单核100%），无运行错误。证据 `harness/artifacts/soak-5e0b530a/soak-summary.json`。该进程在阶段02最终停止边界修复前启动，验证当时的正常等待/推理链路；停止边界由后续失败用例验证。
+- `sh scripts/start-mac.sh` 已实际完成锁定同步并启动最新页面，浏览器确认未连接页面正常；退出时服务返回0，未启用摄像头或真实API。

@@ -23,5 +23,5 @@ jobs:
       - run: uv sync --locked --group dev
       - run: uv run --locked ruff check .
       - run: uv run --locked ruff format --check .
-      - run: uv run --locked pytest
+      - run: uv run --locked python scripts/ci_checks.py
       - run: uv run --locked python scripts/doctor.py
