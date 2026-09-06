@@ -1,0 +1,38 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+config.local.*
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Private runtime data, generated evidence, and model binaries
+data/
+models/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.onnx
+*.pt
+*.pth
+*.log
+harness/artifacts/*
+!harness/artifacts/README.md
+
+# Operating system metadata
+.DS_Store
+Thumbs.db
