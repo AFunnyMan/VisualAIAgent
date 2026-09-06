@@ -1,6 +1,6 @@
 # 文档、开源组件与来源
 
-查阅日期：2026-09-07。以下来源已在规划阶段阅读；软件未安装、模型未下载、运行能力未验证。软件/API 版本将在对应实施阶段记录实际验证值，不按网页示例默认模型运行。
+查阅日期：2026-09-07。规划来源保留；当前软件已安装并锁定、模型已导出校验。实际版本/许可见 third-party-notices.md，模型来源与校验见阶段02 context；真实 API 和实机结果不由文档推断。
 
 ## Codex 开发工作流
 
@@ -10,7 +10,7 @@
 | [AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md) | 根目录保存持久指引，链接详细材料；新文件在当前会话显式读取 |
 | [Using PLANS.md for multi-hour problem solving](https://developers.openai.com/cookbook/articles/codex_exec_plans) | 借鉴持续更新、可恢复和可观察验收；文章已归档，不沿用旧模型/API 推荐 |
 
-本项目不照搬文章的逐阶段等待批准：用户选择在已授权连续实施范围内验证后推进；但当前任务明确只有文档和 Git，完成后停止。AGENTS.md 是 Codex 识别的指引，其余文件为项目约定，不是平台强制文件。
+本项目不照搬文章的逐阶段等待批准：用户选择在已授权连续实施范围内验证后推进；当前用户已追加授权全路线实施及 Sol 或更低成本开发子 Agent 并行。AGENTS.md 是 Codex 识别的指引，其余文件为项目约定，不是平台强制文件。
 
 ## 选定的复用组件
 

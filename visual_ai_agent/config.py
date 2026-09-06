@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 @dataclass(frozen=True)
 class Config:
     data_dir: Path = Path("data")
-    model_path: Path = Path("models/yolo26n.onnx")
+    model_path: Path = Path("models/yolo26n-e2e.onnx")
     model_sha256: str = ""
     api_key: str = field(default="", repr=False)
     api_base_url: str = ""
@@ -54,7 +54,7 @@ class Config:
             load_dotenv(dotenv_path, override=False)
         return cls(
             data_dir=Path(os.getenv("VAA_DATA_DIR", "data")),
-            model_path=Path(os.getenv("VAA_MODEL_PATH", "models/yolo26n.onnx")),
+            model_path=Path(os.getenv("VAA_MODEL_PATH", "models/yolo26n-e2e.onnx")),
             model_sha256=os.getenv("VAA_MODEL_SHA256", ""),
             api_key=os.getenv("VAA_API_KEY", ""),
             api_base_url=os.getenv("VAA_API_BASE_URL", ""),

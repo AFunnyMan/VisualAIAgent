@@ -1,6 +1,6 @@
 # 技术架构与现行决策
 
-状态：设计约定，尚未实现。原始计划保存在 [基线](project-plan-baseline.md)。2026-09-07 的环境讨论补充推荐：原生开发为主，Docker 非首版前置条件。
+状态：现行实现架构；源代码与离线验证已建立，真实模型/摄像头/Windows验收另记。原始计划保存在 [基线](project-plan-baseline.md)。2026-09-07 的环境讨论补充推荐：原生开发为主，Docker 非首版前置条件。
 
 ## 系统组成
 
@@ -21,7 +21,7 @@ flowchart TD
     Notify --> UI
 ```
 
-采用 Python 3.11、OpenCV、YOLO26n ONNX、ONNX Runtime CPU、Supervision、SQLite、OpenAI Agents SDK 和 Streamlit。使用 uv 管理环境和锁文件。版本必须在阶段 00/02 验证后填写，不用未知的最新版本作为默认值。
+采用 Python 3.11、OpenCV、YOLO26n ONNX、ONNX Runtime CPU、Supervision、SQLite、OpenAI Agents SDK 和 Streamlit。使用 uv 管理环境和锁文件。实际版本锁定于 uv.lock，模型校验与导出版本见 model_manifests。
 
 复用 SDK 的循环与工具执行、Supervision 的检测表示和绘制、YOLO 的权重和导出。项目自行实现事件、视觉记忆、任务与页面。Frigate 只作设计参考。[来源](references.md)
 
@@ -43,7 +43,7 @@ flowchart TD
 
 ## 最小接口约定
 
-以下是计划接口，尚无实现。类型使用 Python 类型标注及适当的数据校验，内部实现不暴露任意 SQL、代码或 Shell。
+以下接口已在 visual_ai_agent 包实现。类型使用 Python 类型标注及适当的数据校验，内部实现不暴露任意 SQL、代码或 Shell。
 
 | 类型 | 最少表达的内容 |
 |---|---|
@@ -97,3 +97,20 @@ SQLite 持久化最新观察、事件、任务、通知和用量/执行摘要；
 ## 尚待实测
 
 模型导出与 ONNX 输出一致性、不同平台依赖、USB 采集后端、三类小物体效果、CPU/内存/延迟、具体 API 工具调用。以上是实施验证项，不是重新开放已确定的首版范围。
+
+## 实现索引与实际边界
+
+- `models.py`：Pydantic 领域记录，带时区时间和固定类别/条件。
+- `vision.py`：CameraSource、ReplaySource、YoloOnnxDetector、VisionWorker；模型清单与配置 SHA 校验，检测输出为固定端到端头。
+- `events.py`：仅进程单调时间推进确认；候选状态随 SQLite 事务成功后采用。
+- `memory.py`：MemoryStore，版本 2；版本 1→2 先用 SQLite backup 备份再迁移，未知版本写前拒绝；每线程独立连接和显式事务。
+- `watches.py`：WatchService，waiting/processing 原子认领、通知事务与引用保留。
+- `agent.py`：AgentService 的 async run_user/run_event/close。真实客户端和 Runner 均禁重试；整体超时默认 30 秒，最多三次模型请求。第三轮已执行成功的通知以工具记录确认完成，不再额外请求文字结尾。
+- `runtime.py`：ApplicationRuntime；一个有界 64 项的串行 Agent 队列，与视觉线程独立。启动恢复 processing 事件，队列满以事实生成本地降级；每小时清理普通数据。
+- `app.py`：全局缓存一个线程安全运行时，原生文件锁限制同目录多进程；局部定时刷新不调用模型。
+
+默认模型路径为 `models/yolo26n-e2e.onnx`，清单为 `model_manifests/yolo26n-e2e.onnx.json`。配置见 `.env.example`。每次导出可能因时间元数据改变哈希，必须用准备脚本重新完成输出对比并写入实际清单；不能伪造清单绕过验证。
+
+当前实现保留每类最新观察及事件截图；普通持续检测的旧截图在引用释放后删除，普通观察/事件七天清理。被任务或通知引用的旧事件/截图保留以保证证据完整，因此此类数据可超过七天。对话仅保留最近五个完整用户/助手交互，当前调用的工具输入/输出由 SDK 保持配对，历史工具摘要在独立表记录。
+
+用量同时表达已知部分值与 `usage_complete`，后续请求失败不能抹掉先前实际用量，也不能将部分用量宣称为总量。未知 API 能力、Windows 实机和摄像头小物体效果仍须验收。

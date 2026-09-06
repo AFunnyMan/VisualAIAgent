@@ -1,0 +1,33 @@
+# 阶段 03/04 本地域层审查
+
+日期：2026-09-07（Asia/Shanghai）
+
+## 范围
+
+审查 `visual_ai_agent/events.py`、`memory.py`、`watches.py`，以及 `tests/events`、`tests/memory`、`tests/watches`。重点检查事件证据、采样新鲜度、事务回滚、清理引用、任务状态、并发去重、重启恢复和用量缺失语义。
+
+## 已发现并修复
+
+- 同一时间戳的对话最初只按时间排序，最近五轮不稳定；增加 SQLite 行序作为次级顺序，并实际删除更早完整轮次。
+- 状态机最初在数据库事务提交前更新，提交失败可能让事件丢失；改为提交成功后才采用候选状态，并串行化同一仓储的 `ingest`。
+- 历史观察最初持续引用每帧截图，且清空引用会扫描全部历史；改为只保留最新观察引用，增加非空证据局部索引，并保护事件与每类最后观察证据。
+- 当前场景最初会把断连等明确故障统一显示为过期；现保留故障状态，只将过期或重启后的旧 `running` 观察标为 `stale`。未来墙钟观察也不再误判为当前。
+- 清理最初未覆盖崩溃孤儿文件，且任务引用事件可能触发外键失败；现清理无索引文件，并保护任务、通知及 `last_seen` 引用。
+- 用户 Agent 运行先写 `running`、完成后补本地日期时，upsert 最初没有更新日期，导致日汇总漏计；现补写日期并有回归测试。
+- 单靠 Token 非空无法区分完整用量与失败前部分用量；Schema 2 增加 `usage_complete`，汇总同时提供完整值和明确标注的 `known_*` 部分值，并验证版本 1 原位迁移不丢记录。
+- 数据库初始化原先没有在写入前拒绝未知 schema 版本；现只接受当前版本 2 和已实现的 1→2 迁移，未知或损坏元数据在任何 DDL 前失败，并用哨兵表验证原库未被修改。
+- 版本 1→2 迁移最初缺少迁移前备份，不符合项目恢复约定；现先用 SQLite Backup API 将一致快照写入私有 `data_dir/backups`，通过 `integrity_check` 和落盘检查后才允许 DDL。备份失败会删除不完整备份并中止，源库版本、列、数据和表清单保持原样。
+
+## 验证
+
+- `.venv/bin/ruff check visual_ai_agent/events.py visual_ai_agent/memory.py visual_ai_agent/watches.py tests/events tests/memory tests/watches`：退出 0。
+- `.venv/bin/pytest tests/events tests/memory tests/watches -q`：29 passed（最终本地域专项检查）。
+- `.venv/bin/pytest tests/memory -q`：迁移备份变更后的定向检查退出 0；18 passed。
+- `.venv/bin/pytest -q`：迁移备份变更前的全仓检查退出 0；70 passed，3 deselected。最终全仓回归由主 Agent 执行。被排除项为显式真实条件测试，不以离线测试替代。
+- `git diff --check`：退出 0。
+
+覆盖的失败与并发场景包括：三次出现、五秒缺失、两秒遮挡、故障与采样缺口、单调钟/墙钟倒退、数据库失败不推进状态、证据写入失败、重启当前状态未知、七天清理引用完整、孤儿文件、建立前事件、取消与到期后迟到通知、并发通知去重、并发日额度预占、对话五轮限制和未知 Token 聚合。
+
+## 仍需外部验证
+
+真实摄像头场景、Windows 11 x64、三十分钟持续运行和真实模型工具调用不属于本次离线通过证据，仍按阶段 06 记录为待用户条件。

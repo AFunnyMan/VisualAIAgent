@@ -12,12 +12,12 @@
 |---|---|---|
 | 文档准备 | 完成 | 21 份 Markdown 和忽略规则已检查、提交并同步；最终交接记录随本条后续提交保存 |
 | 00 项目基础 | 完成 | 锁定安装、关键依赖导入与 8 项基础测试通过；见下方实际命令 |
-| 01 Agent 核心 | 未开始 | 无业务代码或真实 API 验证 |
-| 02 本地视觉 | 未开始 | 未安装模型或访问摄像头 |
-| 03 视觉记忆 | 未开始 | 未建立运行数据库 |
-| 04 事件驱动 Agent | 未开始 | 未实现关注/通知服务 |
-| 05 用户界面 | 未开始 | 无可运行应用 |
-| 06 验证与交接 | 未开始 | Mac/Windows 产品验收均未运行 |
+| 01 Agent 核心 | 进行中 | 七工具 SDK 已实现并离线验证；真实 API 待配置 |
+| 02 本地视觉 | 进行中 | 官方模型已导出及参考对比；真实摄像头/Windows 待验 |
+| 03 视觉记忆 | 进行中 | 状态机、SQLite、证据与清理已实现并离线验证 |
+| 04 事件驱动 Agent | 进行中 | 关注、去重、限额及恢复已实现，真实闭环待验 |
+| 05 用户界面 | 进行中 | 本地页面、后台队列及浏览器创建/取消已验证 |
+| 06 验证与交接 | 进行中 | 总回归/文档/辅助验收脚本进行中；实机项不冒充通过 |
 
 ## 2026-09-07T02:19:56+08:00 — 初始现场与 Git 检查
 
@@ -86,3 +86,25 @@
 - `scripts/doctor.py` 退出 0：Darwin 25.6.0 arm64、Python 3.11.16；Agent 未配置，模型此时尚未存在。包版本由 uv.lock 锁定。
 - 远程 `git ls-remote ssh://git@ssh.github.com:443/AFunnyMan/VisualAIAgent.git refs/heads/main` 确認仍为 f5733db，未发现未知远程更新。
 - 审查：[阶段 00](code_review/phase-00-foundation.md)。后续业务模块正在独立开发，本提交只纳入基础已验证内容。
+
+## 2026-09-07T03:08:00+08:00 — 并行模块与集成验证
+
+- 基础提交：36f196e。后续模块尚在集成修改，不将正在变化的测试数写成最终验收。
+- 首轮全仓 `.venv/bin/pytest`：51 passed（02:59 前后）；新增 UI 测试发现 fragment-only rerun 在整页执行时非法，已改用可用于两种上下文的 st.rerun()，定向 6 项测试通过。
+- 后续测试发现“缺模型”用例依赖工作树恰好无模型，模型下载后会失效；已改为显式临时缺失路径，避免环境相关误判。
+- 浏览器：本机 127.0.0.1:8501 页面已实际加载，未连接状态/禁用聊天可见，在专用 ui-review 数据目录创建关注后取消，页面显示已取消。没有点击摄像头启动，没有调用真实 API。
+- 模型：官方 YOLO26n 导出成功。首次参考预测默认 rect=True 导致与固定正方形 ONNX 输入有差异；统一 rect=False 后五框最小 IoU 0.99999815，最大框差 0.000610px；三类公开图业务适配对比完成。详见阶段02 context。
+- 审查追加修复：恢复 processing 任务重新入队；切换采样档重置确认间隔；当前时间倒退标未知；截图引用清空加索引和非空条件，避免每帧更新全部历史；正在修三轮工具通知成功后错误降级的 SDK 边界。
+- 独立真实 API 测试需显式 opt-in；摄像头、固定场景、Windows 11 与 30 分钟实机性能仍未执行。
+
+## 2026-09-07T03:17:00+08:00 — 源码功能里程碑与最终离线回归
+
+- `.venv/bin/ruff check .` 和 `.venv/bin/ruff format --check .` 均退出 0；`.venv/bin/pytest` 退出 0：80 passed，3 deselected，实际耗时 6.89 秒。
+- `.venv/bin/pytest tests/agent -m live_api -rs` 退出 0：3 skipped、12 deselected，原因是未设置显式付费开关；真实 API 未执行，不能算真实 Agent 验收通过。
+- 文档检查：33 份项目 Markdown、111 个本地链接目标存在；`sh -n scripts/start-mac.sh` 与 `git diff --check` 退出 0。原始计划基线 SHA-256 仍为 c28566e288f0ec7f3018699e951a8173166f21b03322719e8ae00e9d6c25692c。
+- 模型短测：`.venv/bin/python scripts/benchmark.py --image harness/artifacts/public-cup.jpg --samples 30` 退出 0；真实 ONNX CPU 连续图片推理 30 次，p50 56.08 ms、p95 90.93 ms，进程峰值 RSS 271.36 MiB。连续全速 CPU 平均 175.97%（单核 100%），不代表低频摄像头CPU；只验证短样本。证据本地路径 `data/acceptance/20260906T190659Z-f39d7d/summary.json`。
+- `scripts/offline_soak.py --image harness/artifacts/public-cup.jpg --duration 600` 已启动，使用真实本地 ONNX 与明确回放输入、无关关注和零调用哨兵；截至本条仍在运行，结果待追加。
+- 架构、README、测试说明、用户辅助验收、第三方原许可证与模型清单已纳入交接。GitHub 原生 macOS/Windows 离线工作流已配置，尚未宣称远程运行通过。
+- 软件实现与离线检查已完成；阶段 01—06 保留真实模型/摄像头/Windows 等验收项为进行中，未删改原验收条件。审查见各阶段 code_review 和阶段05集成审查。
+
+- 暂存检查补充：原样保存的 NumPy/PyTorch 许可证包含上游尾随空格/文件尾空行，首次 staged diff-check 因此失败。使用仅作用于 third_party/licenses 的 .gitattributes 保留原许可证字节，业务源码仍执行正常空白检查；复验后再提交。

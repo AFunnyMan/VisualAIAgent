@@ -1,0 +1,78 @@
+{
+  "end_to_end": true,
+  "export": {
+    "batch": 1,
+    "device": "cpu",
+    "dynamic": false,
+    "format": "onnx",
+    "imgsz": 640,
+    "nms": false,
+    "simplify": true
+  },
+  "exported_at": "2026-09-06T19:03:00.167887+00:00",
+  "file": "yolo26n-e2e.onnx",
+  "input_shape": [
+    1,
+    3,
+    640,
+    640
+  ],
+  "input_size": 640,
+  "license": "AGPL-3.0-only or Ultralytics Enterprise License",
+  "license_url": "https://github.com/ultralytics/ultralytics/blob/main/LICENSE",
+  "model": "Ultralytics YOLO26n detect",
+  "model_metadata": {
+    "args": "{'data': None, 'batch': 1, 'fraction': 1.0, 'quantize': None, 'nms': False, 'dynamic': False, 'simplify': True, 'opset': None}",
+    "author": "Ultralytics",
+    "batch": "1",
+    "channels": "3",
+    "date": "2026-09-07T03:02:58.950748+08:00",
+    "description": "Ultralytics YOLO26n model trained on /home/lq/codes/ultralytics/ultralytics/cfg/datasets/coco.yaml",
+    "docs": "https://docs.ultralytics.com",
+    "end2end": "True",
+    "head": "Detect",
+    "imgsz": "[640, 640]",
+    "license": "AGPL-3.0 License (https://ultralytics.com/license)",
+    "names": "{0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 4: 'airplane', 5: 'bus', 6: 'train', 7: 'truck', 8: 'boat', 9: 'traffic light', 10: 'fire hydrant', 11: 'stop sign', 12: 'parking meter', 13: 'bench', 14: 'bird', 15: 'cat', 16: 'dog', 17: 'horse', 18: 'sheep', 19: 'cow', 20: 'elephant', 21: 'bear', 22: 'zebra', 23: 'giraffe', 24: 'backpack', 25: 'umbrella', 26: 'handbag', 27: 'tie', 28: 'suitcase', 29: 'frisbee', 30: 'skis', 31: 'snowboard', 32: 'sports ball', 33: 'kite', 34: 'baseball bat', 35: 'baseball glove', 36: 'skateboard', 37: 'surfboard', 38: 'tennis racket', 39: 'bottle', 40: 'wine glass', 41: 'cup', 42: 'fork', 43: 'knife', 44: 'spoon', 45: 'bowl', 46: 'banana', 47: 'apple', 48: 'sandwich', 49: 'orange', 50: 'broccoli', 51: 'carrot', 52: 'hot dog', 53: 'pizza', 54: 'donut', 55: 'cake', 56: 'chair', 57: 'couch', 58: 'potted plant', 59: 'bed', 60: 'dining table', 61: 'toilet', 62: 'tv', 63: 'laptop', 64: 'mouse', 65: 'remote', 66: 'keyboard', 67: 'cell phone', 68: 'microwave', 69: 'oven', 70: 'toaster', 71: 'sink', 72: 'refrigerator', 73: 'book', 74: 'clock', 75: 'vase', 76: 'scissors', 77: 'teddy bear', 78: 'hair drier', 79: 'toothbrush'}",
+    "stride": "32",
+    "task": "detect",
+    "version": "8.4.142"
+  },
+  "onnx_version": "1.22.0",
+  "onnxruntime_version": "1.29.0",
+  "output_columns": [
+    "x1",
+    "y1",
+    "x2",
+    "y2",
+    "confidence",
+    "class_id"
+  ],
+  "output_shape": [
+    1,
+    300,
+    6
+  ],
+  "reference_comparison": {
+    "box_tolerance_px": 0.01,
+    "classes_equal": true,
+    "confidence_tolerance": 0.0001,
+    "detection_count": 5,
+    "image": "ultralytics-bus.jpg",
+    "max_box_difference_px": 0.0006103515625,
+    "max_confidence_difference": 1.3113021850585938e-06,
+    "min_iou": 0.9999981544223233,
+    "minimum_iou": 0.9999
+  },
+  "schema_version": 1,
+  "sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+  "source_checkpoint": "yolo26n.pt",
+  "source_checkpoint_sha256": "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+  "source_url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt",
+  "target_classes": {
+    "39": "bottle",
+    "41": "cup",
+    "67": "cell phone"
+  },
+  "ultralytics_version": "8.4.142"
+}

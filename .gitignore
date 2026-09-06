@@ -42,3 +42,6 @@ Thumbs.db
 .python/
 .uv-cache/
 .export-venv/
+
+# ONNX Runtime import-time telemetry session cache
+/:memory:.ses
