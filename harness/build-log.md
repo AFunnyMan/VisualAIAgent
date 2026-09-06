@@ -174,3 +174,16 @@
 - 运行后独立核对：26次HTTP请求与12条Agent运行记录的26次请求完全一致，usage全部完整；两条通知仍为Agent来源，无重复。runtime_error为null，最后观察状态为stopped，进程退出0。所有临时UI及回放进程均已结束，没有访问物理摄像头。
 - 软件修复代码固定于c58a169并已双平台CI通过；本条及相关结果页仅文档更新，不重复执行相同软件检查。最终交接审查见 [千问与视频交接](code_review/qwen-video-handoff.md)。完成后正常提交同步并核对远程引用。
 - 剩余用户辅助：真实USB三类各10次放入/移出及遮挡/多个候选/断开恢复，Apple芯片Mac和Windows11原生USB各30分钟，完整UI实物提醒。公开视频只有瓶子素材通过，不能声称手机/杯子视频或三类现场识别率达标；其他未执行实机项不关闭。
+
+## 2026-09-07T05:32:00+08:00 — 调用审计与九段视频扩展测评
+
+- 用户要求判断大模型调用次数并扩大不同类型视频测试。两个Sol开发子Agent分别搜集/复核手机与杯子素材，主Agent审计请求、测试瓶子/负样本并统一复验；没有新增百炼请求，没有打开USB或更改生产权重/0.35阈值。
+- 历史严格闭环12个Agent运行/26次请求：10次用户操作各2次请求，2次事件各3次；30分钟等待新增0。115次是包含初始失败和多轮复验的开发验证累计，不是运行半小时的请求量。判断与节省方向见 [评估](../docs/recognition-assessment-2026-09-07.md)。
+- 下载9段新公开视频：3手机、3不同杯型、2瓶子、1行人负样本。来源、许可、SHA及最终参数保存在 [评估清单](evaluations/video-survey-20260907.json)，视频/图片/完整输出仍被忽略。OpenCV负样本的独立原视频许可未确定，不以仓库许可替代，不分发视频。
+- 初轮随机seek在rice-phone OGV中发现同一POS_MSEC随跳转历史返回不同像素。新增scripts/recognition_survey.py改为从头顺序解码、CFR帧索引采样，并全部重跑；命令为 `.venv/bin/python scripts/recognition_survey.py --video <清单中的文件> --output harness/artifacts/video-survey/<id>-sequential --duration 190`，负样本duration30。9段均退出0，最终488个每秒采样帧；开发Agent逐图复核53帧，未知/黑场/完全遮挡不算漏检。此前探索复核不作最终定量。
+- 实测识别不足：夜间横瓶抽查1/6命中、近景完整变色马克杯0/6、透明茶杯3/6、小手机工位0/5。都是小样本的可见帧命中，不是整体识别率。厨房大桶在36—38秒被持续当杯子并形成38秒appeared；桌面手机仍可见却在15秒形成missing。保持现有“持续未检测到”事实措辞，也不因此声称实物移出正确。
+- 定向复验 `.venv/bin/python scripts/recognition_survey.py --video harness/artifacts/video-survey/videos/rice-phone.ogv --output harness/artifacts/video-survey/phone-missing-sequential --start 7 --duration 15` 退出0，出现9秒/未检测到15秒。与完整顺序回放重叠15/15样本的检测和帧索引完全一致，复核图确认手机仍在。
+- 独立官方PT/ONNX对照同一完整杯失败帧，最高cup得分0.01264465/约0.012646，框坐标一致，生产0.35下均无框；仅独立诊断查看低分，未改变生产配置。不能将单帧对照扩大为全部管线无bug。
+- 最终 `.venv/bin/ruff check .`、`.venv/bin/ruff format --check .`、`git diff --check` 均退出0；`.venv/bin/pytest -q` 为92 passed、3 deselected、7.35秒。新评估文档本地链接、9段素材哈希和原始计划基线SHA均核对通过。
+- 路线图修正为本地识别质量仍有未解决问题，不能再概括成仅剩用户实机；没有降低90%目标。审查见 [扩展视频识别](code_review/recognition-survey-review.md)。本轮是完成诊断与测评，持续误分类/漏检尚未修复，USB和Windows11实机项继续开放。
+- 提交前只读核对远程main仍为a8b4fcf，无未知新提交。以下将正常提交同步；远程CI结果在实际返回后核对，不预填通过。

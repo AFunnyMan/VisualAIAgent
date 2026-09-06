@@ -1,0 +1,983 @@
+{
+  "date": "2026-09-07",
+  "timezone": "Asia/Shanghai",
+  "purpose": "Exploratory local recognition assessment; not USB acceptance or a representative accuracy benchmark",
+  "model_manifest": "model_manifests/yolo26n-e2e.onnx.json",
+  "model_sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+  "scope": "9 distinct videos, sequential CFR decode, 488 one-second samples, 53 visually reviewed frames; additional targeted reviews excluded from primary counts",
+  "new_cloud_requests": 0,
+  "videos": [
+    {
+      "id": "beer-bottling",
+      "target": "bottle",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Beer-bottling.webm",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Beer-bottling.webm",
+      "author": "Sage Ross",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+      "measurement": {
+        "video": "harness/artifacts/video-survey/beer-bottling.webm",
+        "sha256": "fbd2ec34ac4e8347ff68e85fe3a0bcab9d982f53f64089b4cbf746f1cb291c79",
+        "fps": 23.976023976023978,
+        "duration_seconds": 188.98045833333333,
+        "width": 1920,
+        "height": 1088,
+        "window_start": 0,
+        "window_end": 188.0,
+        "interval": 1,
+        "sampling": "sequential decode, nearest CFR frame index; VFR not validated",
+        "samples": 189,
+        "confidence": 0.35,
+        "input_size": 640,
+        "category_detected_frames": {
+          "cell phone": 0,
+          "cup": 22,
+          "bottle": 51
+        },
+        "review_times": [
+          0.0,
+          37.0,
+          75.0,
+          112.0,
+          150.0,
+          188.0
+        ],
+        "events": [
+          {
+            "t": 14.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "t": 27.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "t": 31.0,
+            "category": "bottle",
+            "kind": "appeared"
+          },
+          {
+            "t": 38.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "t": 39.0,
+            "category": "bottle",
+            "kind": "missing"
+          },
+          {
+            "t": 46.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "t": 115.0,
+            "category": "bottle",
+            "kind": "appeared"
+          },
+          {
+            "t": 147.0,
+            "category": "bottle",
+            "kind": "missing"
+          },
+          {
+            "t": 159.0,
+            "category": "bottle",
+            "kind": "appeared"
+          },
+          {
+            "t": 183.0,
+            "category": "bottle",
+            "kind": "missing"
+          }
+        ],
+        "event_clock": "accelerated video-relative seconds; no wall-clock claim",
+        "model_requests": 0,
+        "accuracy": "not calculated without independent human labels"
+      },
+      "reviewed_frames": [
+        {
+          "t": 0,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Graduated measuring cylinder, not bottle; no drinking cup visible"
+        },
+        {
+          "t": 37,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": null,
+          "false_positive_classes": [
+            "cup"
+          ],
+          "notes": "Large white bucket incorrectly boxed as cup"
+        },
+        {
+          "t": 75,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Hands in large steel pot; no bottle visible"
+        },
+        {
+          "t": 112,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Bucket spigot and tube; no bottle visible"
+        },
+        {
+          "t": 150,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Two large brown bottles visible, blur and highlights; both missed"
+        },
+        {
+          "t": 188,
+          "target_visible": true,
+          "detected": true,
+          "correct_box": true,
+          "notes": "Many bottles; two correct boxes, many other visible instances missed"
+        }
+      ],
+      "artifact_directory": "harness/artifacts/video-survey/beer-sequential",
+      "review_counts": {
+        "visible": 2,
+        "correct_hit": 1
+      }
+    },
+    {
+      "id": "sabrage",
+      "target": "bottle",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Sabrage_with_the_glass_2.webm",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Sabrage_with_the_glass_2.webm",
+      "author": "PeterLemenkov",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "measurement": {
+        "video": "harness/artifacts/video-survey/sabrage.webm",
+        "sha256": "edb88fb14d9662d4c10623fe86fc7ebafad3481494b17437d8dcd6afd76caf60",
+        "fps": 30.0,
+        "duration_seconds": 8.0,
+        "width": 1080,
+        "height": 1920,
+        "window_start": 0,
+        "window_end": 7.0,
+        "interval": 1,
+        "sampling": "sequential decode, nearest CFR frame index; VFR not validated",
+        "samples": 8,
+        "confidence": 0.35,
+        "input_size": 640,
+        "category_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 1
+        },
+        "review_times": [
+          0.0,
+          1.0,
+          2.0,
+          4.0,
+          5.0,
+          7.0
+        ],
+        "events": [],
+        "event_clock": "accelerated video-relative seconds; no wall-clock claim",
+        "model_requests": 0,
+        "accuracy": "not calculated without independent human labels"
+      },
+      "reviewed_frames": [
+        {
+          "t": 0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Bottle visible in hands; wine glass is outside current supported classes"
+        },
+        {
+          "t": 1,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Bottle visible in hands; wine glass is outside current supported classes"
+        },
+        {
+          "t": 2,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Bottle visible in hands; wine glass is outside current supported classes"
+        },
+        {
+          "t": 4,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Bottle visible in hands; wine glass is outside current supported classes"
+        },
+        {
+          "t": 5,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Bottle visible in hands; wine glass is outside current supported classes"
+        },
+        {
+          "t": 7,
+          "target_visible": true,
+          "detected": true,
+          "correct_box": true,
+          "notes": "Bottle visible in hands; wine glass is outside current supported classes"
+        }
+      ],
+      "artifact_directory": "harness/artifacts/video-survey/sabrage-sequential",
+      "review_counts": {
+        "visible": 6,
+        "correct_hit": 1
+      }
+    },
+    {
+      "id": "pedestrian-negative",
+      "target": null,
+      "source_page": "https://github.com/opencv/opencv/blob/4.x/samples/data/vtest.avi",
+      "download_url": "https://raw.githubusercontent.com/opencv/opencv/4.x/samples/data/vtest.avi",
+      "author": "OpenCV sample repository; original footage attribution unresolved",
+      "license": "Official OpenCV repository sample; repository Apache-2.0, separate original footage license not identified; binary not redistributed",
+      "license_url": null,
+      "measurement": {
+        "video": "harness/artifacts/video-survey/opencv-vtest.avi",
+        "sha256": "45cddc9490be69345cbdab64ca583be65987e864ca408038e648db99e10516cf",
+        "fps": 10.0,
+        "duration_seconds": 79.5,
+        "width": 768,
+        "height": 576,
+        "window_start": 0,
+        "window_end": 29.0,
+        "interval": 1,
+        "sampling": "sequential decode, nearest CFR frame index; VFR not validated",
+        "samples": 30,
+        "confidence": 0.35,
+        "input_size": 640,
+        "category_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 0
+        },
+        "review_times": [
+          0.0,
+          5.0,
+          11.0,
+          17.0,
+          23.0,
+          29.0
+        ],
+        "events": [],
+        "event_clock": "accelerated video-relative seconds; no wall-clock claim",
+        "model_requests": 0,
+        "accuracy": "not calculated without independent human labels"
+      },
+      "reviewed_frames": [
+        {
+          "t": 0,
+          "visible_categories": [],
+          "detected_categories": [],
+          "notes": "No identifiable supported object; small hidden carried objects cannot be excluded"
+        },
+        {
+          "t": 5,
+          "visible_categories": [],
+          "detected_categories": [],
+          "notes": "No identifiable supported object; small hidden carried objects cannot be excluded"
+        },
+        {
+          "t": 11,
+          "visible_categories": [],
+          "detected_categories": [],
+          "notes": "No identifiable supported object; small hidden carried objects cannot be excluded"
+        },
+        {
+          "t": 17,
+          "visible_categories": [],
+          "detected_categories": [],
+          "notes": "No identifiable supported object; small hidden carried objects cannot be excluded"
+        },
+        {
+          "t": 23,
+          "visible_categories": [],
+          "detected_categories": [],
+          "notes": "No identifiable supported object; small hidden carried objects cannot be excluded"
+        },
+        {
+          "t": 29,
+          "visible_categories": [],
+          "detected_categories": [],
+          "notes": "No identifiable supported object; small hidden carried objects cannot be excluded"
+        }
+      ],
+      "artifact_directory": "harness/artifacts/video-survey/negative-sequential"
+    },
+    {
+      "id": "thermochromic-mug",
+      "target": "cup",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Thermochromic_mug.webm",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/8/89/Thermochromic_mug.webm",
+      "author": "The wub",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "measurement": {
+        "video": "harness/artifacts/video-survey/videos/thermochromic-mug.webm",
+        "sha256": "c1b76373380d7796697bc9b6db4481c9f24a8aebf2022087a6fa04613942cc10",
+        "fps": 25.0,
+        "duration_seconds": 34.92,
+        "width": 1080,
+        "height": 1080,
+        "window_start": 0,
+        "window_end": 34.0,
+        "interval": 1,
+        "sampling": "sequential decode, nearest CFR frame index; VFR not validated",
+        "samples": 35,
+        "confidence": 0.35,
+        "input_size": 640,
+        "category_detected_frames": {
+          "cell phone": 0,
+          "cup": 4,
+          "bottle": 0
+        },
+        "review_times": [
+          0.0,
+          6.0,
+          13.0,
+          20.0,
+          27.0,
+          34.0
+        ],
+        "events": [],
+        "event_clock": "accelerated video-relative seconds; no wall-clock claim",
+        "model_requests": 0,
+        "accuracy": "not calculated without independent human labels"
+      },
+      "reviewed_frames": [
+        {
+          "t": 0.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Large dark ceramic mug is fully visible and centered."
+        },
+        {
+          "t": 6.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Large dark mug remains fully visible; pouring stream is above the rim and does not materially occlude it."
+        },
+        {
+          "t": 13.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Mug is unobstructed; a pale patterned band has begun appearing near the bottom."
+        },
+        {
+          "t": 20.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Mug is fully visible with roughly the lower half changed to a pale pattern."
+        },
+        {
+          "t": 27.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Mug remains large, stationary, and unobstructed; most of the body is pale and patterned."
+        },
+        {
+          "t": 34.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Mug remains fully visible at the end with the pale pattern exposed."
+        }
+      ],
+      "artifact_directory": "harness/artifacts/video-survey/thermochromic-mug-sequential",
+      "review_counts": {
+        "visible": 6,
+        "correct_hit": 0
+      }
+    },
+    {
+      "id": "glass-tea-cup-setup",
+      "target": "cup",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Setup_with_two_flashlights_and_a_glass_tea_cup_before_smash_experiment.webm",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Setup_with_two_flashlights_and_a_glass_tea_cup_before_smash_experiment.webm",
+      "author": "Pittigrilli",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+      "measurement": {
+        "video": "harness/artifacts/video-survey/videos/glass-tea-cup-setup.webm",
+        "sha256": "4a9feeb4a7879332322e4cc853da58d6c1931e3b04856d860df25c6663079242",
+        "fps": 25.0,
+        "duration_seconds": 12.2,
+        "width": 1280,
+        "height": 720,
+        "window_start": 0,
+        "window_end": 12.0,
+        "interval": 1,
+        "sampling": "sequential decode, nearest CFR frame index; VFR not validated",
+        "samples": 13,
+        "confidence": 0.35,
+        "input_size": 640,
+        "category_detected_frames": {
+          "cell phone": 0,
+          "cup": 6,
+          "bottle": 0
+        },
+        "review_times": [
+          0.0,
+          2.0,
+          4.0,
+          7.0,
+          9.0,
+          12.0
+        ],
+        "events": [
+          {
+            "t": 11.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ],
+        "event_clock": "accelerated video-relative seconds; no wall-clock claim",
+        "model_requests": 0,
+        "accuracy": "not calculated without independent human labels"
+      },
+      "reviewed_frames": [
+        {
+          "t": 0.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Transparent handled tea cup is visible in the overlapping flashlight beams."
+        },
+        {
+          "t": 2.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Cup remains fully visible near the upper-right, with strong glare through its body."
+        },
+        {
+          "t": 4.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Transparent cup and handle are clearly visible and unobstructed."
+        },
+        {
+          "t": 7.0,
+          "target_visible": true,
+          "detected": true,
+          "correct_box": true,
+          "notes": "The 0.49 cup box correctly encloses the cup body and handle."
+        },
+        {
+          "t": 9.0,
+          "target_visible": true,
+          "detected": true,
+          "correct_box": true,
+          "notes": "The 0.61 cup box is correctly placed on the transparent cup."
+        },
+        {
+          "t": 12.0,
+          "target_visible": true,
+          "detected": true,
+          "correct_box": true,
+          "notes": "The 0.74 cup box correctly encloses the cup body and most of the handle."
+        }
+      ],
+      "artifact_directory": "harness/artifacts/video-survey/glass-tea-cup-setup-sequential",
+      "review_counts": {
+        "visible": 6,
+        "correct_hit": 3
+      }
+    },
+    {
+      "id": "child-drinks-from-cup",
+      "target": "cup",
+      "source_page": "https://commons.wikimedia.org/wiki/File:1_Year_Milestone-_Starts_to_use_things_correctly;_for_example,_drinks_from_a_cup,_brushes_hair.webm",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/4/45/1_Year_Milestone-_Starts_to_use_things_correctly%3B_for_example%2C_drinks_from_a_cup%2C_brushes_hair.webm",
+      "author": "Centers for Disease Control and Prevention",
+      "license": "Public domain (U.S. HHS/CDC)",
+      "license_url": "https://commons.wikimedia.org/wiki/Template:PD-USGov-HHS-CDC",
+      "measurement": {
+        "video": "harness/artifacts/video-survey/videos/child-drinks-from-cup.webm",
+        "sha256": "4b701ba3858e5ca41fbf228ac0744b1a7b71ab7519182dd7383b07df7ce77801",
+        "fps": 29.97002997002997,
+        "duration_seconds": 4.4044,
+        "width": 1280,
+        "height": 720,
+        "window_start": 0,
+        "window_end": 4.0,
+        "interval": 1,
+        "sampling": "sequential decode, nearest CFR frame index; VFR not validated",
+        "samples": 5,
+        "confidence": 0.35,
+        "input_size": 640,
+        "category_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 0
+        },
+        "review_times": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0
+        ],
+        "events": [],
+        "event_clock": "accelerated video-relative seconds; no wall-clock claim",
+        "model_requests": 0,
+        "accuracy": "not calculated without independent human labels"
+      },
+      "reviewed_frames": [
+        {
+          "t": 0.0,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Black opening frame; no cup or other scene content is visible."
+        },
+        {
+          "t": 1.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Small pink cup is pressed to the child's mouth and is heavily occluded by face and hands."
+        },
+        {
+          "t": 2.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Pink cup remains identifiable but heavily occluded by face and both hands."
+        },
+        {
+          "t": 3.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Cup remains at the mouth with heavy face-and-hand occlusion."
+        },
+        {
+          "t": 4.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": null,
+          "notes": "Cup has been lowered; rim, body, and handle are visible with moderate hand occlusion."
+        }
+      ],
+      "artifact_directory": "harness/artifacts/video-survey/child-drinks-from-cup-sequential",
+      "review_counts": {
+        "visible": 4,
+        "correct_hit": 0
+      }
+    },
+    {
+      "id": "gigaset-quality",
+      "target": "cell phone",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Gigaset_Smartphone_Production_IV_Quality_Inspection.webm",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/a/af/Gigaset_Smartphone_Production_IV_Quality_Inspection.webm",
+      "author": "Sound Recordist: Kathinka Engels; Photographer/Video Recordist: Inke Pickhardt",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0",
+      "measurement": {
+        "video": "harness/artifacts/video-survey/videos/gigaset-quality.webm",
+        "sha256": "9f1df90978a735f1836cf36777075e959bef20ba63b4546fb0feec38fb731dec",
+        "fps": 30.0,
+        "duration_seconds": 29.333333333333332,
+        "width": 1280,
+        "height": 720,
+        "window_start": 0,
+        "window_end": 29.0,
+        "interval": 1,
+        "sampling": "sequential decode, nearest CFR frame index; VFR not validated",
+        "samples": 30,
+        "confidence": 0.35,
+        "input_size": 640,
+        "category_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 0
+        },
+        "review_times": [
+          0.0,
+          5.0,
+          11.0,
+          17.0,
+          23.0,
+          29.0
+        ],
+        "events": [],
+        "event_clock": "accelerated video-relative seconds; no wall-clock claim",
+        "model_requests": 0,
+        "accuracy": "not calculated without independent human labels"
+      },
+      "reviewed_frames": [
+        {
+          "t": 0.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Several small dark smartphones are visible in the lower bench fixtures; no detection box."
+        },
+        {
+          "t": 5.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Multiple small fixture-mounted smartphones remain visible; no detection box."
+        },
+        {
+          "t": 11.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Small smartphones are visible along the lower workbench amid industrial clutter; no detection box."
+        },
+        {
+          "t": 17.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "At least two small phones remain visible in the fixtures; no detection box."
+        },
+        {
+          "t": 23.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Small phones remain visible in the lower part of the frame; no detection box."
+        },
+        {
+          "t": 29.0,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Black end frame; no phone pixels visible and no detection box."
+        }
+      ],
+      "artifact_directory": "harness/artifacts/video-survey/gigaset-quality-sequential",
+      "review_counts": {
+        "visible": 5,
+        "correct_hit": 0
+      }
+    },
+    {
+      "id": "smartphone-emf",
+      "target": "cell phone",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Smartphone_EMF_Detection.webm",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/6/63/Smartphone_EMF_Detection.webm",
+      "author": "Epic Jefferson",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0",
+      "measurement": {
+        "video": "harness/artifacts/video-survey/videos/smartphone-emf.webm",
+        "sha256": "7c59b5d01a1f67797069e2fdc78a0290b71bfb72c43ab949ada2794664ecff76",
+        "fps": 29.97002997002997,
+        "duration_seconds": 53.653600000000004,
+        "width": 1920,
+        "height": 1080,
+        "window_start": 0,
+        "window_end": 53.0,
+        "interval": 1,
+        "sampling": "sequential decode, nearest CFR frame index; VFR not validated",
+        "samples": 54,
+        "confidence": 0.35,
+        "input_size": 640,
+        "category_detected_frames": {
+          "cell phone": 12,
+          "cup": 0,
+          "bottle": 0
+        },
+        "review_times": [
+          0.0,
+          10.0,
+          21.0,
+          31.0,
+          42.0,
+          53.0
+        ],
+        "events": [
+          {
+            "t": 37.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "t": 51.0,
+            "category": "cell phone",
+            "kind": "missing"
+          }
+        ],
+        "event_clock": "accelerated video-relative seconds; no wall-clock claim",
+        "model_requests": 0,
+        "accuracy": "not calculated without independent human labels"
+      },
+      "reviewed_frames": [
+        {
+          "t": 0.0,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Title card only."
+        },
+        {
+          "t": 10.0,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Text card only."
+        },
+        {
+          "t": 21.0,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Empty illuminated wooden fixture; no smartphone visible."
+        },
+        {
+          "t": 31.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "A large phone is being placed by hand and is partly occluded; no detection box."
+        },
+        {
+          "t": 42.0,
+          "target_visible": true,
+          "detected": true,
+          "correct_box": true,
+          "notes": "Phone lies fully visible in the fixture; the 0.553 cell-phone box correctly encloses it."
+        },
+        {
+          "t": 53.0,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Fixture is empty; a tiny cropped object at the lower-left edge is insufficient to identify as the target phone."
+        }
+      ],
+      "artifact_directory": "harness/artifacts/video-survey/smartphone-emf-sequential",
+      "review_counts": {
+        "visible": 2,
+        "correct_hit": 1
+      }
+    },
+    {
+      "id": "rice-phone",
+      "target": "cell phone",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Tamper-evident_unrepeatable-pattern_security_principle_demonstrated_by_securing_a_phone_with_rice_patterns.ogv",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/7/77/Tamper-evident_unrepeatable-pattern_security_principle_demonstrated_by_securing_a_phone_with_rice_patterns.ogv",
+      "author": "MarkJFernandes; own work",
+      "license": "CC0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "measurement": {
+        "video": "harness/artifacts/video-survey/videos/rice-phone.ogv",
+        "sha256": "7acba804464c12ef8e7c72ef8c16e29fd3d73cd00c9450ec82e2e37a91e69cf8",
+        "fps": 25.0,
+        "duration_seconds": 123.12,
+        "width": 768,
+        "height": 576,
+        "window_start": 0,
+        "window_end": 123.0,
+        "interval": 1,
+        "sampling": "sequential decode, nearest CFR frame index; VFR not validated",
+        "samples": 124,
+        "confidence": 0.35,
+        "input_size": 640,
+        "category_detected_frames": {
+          "cell phone": 13,
+          "cup": 2,
+          "bottle": 0
+        },
+        "review_times": [
+          0.0,
+          24.0,
+          49.0,
+          73.0,
+          98.0,
+          123.0
+        ],
+        "events": [
+          {
+            "t": 9.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "t": 15.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "t": 49.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "t": 64.0,
+            "category": "cell phone",
+            "kind": "missing"
+          }
+        ],
+        "event_clock": "accelerated video-relative seconds; no wall-clock claim",
+        "model_requests": 0,
+        "accuracy": "not calculated without independent human labels"
+      },
+      "reviewed_frames": [
+        {
+          "t": 0.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Unobstructed smartphone lies at the lower center-left of the table; no detection box."
+        },
+        {
+          "t": 24.0,
+          "target_visible": true,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Unobstructed smartphone remains on the table; no detection box."
+        },
+        {
+          "t": 49.0,
+          "target_visible": true,
+          "detected": true,
+          "correct_box": true,
+          "notes": "Phone is held with partial hand occlusion; the 0.351 cell-phone box lands on its visible body."
+        },
+        {
+          "t": 73.0,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Rice is being poured into the box; no phone pixels are visually confirmable."
+        },
+        {
+          "t": 98.0,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Rice-filled box shown; phone is fully occluded."
+        },
+        {
+          "t": 123.0,
+          "target_visible": false,
+          "detected": false,
+          "correct_box": false,
+          "notes": "Rice-filled box remains; phone is fully occluded."
+        }
+      ],
+      "artifact_directory": "harness/artifacts/video-survey/rice-phone-sequential",
+      "review_counts": {
+        "visible": 3,
+        "correct_hit": 1
+      }
+    }
+  ],
+  "pipeline_crosscheck": {
+    "purpose": "Check whether the complete thermochromic mug miss could be caused by the production preprocessing or ONNX adapter rather than model confidence.",
+    "frame": "frames/thermochromic-mug/review-04-019.95s.jpg",
+    "frame_observation": "A large, complete ceramic mug is plainly visible and unobstructed.",
+    "reference": {
+      "checkpoint": "models/yolo26n.pt",
+      "runtime": "Ultralytics 8.4.142 in the existing isolated export environment",
+      "settings": {
+        "imgsz": 640,
+        "confidence": 0.001,
+        "nms": false,
+        "rect": false,
+        "device": "cpu"
+      },
+      "highest_cup": {
+        "confidence": 0.012644651345908642,
+        "bbox_xyxy": [
+          100.16,
+          140.98,
+          1032.28,
+          984.19
+        ]
+      },
+      "detections_at_production_threshold_0_35": 0
+    },
+    "production_adapter": {
+      "model": "models/yolo26n-e2e.onnx",
+      "model_sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+      "adapter": "visual_ai_agent.vision.YoloOnnxDetector",
+      "inspection_confidence": 0.001,
+      "highest_cup": {
+        "confidence": 0.012646,
+        "bbox_xyxy": [
+          100.16,
+          140.98,
+          1032.28,
+          984.19
+        ]
+      },
+      "detections_at_production_threshold_0_35": 0
+    },
+    "supporting_checks": {
+      "model_io": {
+        "input": [
+          1,
+          3,
+          640,
+          640
+        ],
+        "output": [
+          1,
+          300,
+          6
+        ]
+      },
+      "metadata_classes": {
+        "39": "bottle",
+        "41": "cup",
+        "67": "cell phone"
+      },
+      "manifest_hash_matches_model": true,
+      "geometry_and_detector_tests": "10 passed",
+      "existing_export_validation": "harness/context/phase-02-local-vision.md records PT/ONNX reference comparison with identical classes, minimum IoU 0.9999981544, maximum box difference 0.0006103516 px, and maximum confidence difference 0.0000013113."
+    },
+    "conclusion": "For this complete-mug failure frame, the official PyTorch checkpoint and production ONNX adapter agree on a very low cup confidence and the same box. This is evidence of model scoring below 0.35 rather than an adapter coordinate, class, or preprocessing error on this frame.",
+    "limits": "A single-frame cross-check plus existing reference fixtures does not prove the pipeline is bug-free for every codec, resolution, or image. It specifically rules against the examined adapter mismatch as the cause of this miss."
+  },
+  "targeted_findings": [
+    {
+      "video_id": "rice-phone",
+      "t": 15,
+      "target_visible": true,
+      "detected": false,
+      "event": "missing",
+      "meaning": "Sustained non-detection while phone remains visibly on table; not physical removal",
+      "artifact": "harness/artifacts/video-survey/phone-missing-sequential/review-sheet.jpg",
+      "overlap_check": "15/15 samples in 7..21s match full sequential decode exactly"
+    },
+    {
+      "video_id": "beer-bottling",
+      "t": 38,
+      "false_category": "cup",
+      "actual_object": "large white bucket",
+      "event": "appeared",
+      "artifact": "harness/artifacts/video-survey/bucket-detail/review-sheet.jpg",
+      "note": "Bucket at 36,37,38s incorrectly classed cup; full sequential replay independently reproduces appeared at38"
+    }
+  ]
+}

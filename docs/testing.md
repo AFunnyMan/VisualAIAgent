@@ -55,6 +55,15 @@ uv run --locked python scripts/offline_soak.py --image path/to/cup.jpg --duratio
 
 ## 真实验收
 
+扩大到手机、不同杯型、瓶子和负样本的9段视频后，发现持续误分类和漏检；见 [识别与调用评估](recognition-assessment-2026-09-07.md)。这些结果没有满足三类现场90%的验收条件。可复用离线入口为：
+
+```sh
+uv run --locked python scripts/recognition_survey.py \
+  --video path/to/video.webm --output harness/artifacts/new-survey --duration 190
+```
+
+该入口不读.env、不创建Agent、不打开USB；从头顺序解码，按标称恒定帧率每秒取最近帧，输出逐帧检测、复核图和加速时间线事件。VFR未验证，短暂目标可能落在采样间隙。原始视频来源、哈希、最终采样和人工复核标签见评估页链接的清单；检出占比不能当准确率，事件时间不能当真实提醒延迟。
+
 真实千问已完成独立 SDK 和视频集成验证，提供商配置、公开视频命令及局限见 [千问说明](qwen.md)。USB 联合实测步骤放在 [用户辅助验收](user-acceptance.md)，包括：显式启用 `VAA_RUN_LIVE_API=1` 的真实 SDK 测试、三类各十次放入/移出、两秒遮挡、候选、断连/停止/重启、正常/降级通知和两平台各三十分钟运行。
 
 ```sh
