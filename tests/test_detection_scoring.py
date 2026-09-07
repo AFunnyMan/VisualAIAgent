@@ -1,6 +1,8 @@
+import json
+
 import pytest
 
-from scripts.score_detections import score_dataset, score_image
+from scripts.score_detections import main, score_dataset, score_image
 
 
 def annotation(category="cup", box=(0, 0, 10, 10), crowd=0):
@@ -45,3 +47,27 @@ def test_duplicate_manifest_image_is_error_not_silently_collapsed():
     sample = {"id": 1, "annotations": []}
     with pytest.raises(ValueError, match="exactly"):
         score_dataset({"samples": [sample, sample]}, [{"id": 1, "detections": []}])
+
+
+def test_cli_keeps_class_calibrated_low_confidence_predictions(tmp_path, monkeypatch):
+    manifest, predictions, output = [tmp_path / n for n in ("gt.json", "pred.json", "score.json")]
+    manifest.write_text(json.dumps({"samples": [{"id": 1, "annotations": [annotation()]}]}))
+    predictions.write_text(
+        json.dumps({"images": [{"id": 1, "detections": [prediction(confidence=0.2)]}]})
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "score",
+            "--manifest",
+            str(manifest),
+            "--predictions",
+            str(predictions),
+            "--output",
+            str(output),
+            "--confidence",
+            "0.05",
+        ],
+    )
+    main()
+    assert json.loads(output.read_text())["categories"]["cup"]["tp"] == 1

@@ -99,3 +99,7 @@ uv run --locked python scripts/benchmark.py --camera 0 --duration 1800
 ## 证据与恢复
 
 日志记录时间/时区、实际命令、退出状态、关键结果与局限；完整日志/图片放被忽略的 artifacts 或 data，仅脱敏摘要进入 Git。未知数据库版本拒绝写入，版本 1→2 在 SQLite 在线备份成功后迁移，不通过删库恢复。失败修复后定向复验，不删改验收条件。
+
+## 第二轮识别实验复算
+
+[第二轮报告](recognition-v2-results-2026-09-07.md)提供60图14配置的归档预测复算命令；归档已按各类阈值接受的框需使用`--confidence 0.05`，避免再次套用统一0.35丢掉合法候选。`scripts/recognition_input_trial.py`提供calibrate/images/review/videos入口，使用显式模型profiles与SHA，不读应用凭据；需要本地实验权重和素材。旧30图现在属于校准集，新60图只验证。完整命令与已运行范围见build-log，review分支本轮未运行。

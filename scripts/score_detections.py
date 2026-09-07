@@ -99,7 +99,15 @@ def main():
         "--profile", help="Profile in an archived comparison; clip:<id> for cascade"
     )
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--confidence",
+        type=float,
+        default=0.35,
+        help="Scoring floor; use 0.05 for already class-filtered experimental predictions",
+    )
     args = parser.parse_args()
+    if not 0 <= args.confidence <= 1:
+        parser.error("--confidence must be between 0 and 1")
     predictions = json.loads(args.predictions.read_text())
     if args.profile:
         predictions = (
@@ -107,7 +115,9 @@ def main():
             if args.profile.startswith("clip:")
             else predictions["models"][args.profile]
         )
-    result = score_dataset(json.loads(args.manifest.read_text()), predictions["images"])
+    result = score_dataset(
+        json.loads(args.manifest.read_text()), predictions["images"], args.confidence
+    )
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
     print(json.dumps(result["categories"], ensure_ascii=False, indent=2))
 

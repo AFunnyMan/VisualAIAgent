@@ -225,3 +225,22 @@
 
 - 里程碑60b598f已正常推送。公开GitHub API确认 [run34078252826](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34078252826) 的macOS与Windows两job均completed/success，head SHA为60b598f9195a7920e717af0ba2df307def9dc89a。源码本机100项离线用例通过，远程锁定依赖、Ruff/格式、离线检查及doctor通过。
 - 此记录仅文档更新，使用skip ci提交；未增加百炼调用，未改变模型采用决定，也不关闭USB/Windows11实机及识别质量问题。
+
+
+## 2026-09-07T17:20:31+08:00 — 第二轮资料驱动识别改进实验
+
+- 按用户要求继续查官方资料并实际尝试。主任务完成分类阈值/重叠切片/YOLO26m探索，两个Sol分别完成RF-DETR Nano和固定输入增强，一个Luna建立新60图，另一个Sol独立审查。没有新增百炼请求、USB访问、训练或生产模型/依赖锁/事件契约改动。
+- 官方依据为Ultralytics分类指标/TTA、OpenCV CLAHE、SAHI切片、RF-DETR实现与导出，参数及边界见 [第二轮报告](../docs/recognition-v2-results-2026-09-07.md)。保留原始计划SHA，未降低90%实机成功率要求。
+- 新60图以seed20260908在推理前选定，排除旧30图，手机/杯/瓶各16图加12负例。原标注含155个非crowd业务实例+1个bottle crowd，所有原图SHA和尺寸核验。旧30图明确转为开发/校准，不再称未看过的留出集。审查修复构建脚本恒真的排除断言，实际产物独立核对无交集、60唯一，未修改原GT。
+- 实际 `.venv/bin/python scripts/recognition_input_trial.py calibrate --profiles harness/artifacts/ab-20260907/detectors/profiles.json --manifest harness/evaluations/recognition-holdout-20260907.json --output harness/artifacts/recognition-v2-20260907/local/calibration` 完成；重新提取完整>=.05候选，按旧n .35分类FP预算选阈值。n瓶/杯/手机=.20/.35/.45，s=.35/.50/.45；冻结后以images模式、validation/manifest.json和local/calibration/frozen.json运行新图，输出local/validation。s-sliced同一入口完成新60、300次模型推理；旧30切片另保存development-sliced.json，共150次。review分支未运行，不写成通过。
+- `.export-venv/bin/python harness/artifacts/recognition-v2-20260907/local/prepare_m.py` 完成官方下载与640传统头ONNX导出；同目录validate_m.py对5个原始诊断帧PT/ORT框数/类别一致，最大坐标差.00012207px、分数差7.15e-7。`.venv/bin/python .../local/m_trial.py`执行旧集FP预算校准，阈值.75/.35/.65在m自身新图推理前持久化。m为中途追加探索，不把文件mtime不足以证明的“早于读取其他模型输出”写成预注册事实。
+- RF隔离环境rfdetr1.10.0/Torch2.14.0，官方Nano384/.35、不训练；run_rfdetr.py的images/videos/videos-all入口完成旧30、新60、53复核和全488时点。官方CPU ONNX导出成功，纯NumPy/Pillow/ORT适配器run_onnx.py在旧30的262框上类别/数量一致、最小IoU.99735、最大坐标差1.179px。新图和完整视频准确性来自PT，ORT仅此一致性和独立CPU计时，不冒称全视频ORT验收。来源/模型哈希与Apache-2.0许可保存在归档；初次包下载超时后从同官方URL续传完成，MD5通过。
+- augmentation/run_augmentation_probe.py完成n/s×CLAHE/gamma/原图翻转六条固定路线旧30+53复核及新60；full-video入口继续s+gamma、n+CLAHE、n+flip各488时点。目录复用失败的空目录保留，修复后新目录完整成功。审查将flip单视频total_inferences由帧数修正为实际调用和，9项合计976，与根总数一致；不是重新推理或改预测。
+- `.venv/bin/python scripts/recognition_input_trial.py videos --variant s-calibrated --profiles harness/artifacts/ab-20260907/detectors/profiles.json --manifest harness/evaluations/video-survey-20260907.json --calibration harness/artifacts/recognition-v2-20260907/local/calibration/frozen.json --output harness/artifacts/recognition-v2-20260907/local/s-calibrated-videos` 完成488时点。`scripts/detector_comparison.py --profiles .../local/profiles.json --only m-traditional --videos harness/evaluations/video-survey-20260907.json --output .../local/m-videos`也完成488；所有视频按CFR帧索引顺序解码。RF另从存量预测用真实EventStateMachine回放三次/五秒事件，不改契约。
+- 新60图14配置完整计分见 [可复算预测](evaluations/recognition-v2-20260907.json)。当前n=56TP/21FP/99FN，s=.35为77/23/78，s分类阈值76/18/79，RF90/41/65，m探索83/27/72，切片97/62/58。独立审查逐组重算categories/totals均一致，14源文件SHA匹配。新图选择、标注、原图路径与selection SHA已归档；图片/完整视频/权重/日志/隔离环境不进Git。
+- 视频实质收益：m变色杯33/35、工业手机29/30；RF变色杯35/35、儿童杯3/5、夜间瓶7/8，关键拼图已目检。RF仍有beer杯误报32帧和rice错误杯事件；s校准变色杯仍在却26秒missing；CLAHE丢失rice原有手机事件，flip新增beer杯错误事件。没有把检出占比当准确率，没有据此更换生产模型。mug/儿童杯/工业手机的改善不能推断三类全部达标。
+- 全部重推理结束后，各自独立进程串行bench，固定旧图000000231831.jpg、2线程、5预热/30计时，覆盖预处理/ORT/后处理。n p50/p95=45.34/48.06ms，s=137.84/142.80，s校准137.18/141.03，m407.50/415.61，切片692.06/701.31，RF384=210.27/217.66，n+CLAHE46.67/48.85，n+flip90.56/94.62，s+gamma142.48/147.27。RF包含磁盘解码另测212.47/217.56并区分口径；RSS测量范围在报告中说明。短循环不代替1Hz稳态/30分钟/Windows11实机。
+- 实验工具补充参数缺失提前拒绝、review SHA校验及解码资源释放；计分CLI增加显式--confidence以复算已按类别阈值筛选的低分框，默认.35保持原行为。新增4项切片/校准失败用例及1项低分框复算回归。`.venv/bin/ruff check .`、`.venv/bin/ruff format --check .`均退出0（104份Python）；`.venv/bin/pytest -q --junitxml=harness/artifacts/recognition-v2-20260907/pytest.xml`为105 passed、3 deselected、7.35秒。报告示例CLI实际执行，s校准各类计数一致。
+- [独立审查](code_review/recognition-v2-review.md)发现项均修正并复核。首选均衡候选为s分类阈值；RF杯/手机召回有意义但瓶误报多，后续需要新部署域校准/验证及全ORT链路。此次完成所授权的研究与尝试，生产识别质量和USB/Windows11现场验收继续开放。
+
+- 追加RF PyAV/OpenCV解码核对：9视频SHA全匹配，53帧shape一致；RGB平均绝对差0.976/255，rice OGV2.668/255、最大119。rice六点同索引均比±1更接近，未发现一帧偏移证据，但不是逐像素相同输入，报告已降为带解码差异限制的诊断对照。decoder-parity.json保存完整比对，未重跑模型。原生ci_checks入口与doctor也退出0；该入口调用105项离线回归通过。

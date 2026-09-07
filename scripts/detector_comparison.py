@@ -164,7 +164,7 @@ def main():
         result = {
             "profile": profile,
             "confidence": 0.35,
-            "proposal_floor": 0.01,
+            "proposal_floor": max(0.01, profile.get("confidence_floor", 0.01)),
             "cloud_requests": 0,
             "performance_note": "Not isolated unless explicitly run alone",
         }
