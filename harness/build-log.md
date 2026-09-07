@@ -192,3 +192,10 @@
 
 - 测评里程碑c025f25已正常推送。GitHub [run34061467134](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34061467134) 的macOS和Windows两个job均completed/success；本机92项离线测试通过。未产生新的百炼请求。该结果验证源码与工具检查，不关闭报告中的识别质量问题或实机验收。
 - 本条为仅文档记录，使用skip ci提交；源码检查结果仍对应c025f25。
+
+## 2026-09-07T10:11:20+08:00 — 本地识别改进分析与定向对照
+
+- 用户要求分析改善本地识别率。复查生产采集分辨率、固定形状模型适配器和事件状态机，并查询官方YOLO26型号/双检测头/切片说明。分析见 [改进方案](../docs/recognition-improvement-options.md)，尚未采用候选架构或修改生产参数。
+- 对5个既有失败点顺序解码，实际运行 `.venv/bin/python harness/artifacts/recognition-options/crop_probe.py` 与 `.export-venv/bin/python harness/artifacts/recognition-options/size_probe.py`，均退出0。前者全图加4个固定60%宽高裁剪，共25次现有ONNX推理；后者相同YOLO26n PT在640/960/1280各运行，共15次推理。均0.35阈值、无云端请求。
+- 裁剪未恢复四个漏检点，大桶误杯得分约0.60升至0.82，夜间瓶子产生约0.36的错误手机框；标框图已查看。更大输入也未恢复四个漏检点，桶误报在1280下消失。该结果只用于失败诊断，不是整体验证集或速度数据；全部脚本、完整输出和图保存在忽略目录。
+- 建议优先对照YOLO26s640的实际能力与CPU代价，再结合高质量采集、按需ROI和事件前新鲜帧复检，最后校准分类阈值。采用s需更新现有锁定n的架构决定；本轮没有替换模型、不训练、不改变三次/五秒验收契约。无需对仅文档修改重复完整软件回归。
