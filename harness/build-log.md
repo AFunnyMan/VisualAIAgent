@@ -244,3 +244,8 @@
 - [独立审查](code_review/recognition-v2-review.md)发现项均修正并复核。首选均衡候选为s分类阈值；RF杯/手机召回有意义但瓶误报多，后续需要新部署域校准/验证及全ORT链路。此次完成所授权的研究与尝试，生产识别质量和USB/Windows11现场验收继续开放。
 
 - 追加RF PyAV/OpenCV解码核对：9视频SHA全匹配，53帧shape一致；RGB平均绝对差0.976/255，rice OGV2.668/255、最大119。rice六点同索引均比±1更接近，未发现一帧偏移证据，但不是逐像素相同输入，报告已降为带解码差异限制的诊断对照。decoder-parity.json保存完整比对，未重跑模型。原生ci_checks入口与doctor也退出0；该入口调用105项离线回归通过。
+
+## 2026-09-07T17:27:29+08:00 — 第二轮识别实验同步与双平台CI
+
+- 里程碑0a2746f已正常同步；公开GitHub API核对 [run34105917312](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34105917312) 的macOS与Windows两个job均completed/success，head SHA均为0a2746f852513270295aab66e3bba6432887dd82。本机105项离线用例、Ruff/格式、ci_checks和doctor通过。
+- 提交前14个相关文件JSON/本地链接/凭据模式核验通过，原始计划基线SHA不变，未暂存素材/权重/运行数据。当前追加仅记录真实CI结果，使用skip ci提交；不重复运行相同软件检查。生产识别质量和USB/Windows11实机验收仍开放。
