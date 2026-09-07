@@ -249,3 +249,11 @@
 
 - 里程碑0a2746f已正常同步；公开GitHub API核对 [run34105917312](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34105917312) 的macOS与Windows两个job均completed/success，head SHA均为0a2746f852513270295aab66e3bba6432887dd82。本机105项离线用例、Ruff/格式、ci_checks和doctor通过。
 - 提交前14个相关文件JSON/本地链接/凭据模式核验通过，原始计划基线SHA不变，未暂存素材/权重/运行数据。当前追加仅记录真实CI结果，使用skip ci提交；不重复运行相同软件检查。生产识别质量和USB/Windows11实机验收仍开放。
+
+## 2026-09-07T18:52:45+08:00 — 更优方案分析与存量预测互补性复算
+
+- 用户本次要求分析是否有更优方案。复查已提交模型结果及视觉采集/事件代码，查询Frigate周期检测/过滤、WBF原论文、SigLIP2官方模型卡、OpenCV跟踪和SAM2官方资料；一个Sol独立研究语义复核与跟踪边界。没有新模型下载、推理、训练、百炼请求或生产改动。
+- 实际 `.venv/bin/python harness/artifacts/better-strategy-analysis-20260907/complementarity.py` 退出0，复用前轮60图和两个模型的归档预测：s瓶+RF杯/手机85TP/22FP/70FN，双模型同意68/10/87，保留s框再补RF不重叠框98/46/57。GT匹配交集68、s独有8、RF独有22、都未正确匹配57。明确事后分析，不称新独立验证或模型融合实测；没有把未匹配推断成无候选。
+- 官方来源与采用次序见 [后续方案分析](../docs/recognition-next-strategy.md)，来源SHA/规则/分类计数见 [互补性摘要](evaluations/recognition-complementarity-20260907.json)。建议先验证s主检测+RF周期/事件窗口复查，再评估局部硬负例拒识；不能直接求交集或并集。计算预算137+210×追加比例为粗估，不是组合benchmark。
+- 本机只读检查cv2 4.14.0无TrackerKCF_create/TrackerCSRT_create/legacy；跟踪仅可建议ROI，不能刷新last_seen或补凑三次确认。SigLIP2的Apache-2.0与接口已核验，但未验证本项目ORT/CPU；SAM2官方GPU基准不作CPU证据。当前60图已看过，后续必须另设按视频/场景隔离的新验证集。
+- 仅新增分析文档和脱敏摘要，不改变软件/依赖/验收条件，不重复执行105项软件回归。提交前核验来源SHA、JSON、Markdown链接、敏感信息模式及差异；生产识别质量与实机待验证项继续开放。

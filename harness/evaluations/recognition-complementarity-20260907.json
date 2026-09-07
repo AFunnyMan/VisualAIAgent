@@ -1,0 +1,134 @@
+{
+  "analysis": "post-hoc; reused previous60, no inference, no new holdout claim",
+  "source_sha256": "14f82ec854b2e9e2b649a0e1d071d2ab3e37d533100d4c49a74170526a42c324",
+  "manifest_sha256": "347d3ed41321f35116e59ef5cbd2370a6e5e55bcca2d6517ac8e859e5280196c",
+  "models": {
+    "class-route": {
+      "categories": {
+        "bottle": {
+          "tp": 35,
+          "fp": 13,
+          "fn": 45,
+          "ignored": 0,
+          "precision": 0.7291666666666666,
+          "recall": 0.4375
+        },
+        "cup": {
+          "tp": 32,
+          "fp": 6,
+          "fn": 16,
+          "ignored": 0,
+          "precision": 0.8421052631578947,
+          "recall": 0.6666666666666666
+        },
+        "cell phone": {
+          "tp": 18,
+          "fp": 3,
+          "fn": 9,
+          "ignored": 0,
+          "precision": 0.8571428571428571,
+          "recall": 0.6666666666666666
+        }
+      },
+      "totals": {
+        "tp": 85,
+        "fp": 22,
+        "fn": 70
+      }
+    },
+    "agreement": {
+      "categories": {
+        "bottle": {
+          "tp": 28,
+          "fp": 9,
+          "fn": 52,
+          "ignored": 0,
+          "precision": 0.7567567567567568,
+          "recall": 0.35
+        },
+        "cup": {
+          "tp": 25,
+          "fp": 1,
+          "fn": 23,
+          "ignored": 0,
+          "precision": 0.9615384615384616,
+          "recall": 0.5208333333333334
+        },
+        "cell phone": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 12,
+          "ignored": 0,
+          "precision": 1.0,
+          "recall": 0.5555555555555556
+        }
+      },
+      "totals": {
+        "tp": 68,
+        "fp": 10,
+        "fn": 87
+      }
+    },
+    "union-primary-box": {
+      "categories": {
+        "bottle": {
+          "tp": 47,
+          "fp": 33,
+          "fn": 33,
+          "ignored": 0,
+          "precision": 0.5875,
+          "recall": 0.5875
+        },
+        "cup": {
+          "tp": 33,
+          "fp": 9,
+          "fn": 15,
+          "ignored": 0,
+          "precision": 0.7857142857142857,
+          "recall": 0.6875
+        },
+        "cell phone": {
+          "tp": 18,
+          "fp": 4,
+          "fn": 9,
+          "ignored": 0,
+          "precision": 0.8181818181818182,
+          "recall": 0.6666666666666666
+        }
+      },
+      "totals": {
+        "tp": 98,
+        "fp": 46,
+        "fn": 57
+      }
+    }
+  },
+  "oracle_overlap": {
+    "bottle": {
+      "both": 28,
+      "s_only": 7,
+      "rf_only": 12,
+      "neither": 33
+    },
+    "cup": {
+      "both": 25,
+      "s_only": 1,
+      "rf_only": 7,
+      "neither": 15
+    },
+    "cell phone": {
+      "both": 15,
+      "s_only": 0,
+      "rf_only": 3,
+      "neither": 9
+    }
+  },
+  "rules": {
+    "class-route": "s-calibrated bottle; RF cup and cell phone",
+    "agreement": "keep s boxes with same class RF box IoU>=0.5",
+    "union-primary-box": "keep all s boxes; append RF boxes not overlapping any already-kept same-class box at IoU>=0.5; preserve coordinates and scores"
+  },
+  "source": "harness/evaluations/recognition-v2-20260907.json",
+  "manifest": "harness/evaluations/recognition-v2-validation-20260907.json",
+  "script_sha256": "5c3441ecee47450b58b5140c7b688acf1710b162f3bf3e7cb1c8553fc612d6f7"
+}
