@@ -1,0 +1,110 @@
+{
+  "scope": "5 diagnostic failure frames; official PT dual-head comparison, not ONNX deployment or general accuracy",
+  "confidence": 0.35,
+  "input_size": 640,
+  "results": [
+    {
+      "case": "phone-table",
+      "nms": false,
+      "end2end_actual": true,
+      "detections": []
+    },
+    {
+      "case": "phone-small",
+      "nms": false,
+      "end2end_actual": true,
+      "detections": []
+    },
+    {
+      "case": "mug",
+      "nms": false,
+      "end2end_actual": true,
+      "detections": []
+    },
+    {
+      "case": "bucket",
+      "nms": false,
+      "end2end_actual": true,
+      "detections": [
+        {
+          "category": "cup",
+          "confidence": 0.6006757616996765,
+          "bbox": [
+            756.4620361328125,
+            558.3666381835938,
+            1251.2401123046875,
+            1078.54833984375
+          ]
+        }
+      ]
+    },
+    {
+      "case": "night-bottle",
+      "nms": false,
+      "end2end_actual": true,
+      "detections": []
+    },
+    {
+      "case": "phone-table",
+      "nms": true,
+      "end2end_actual": false,
+      "detections": [
+        {
+          "category": "cell phone",
+          "confidence": 0.48151060938835144,
+          "bbox": [
+            185.9879150390625,
+            363.6359558105469,
+            316.8374938964844,
+            491.7671813964844
+          ]
+        }
+      ]
+    },
+    {
+      "case": "phone-small",
+      "nms": true,
+      "end2end_actual": false,
+      "detections": []
+    },
+    {
+      "case": "mug",
+      "nms": true,
+      "end2end_actual": false,
+      "detections": []
+    },
+    {
+      "case": "bucket",
+      "nms": true,
+      "end2end_actual": false,
+      "detections": [
+        {
+          "category": "cup",
+          "confidence": 0.7514868378639221,
+          "bbox": [
+            755.7984008789062,
+            557.7387084960938,
+            1250.9798583984375,
+            1079.0615234375
+          ]
+        }
+      ]
+    },
+    {
+      "case": "night-bottle",
+      "nms": true,
+      "end2end_actual": false,
+      "detections": []
+    }
+  ],
+  "date": "2026-09-07",
+  "timezone": "Asia/Shanghai",
+  "ultralytics_version": "8.4.142",
+  "visual_review": {
+    "case": "phone-table",
+    "nms": true,
+    "correct_box": true,
+    "reviewer": "root development agent viewed annotated original frame",
+    "artifact": "harness/artifacts/recognition-options/head-phone.jpg"
+  }
+}
