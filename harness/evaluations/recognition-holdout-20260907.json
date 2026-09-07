@@ -1,0 +1,3436 @@
+{
+  "schema_version": 1,
+  "dataset": "COCO 2017 validation subset",
+  "selection_file": "../artifacts/ab-20260907/holdout/selection.json",
+  "annotation_provenance": {
+    "source_url": "http://images.cocodataset.org/annotations/annotations_trainval2017.zip",
+    "member": "annotations/instances_val2017.json",
+    "sha256": "113a836d90195ee1f884e704da6304dfaaecff1f023f49b6ca93c4aaae470268"
+  },
+  "selection": {
+    "seed": 20260907,
+    "frozen_before_inference": true,
+    "model_inference_used": false,
+    "category_mapping": {
+      "note": "COCO JSON IDs are sparse; YOLO class indexes are contiguous and 0-based.",
+      "coco_category_id": {
+        "cell phone": 77,
+        "cup": 47,
+        "bottle": 44
+      },
+      "yolo_0_based_index": {
+        "cell phone": 67,
+        "cup": 41,
+        "bottle": 39
+      }
+    }
+  },
+  "limitations": [
+    "These are existing COCO annotations, not labels from the VisualAIAgent deployment domain.",
+    "A COCO-pretrained detector may have used COCO validation images during development; this is not a truly unseen benchmark."
+  ],
+  "samples": [
+    {
+      "id": "coco-val2017-000000231831",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000231831.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000231831.jpg",
+      "license": {
+        "name": "Attribution-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-sa/2.0/"
+      },
+      "sha256": "1d5fd2d14a5a0ffc6995c37a3e88130aee322f541cba2113f982b538be9a6430",
+      "width": 481,
+      "height": 640,
+      "annotations": [
+        {
+          "category": "cat",
+          "bbox": [
+            37.38,
+            160.75,
+            480.06,
+            639.89
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            197.03,
+            175.22,
+            309.21000000000004,
+            280.21
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "remote",
+          "bbox": [
+            1.11,
+            190.03,
+            72.48,
+            228.63
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cell phone",
+          "bbox": [
+            0.0,
+            190.27,
+            73.63,
+            229.78
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            148.68,
+            399.22,
+            237.15,
+            440.15000000000003
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            18.31,
+            141.56,
+            145.04,
+            190.82
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            220.92,
+            195.9,
+            333.56,
+            259.64
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "scissors",
+          "bbox": [
+            36.95,
+            125.14,
+            113.09,
+            151.03
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            20.61,
+            0.0,
+            154.72000000000003,
+            164.58
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000295713",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000295713.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000295713.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "6ad91f53f6e9d9c788852373253089e9e97238879e31bbb5315e76a0bbb6e299",
+      "width": 640,
+      "height": 427,
+      "annotations": [
+        {
+          "category": "cell phone",
+          "bbox": [
+            451.72,
+            161.49,
+            470.79,
+            176.07000000000002
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            413.62,
+            101.19,
+            541.5,
+            370.25
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            547.54,
+            11.8,
+            610.2199999999999,
+            69.79
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            527.55,
+            45.72,
+            555.7299999999999,
+            70.81
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bench",
+          "bbox": [
+            49.9,
+            232.05,
+            249.48000000000002,
+            356.79
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bench",
+          "bbox": [
+            355.52,
+            251.63,
+            634.78,
+            367.90999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "handbag",
+          "bbox": [
+            376.52,
+            188.15,
+            453.21999999999997,
+            259.87
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bench",
+          "bbox": [
+            259.2,
+            157.75,
+            588.56,
+            285.91999999999996
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            542.38,
+            0.88,
+            590.83,
+            60.190000000000005
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            188.0,
+            0.57,
+            221.89,
+            55.13
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            590.07,
+            0.0,
+            598.9200000000001,
+            15.47
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            601.14,
+            0.0,
+            629.5699999999999,
+            48.67
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000506933",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000506933.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000506933.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "8180429aaf079e82eb8a349d28d66d452c2b93e40c580833b5135b2f60136fb5",
+      "width": 640,
+      "height": 480,
+      "annotations": [
+        {
+          "category": "cell phone",
+          "bbox": [
+            68.55,
+            187.22,
+            211.75,
+            416.69
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            0.0,
+            3.06,
+            640.0,
+            472.27
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            613.83,
+            164.88,
+            640.0,
+            192.6
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            1.08,
+            91.36,
+            262.10999999999996,
+            272.57
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            538.35,
+            161.21,
+            640.0,
+            315.81
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000396729",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000396729.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000396729.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
+      },
+      "sha256": "f815b8ad8426092561e56192e016682dbc1faa70676dc18bdfee97f62638040b",
+      "width": 640,
+      "height": 425,
+      "annotations": [
+        {
+          "category": "bed",
+          "bbox": [
+            2.87,
+            23.88,
+            638.93,
+            420.21999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cell phone",
+          "bbox": [
+            339.69,
+            112.22,
+            457.52,
+            179.6
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "remote",
+          "bbox": [
+            246.0,
+            238.82,
+            458.5,
+            423.56
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            99.69,
+            94.28,
+            582.0899999999999,
+            255.57
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            404.37,
+            0.0,
+            595.4,
+            58.42
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000564091",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000564091.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000564091.jpg",
+      "license": {
+        "name": "Attribution-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-sa/2.0/"
+      },
+      "sha256": "4c4e7f97fbf0f9695f38cd52dc58c7a6f8abb227a0b59695894e254c4852a373",
+      "width": 427,
+      "height": 640,
+      "annotations": [
+        {
+          "category": "bottle",
+          "bbox": [
+            170.26,
+            264.55,
+            208.08999999999997,
+            339.48
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            9.78,
+            0.0,
+            324.47999999999996,
+            370.79
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cell phone",
+          "bbox": [
+            223.71,
+            62.4,
+            246.21,
+            74.45
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "handbag",
+          "bbox": [
+            354.9,
+            304.76,
+            427.0,
+            418.4
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cell phone",
+          "bbox": [
+            219.99,
+            55.05,
+            250.33,
+            91.57
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000050811",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000050811.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000050811.jpg",
+      "license": {
+        "name": "Attribution-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-sa/2.0/"
+      },
+      "sha256": "c69067b49ec7f1f07045130495c56fd29da44178965a33861b51a503a041acfa",
+      "width": 640,
+      "height": 605,
+      "annotations": [
+        {
+          "category": "bottle",
+          "bbox": [
+            448.87,
+            314.95,
+            521.73,
+            576.46
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            524.71,
+            316.61,
+            595.36,
+            592.8199999999999
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            448.06,
+            332.8,
+            467.86,
+            443.77
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "tie",
+          "bbox": [
+            239.29,
+            263.85,
+            302.92,
+            417.86
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            72.22,
+            66.09,
+            466.01,
+            491.22
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            164.53,
+            448.89,
+            368.78999999999996,
+            535.5799999999999
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "remote",
+          "bbox": [
+            594.92,
+            477.44,
+            640.0,
+            518.12
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cell phone",
+          "bbox": [
+            9.31,
+            473.02,
+            55.14,
+            499.69
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            3.14,
+            451.0,
+            640.0,
+            595.5699999999999
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000302882",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000302882.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000302882.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
+      },
+      "sha256": "b36479fb1a1caddbdf286730e3eac7d43cec5ad175f0edb3e17b8519439afe77",
+      "width": 500,
+      "height": 400,
+      "annotations": [
+        {
+          "category": "cell phone",
+          "bbox": [
+            230.11,
+            86.92,
+            323.6,
+            313.43
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            0.0,
+            55.57,
+            388.37,
+            400.0
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000180878",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000180878.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000180878.jpg",
+      "license": {
+        "name": "Attribution-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nd/2.0/"
+      },
+      "sha256": "d3af8ca1590f81e3163c258119db48367ff1de3166a39c2f931f0327d0cee6a0",
+      "width": 640,
+      "height": 427,
+      "annotations": [
+        {
+          "category": "cell phone",
+          "bbox": [
+            354.4,
+            299.09,
+            522.53,
+            380.28
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cake",
+          "bbox": [
+            404.93,
+            203.26,
+            512.4,
+            312.65
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cake",
+          "bbox": [
+            116.37,
+            37.99,
+            427.0,
+            344.77
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "car",
+          "bbox": [
+            405.62,
+            201.21,
+            507.11,
+            311.92
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000580294",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000580294.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000580294.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial License",
+        "url": "http://creativecommons.org/licenses/by-nc/2.0/"
+      },
+      "sha256": "82f40f60da78fe5e2f6c2f94761217a86db641c4012b73b1daffa1d1b16b782b",
+      "width": 640,
+      "height": 443,
+      "annotations": [
+        {
+          "category": "person",
+          "bbox": [
+            411.14,
+            3.05,
+            640.0,
+            438.09000000000003
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            2.0,
+            320.78,
+            192.57,
+            438.51
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            365.17,
+            171.7,
+            410.95000000000005,
+            200.95999999999998
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "sink",
+          "bbox": [
+            442.34,
+            186.06,
+            496.90999999999997,
+            212.57
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "spoon",
+          "bbox": [
+            0.76,
+            330.73,
+            343.63,
+            443.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "oven",
+          "bbox": [
+            4.61,
+            245.15,
+            441.85,
+            408.97
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "toothbrush",
+          "bbox": [
+            495.27,
+            184.09,
+            500.5,
+            214.32
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            450.18,
+            172.56,
+            497.18,
+            211.25
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            405.71,
+            174.12,
+            435.90999999999997,
+            198.57
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000551822",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000551822.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000551822.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
+      },
+      "sha256": "ef9eb53ac602092f01ee69ab8f8d43a2f7c68fea857509a0f4f061b3dec29916",
+      "width": 640,
+      "height": 453,
+      "annotations": [
+        {
+          "category": "sandwich",
+          "bbox": [
+            108.92,
+            254.32,
+            386.83000000000004,
+            399.9
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "sandwich",
+          "bbox": [
+            318.21,
+            212.92,
+            547.25,
+            387.23
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            114.52,
+            161.23,
+            307.07,
+            296.02
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            218.45,
+            23.08,
+            319.87,
+            195.69
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            37.7,
+            17.89,
+            119.26,
+            126.35
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            0.0,
+            131.32,
+            640.0,
+            453.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            86.31,
+            23.57,
+            224.06,
+            182.59
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000175364",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000175364.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000175364.jpg",
+      "license": {
+        "name": "Attribution License",
+        "url": "http://creativecommons.org/licenses/by/2.0/"
+      },
+      "sha256": "badb2570222f6900a65bfc9d39615216c683ce3c5d03afb85c692a3cf08f323c",
+      "width": 614,
+      "height": 461,
+      "annotations": [
+        {
+          "category": "bottle",
+          "bbox": [
+            240.6,
+            57.91,
+            255.7,
+            92.53999999999999
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            232.87,
+            116.4,
+            244.97,
+            142.89000000000001
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "wine glass",
+          "bbox": [
+            577.81,
+            106.53,
+            600.28,
+            143.46
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            42.63,
+            126.61,
+            58.300000000000004,
+            150.5
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "oven",
+          "bbox": [
+            158.95,
+            250.32,
+            261.73,
+            428.52
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "oven",
+          "bbox": [
+            430.96,
+            232.05,
+            581.17,
+            354.3
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "toaster",
+          "bbox": [
+            67.12,
+            217.83,
+            127.81,
+            259.19
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "toaster",
+          "bbox": [
+            404.66,
+            199.53,
+            453.88,
+            231.38
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "sink",
+          "bbox": [
+            259.58,
+            227.52,
+            338.14,
+            245.62
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            230.19,
+            52.33,
+            242.93,
+            94.38
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            447.02,
+            124.18,
+            466.10999999999996,
+            141.18
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "spoon",
+          "bbox": [
+            342.55,
+            197.33,
+            355.79,
+            220.37
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            555.75,
+            319.91,
+            600.65,
+            352.51000000000005
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            424.74,
+            80.75,
+            432.97,
+            93.62
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            432.57,
+            79.33,
+            443.25,
+            92.91
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            446.91,
+            79.88,
+            458.66,
+            92.03
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            462.12,
+            76.41,
+            467.84000000000003,
+            88.56
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            234.69,
+            305.34,
+            613.0699999999999,
+            455.01
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000283412",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000283412.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000283412.jpg",
+      "license": {
+        "name": "Attribution License",
+        "url": "http://creativecommons.org/licenses/by/2.0/"
+      },
+      "sha256": "ecff06907a7898f62175cdebf1108b752e085d9b53a4806869c6b4df508d6602",
+      "width": 640,
+      "height": 427,
+      "annotations": [
+        {
+          "category": "dog",
+          "bbox": [
+            1.73,
+            2.44,
+            440.8,
+            418.13
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            0.0,
+            283.84,
+            133.7,
+            427.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bed",
+          "bbox": [
+            427.0,
+            99.82,
+            637.73,
+            262.85
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000558114",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000558114.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000558114.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
+      },
+      "sha256": "c330d08c171e9fba6c59bd717677381b0b03933e59e0c3216ffd705d8f251533",
+      "width": 640,
+      "height": 480,
+      "annotations": [
+        {
+          "category": "tie",
+          "bbox": [
+            301.57,
+            217.38,
+            317.39,
+            260.49
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "laptop",
+          "bbox": [
+            219.04,
+            256.17,
+            240.95999999999998,
+            268.45
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            261.03,
+            174.74,
+            398.02,
+            468.13
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            0.57,
+            169.12,
+            69.14999999999999,
+            480.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            321.58,
+            179.96,
+            487.39,
+            480.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            440.31,
+            156.82,
+            558.19,
+            467.21999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            196.26,
+            239.21,
+            229.39999999999998,
+            280.75
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            554.92,
+            161.59,
+            583.0799999999999,
+            202.01
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            593.12,
+            144.36,
+            608.47,
+            172.51000000000002
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            273.22,
+            215.89,
+            298.49,
+            255.71999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            545.8,
+            151.01,
+            639.64,
+            471.37
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            353.65,
+            126.63,
+            381.63,
+            156.76999999999998
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            266.53,
+            197.12,
+            295.59999999999997,
+            228.48000000000002
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            551.73,
+            234.82,
+            589.04,
+            288.17
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            578.41,
+            161.69,
+            601.5899999999999,
+            202.85
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            155.57,
+            261.1,
+            166.65,
+            270.47
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            221.68,
+            193.12,
+            242.25,
+            239.41
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            1,
+            6,
+            639,
+            278
+          ],
+          "iscrowd": true
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000070048",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000070048.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000070048.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
+      },
+      "sha256": "5232a912f3438d7d915b7509b4602d1c768f76b72a43589d2624810e42b41988",
+      "width": 640,
+      "height": 480,
+      "annotations": [
+        {
+          "category": "sandwich",
+          "bbox": [
+            369.62,
+            179.81,
+            591.37,
+            377.46000000000004
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "wine glass",
+          "bbox": [
+            286.49,
+            0.0,
+            397.84000000000003,
+            211.35
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            0.09,
+            37.56,
+            217.14000000000001,
+            211.2
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            2.16,
+            3.24,
+            638.56,
+            473.53000000000003
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            36.72,
+            202.9,
+            327.42999999999995,
+            432.02
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            37.4,
+            203.22,
+            329.14,
+            428.88
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000009400",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000009400.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000009400.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
+      },
+      "sha256": "1a613f9b09db3b7bedb626af3e3951ac1709f6036d4e1405f6e8463816108222",
+      "width": 640,
+      "height": 480,
+      "annotations": [
+        {
+          "category": "person",
+          "bbox": [
+            145.48,
+            95.59,
+            281.92999999999995,
+            267.46000000000004
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            312.11,
+            81.92,
+            460.63,
+            278.87
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            447.9,
+            89.27,
+            640.0,
+            365.39
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "laptop",
+          "bbox": [
+            265.58,
+            230.03,
+            491.78999999999996,
+            480.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "laptop",
+          "bbox": [
+            328.91,
+            219.58,
+            500.36,
+            330.74
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "laptop",
+          "bbox": [
+            85.86,
+            211.13,
+            215.07,
+            281.1
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "laptop",
+          "bbox": [
+            0.92,
+            173.05,
+            263.19,
+            473.2
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "mouse",
+          "bbox": [
+            460.09,
+            354.85,
+            542.3,
+            383.08000000000004
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "keyboard",
+          "bbox": [
+            458.43,
+            362.43,
+            587.87,
+            472.45
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            563.75,
+            47.94,
+            613.85,
+            123.61
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            2.16,
+            95.43,
+            104.63,
+            192.51
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            523.0,
+            410.09,
+            640.0,
+            475.16999999999996
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            367.18,
+            59.06,
+            402.8,
+            87.87
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            276.76,
+            60.68,
+            366.46999999999997,
+            198.85
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            32.75,
+            256.44,
+            76.78,
+            319.51
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "laptop",
+          "bbox": [
+            444.38,
+            105.74,
+            480.58,
+            158.72
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "keyboard",
+          "bbox": [
+            318.4,
+            362.33,
+            428.67999999999995,
+            461.76
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "keyboard",
+          "bbox": [
+            403.11,
+            283.11,
+            471.37,
+            320.71000000000004
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "keyboard",
+          "bbox": [
+            1.08,
+            279.37,
+            31.28,
+            307.42
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            250.65,
+            417.12,
+            314.52,
+            480.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            251.59,
+            380.35,
+            328.25,
+            476.48
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            356.25,
+            281.88,
+            405.0,
+            363.13
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "keyboard",
+          "bbox": [
+            189.52,
+            253.97,
+            209.94,
+            268.31
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            457.98,
+            68.75,
+            536.35,
+            222.15
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000415194",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000415194.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000415194.jpg",
+      "license": {
+        "name": "Attribution License",
+        "url": "http://creativecommons.org/licenses/by/2.0/"
+      },
+      "sha256": "4f3aa179879b53163772b1866e1790e98f36ddc384ee8dace37ec468b604dcba",
+      "width": 640,
+      "height": 480,
+      "annotations": [
+        {
+          "category": "refrigerator",
+          "bbox": [
+            0.0,
+            135.86,
+            72.94,
+            283.1
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            217.36,
+            202.93,
+            343.90000000000003,
+            408.70000000000005
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            40.99,
+            221.2,
+            253.48000000000002,
+            255.70999999999998
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            155.54,
+            208.86,
+            196.79,
+            233.67000000000002
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            502.0,
+            193.95,
+            565.76,
+            225.01999999999998
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "sink",
+          "bbox": [
+            466.9,
+            212.86,
+            640.0,
+            279.06
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            185.12,
+            96.58,
+            193.64000000000001,
+            110.85
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "spoon",
+          "bbox": [
+            190.86,
+            199.1,
+            206.32000000000002,
+            211.65
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            64.38,
+            195.72,
+            112.35,
+            233.01999999999998
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "banana",
+          "bbox": [
+            538.25,
+            200.8,
+            561.95,
+            207.32000000000002
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            172.21,
+            95.21,
+            181.87,
+            111.57
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000474021",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000474021.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000474021.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "7d12a5a0082d55511c9c2889d52476731cd443a30fdd1c14f5220f19b9412531",
+      "width": 500,
+      "height": 375,
+      "annotations": [
+        {
+          "category": "bottle",
+          "bbox": [
+            188.21,
+            310.16,
+            201.07,
+            355.83000000000004
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "clock",
+          "bbox": [
+            317.13,
+            211.32,
+            324.38,
+            219.06
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "couch",
+          "bbox": [
+            20.92,
+            271.05,
+            353.47,
+            375.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            17.74,
+            81.58,
+            225.53,
+            370.34999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            250.28,
+            16.91,
+            500.0,
+            369.16
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            329.39,
+            124.16,
+            416.39,
+            369.09000000000003
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "remote",
+          "bbox": [
+            367.98,
+            184.55,
+            380.61,
+            198.22
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "remote",
+          "bbox": [
+            166.69,
+            171.55,
+            182.62,
+            213.79000000000002
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "remote",
+          "bbox": [
+            261.33,
+            264.84,
+            290.47999999999996,
+            342.85999999999996
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            316.66,
+            160.58,
+            341.98,
+            184.20000000000002
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            278.93,
+            176.97,
+            311.8,
+            225.84
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            183.38,
+            258.83,
+            283.6,
+            375.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "remote",
+          "bbox": [
+            83.02,
+            202.18,
+            109.07,
+            219.18
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            312.51,
+            255.06,
+            321.14,
+            273.29
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            293.37,
+            154.46,
+            304.58,
+            176.25
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            313.29,
+            184.48,
+            338.5,
+            205.64999999999998
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            296.22,
+            134.98,
+            301.73,
+            151.16
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            310.49,
+            136.73,
+            319.54,
+            156.33999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            307.07,
+            230.08,
+            316.17,
+            248.92000000000002
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            281.21,
+            225.01,
+            289.66999999999996,
+            244.38
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            302.82,
+            253.34,
+            312.89,
+            272.17
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "clock",
+          "bbox": [
+            408.49,
+            198.89,
+            424.5,
+            211.75
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            339.66,
+            143.83,
+            347.86,
+            160.84
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            332.35,
+            143.23,
+            338.97,
+            159.35999999999999
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            326.27,
+            140.57,
+            333.16999999999996,
+            158.26
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "book",
+          "bbox": [
+            265,
+            132,
+            373,
+            292
+          ],
+          "iscrowd": true
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000013923",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000013923.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000013923.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "91494500cd053f1c4e547edc53f62edce2b088588bf9b4dbc8ceaea86ad4d49e",
+      "width": 640,
+      "height": 427,
+      "annotations": [
+        {
+          "category": "potted plant",
+          "bbox": [
+            289.19,
+            140.48,
+            314.74,
+            200.64999999999998
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "potted plant",
+          "bbox": [
+            260.68,
+            152.63,
+            279.01,
+            200.51999999999998
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "tv",
+          "bbox": [
+            339.24,
+            143.4,
+            406.82,
+            211.47
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            213.5,
+            232.37,
+            335.89,
+            370.4
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            244.23,
+            286.67,
+            337.65,
+            410.43
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            444.65,
+            313.01,
+            570.81,
+            422.40999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            406.71,
+            244.16,
+            492.47999999999996,
+            338.23
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "couch",
+          "bbox": [
+            14.72,
+            201.08,
+            179.45,
+            327.15
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            307.75,
+            324.58,
+            500.09000000000003,
+            422.66999999999996
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "vase",
+          "bbox": [
+            438.14,
+            237.7,
+            452.21,
+            271.28
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "vase",
+          "bbox": [
+            381.51,
+            331.81,
+            401.78999999999996,
+            368.01
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            418.58,
+            76.16,
+            431.99,
+            108.43
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            413.31,
+            78.64,
+            421.97,
+            109.76
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            566.47,
+            34.48,
+            616.14,
+            123.32
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            610.43,
+            128.1,
+            640.0,
+            227.58999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            531.15,
+            117.14,
+            561.15,
+            185.06
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "potted plant",
+          "bbox": [
+            428.71,
+            201.89,
+            457.69,
+            270.69
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "potted plant",
+          "bbox": [
+            357.98,
+            280.41,
+            419.14,
+            368.95000000000005
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            240.48,
+            369.41,
+            339.29999999999995,
+            427.0
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000166426",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000166426.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000166426.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
+      },
+      "sha256": "ab500dcc71acf5f36ad6538672fd451945c127cb49b35415dd86a7c1ecbaf2f4",
+      "width": 587,
+      "height": 640,
+      "annotations": [
+        {
+          "category": "bottle",
+          "bbox": [
+            152.54,
+            10.51,
+            241.35999999999999,
+            272.75
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            292.41,
+            1.62,
+            337.42,
+            200.48000000000002
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            209.75,
+            21.34,
+            371.39,
+            56.760000000000005
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            0.0,
+            39.15,
+            587.0,
+            632.47
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            207.06,
+            75.29,
+            241.28,
+            138.61
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "fork",
+          "bbox": [
+            2.17,
+            350.59,
+            127.29,
+            555.2
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "knife",
+          "bbox": [
+            498.22,
+            350.17,
+            544.88,
+            547.76
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "knife",
+          "bbox": [
+            237.95,
+            60.56,
+            251.6,
+            97.43
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            362.39,
+            3.05,
+            410.59999999999997,
+            207.52
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cup",
+          "bbox": [
+            316.95,
+            167.61,
+            402.90999999999997,
+            278.55
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "fork",
+          "bbox": [
+            440.27,
+            66.03,
+            462.7,
+            107.56
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000354072",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000354072.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000354072.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "09187f078c7f5f80071932db41d194628766fe325ec18deb69760d81ab9d51d3",
+      "width": 359,
+      "height": 640,
+      "annotations": [
+        {
+          "category": "bottle",
+          "bbox": [
+            51.49,
+            284.99,
+            70.52000000000001,
+            327.67
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "sink",
+          "bbox": [
+            86.1,
+            281.26,
+            186.55,
+            344.39
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "potted plant",
+          "bbox": [
+            0.0,
+            318.28,
+            359.0,
+            640.0
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000100238",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000100238.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000100238.jpg",
+      "license": {
+        "name": "Attribution License",
+        "url": "http://creativecommons.org/licenses/by/2.0/"
+      },
+      "sha256": "aeebb3301d652e291323df9567bed787a7966fefbefeb0629634424b1567769b",
+      "width": 640,
+      "height": 480,
+      "annotations": [
+        {
+          "category": "bottle",
+          "bbox": [
+            197.92,
+            351.04,
+            211.04999999999998,
+            364.71000000000004
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            194.8,
+            79.94,
+            425.22,
+            480.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            347.81,
+            0.81,
+            529.84,
+            474.31
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            489.73,
+            214.05,
+            622.7,
+            477.84000000000003
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            1.08,
+            33.32,
+            214.54000000000002,
+            472.14
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "frisbee",
+          "bbox": [
+            68.65,
+            236.3,
+            144.37,
+            303.35
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "frisbee",
+          "bbox": [
+            264.16,
+            242.68,
+            351.14000000000004,
+            300.67
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "handbag",
+          "bbox": [
+            364.39,
+            68.45,
+            393.34,
+            126.99000000000001
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "handbag",
+          "bbox": [
+            175.79,
+            160.83,
+            271.78999999999996,
+            433.87
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "frisbee",
+          "bbox": [
+            415.77,
+            98.1,
+            491.40999999999997,
+            174.82999999999998
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000133244",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000133244.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000133244.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "3843f42ef753e692fdbbee056fde168d4dfde0e2415dced7ecc0dce31f98c7a1",
+      "width": 640,
+      "height": 359,
+      "annotations": [
+        {
+          "category": "chair",
+          "bbox": [
+            367.46,
+            118.06,
+            433.13,
+            186.89
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            218.35,
+            73.53,
+            279.96,
+            134.56
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "tennis racket",
+          "bbox": [
+            241.55,
+            218.68,
+            264.02,
+            271.04
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            199.33,
+            107.17,
+            324.24,
+            311.29
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            380.51,
+            37.97,
+            416.12,
+            83.38
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            105.26,
+            35.47,
+            151.79000000000002,
+            82.61
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            138.2,
+            5.65,
+            177.48,
+            78.25
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            492.32,
+            32.24,
+            547.45,
+            83.61
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            297.58,
+            34.25,
+            333.88,
+            82.65
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            417.28,
+            38.16,
+            456.80999999999995,
+            82.72
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            325.02,
+            12.87,
+            360.82,
+            68.53
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            331.03,
+            49.38,
+            361.95,
+            82.99000000000001
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            74.22,
+            35.5,
+            112.94,
+            83.9
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            543.76,
+            131.11,
+            606.87,
+            203.59000000000003
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            459.3,
+            35.18,
+            499.63,
+            83.24000000000001
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            419.41,
+            96.72,
+            485.03000000000003,
+            187.45999999999998
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            186.44,
+            20.96,
+            210.04,
+            78.45
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            234.87,
+            55.34,
+            278.41,
+            77.11
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            256.94,
+            38.72,
+            297.49,
+            85.19999999999999
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            439.89,
+            171.2,
+            447.32,
+            187.66
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            1,
+            0,
+            639,
+            116
+          ],
+          "iscrowd": true
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000146457",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000146457.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000146457.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "09c72cf70217cc40471d48cd5ea5bed8d115ab5fb3002a3245bf366635629c48",
+      "width": 640,
+      "height": 480,
+      "annotations": [
+        {
+          "category": "bottle",
+          "bbox": [
+            348.59,
+            43.34,
+            371.09999999999997,
+            111.5
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            507.77,
+            58.75,
+            543.1999999999999,
+            124.65
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            1.08,
+            286.92,
+            99.24,
+            379.25
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            0.0,
+            216.98,
+            622.88,
+            474.20000000000005
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            0.0,
+            0.0,
+            263.61,
+            363.25
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            177.98,
+            0.0,
+            335.46,
+            264.27
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            572.06,
+            399.49,
+            640.0,
+            480.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            580.84,
+            79.49,
+            600.21,
+            132.82
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            500.49,
+            88.44,
+            509.77,
+            121.4
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "pizza",
+          "bbox": [
+            386.16,
+            243.78,
+            523.1500000000001,
+            294.47
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "pizza",
+          "bbox": [
+            322.01,
+            275.61,
+            449.01,
+            326.41
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            541.18,
+            189.71,
+            597.6199999999999,
+            290.1
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bottle",
+          "bbox": [
+            201.35,
+            43.38,
+            211.01,
+            62.86
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000460929",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000460929.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000460929.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "d834e420e45937e34ecd56b75839fe2afdd4bb2239c0536a72997ae37f1e20e7",
+      "width": 480,
+      "height": 640,
+      "annotations": [
+        {
+          "category": "bottle",
+          "bbox": [
+            289.03,
+            1.38,
+            421.15999999999997,
+            415.65999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "hot dog",
+          "bbox": [
+            178.11,
+            356.98,
+            332.08000000000004,
+            633.21
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000116362",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000116362.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000116362.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial License",
+        "url": "http://creativecommons.org/licenses/by-nc/2.0/"
+      },
+      "sha256": "016c0d06fa81cdd90a9516c582b0627fc091ca00030db77a903f3db2b310e2ca",
+      "width": 612,
+      "height": 612,
+      "annotations": [
+        {
+          "category": "spoon",
+          "bbox": [
+            26.19,
+            44.8,
+            435.57,
+            268.09
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "apple",
+          "bbox": [
+            190.54,
+            244.94,
+            322.01,
+            309.65
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            72.89,
+            27.28,
+            591.37,
+            417.86
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "bowl",
+          "bbox": [
+            22.54,
+            402.45,
+            253.73999999999998,
+            596.72
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "apple",
+          "bbox": [
+            441.91,
+            168.5,
+            494.37,
+            213.01
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "apple",
+          "bbox": [
+            340.07,
+            330.68,
+            464.62,
+            373.58
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            28.61,
+            247.98,
+            591.34,
+            597.6899999999999
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "carrot",
+          "bbox": [
+            313.93,
+            108.4,
+            441.33000000000004,
+            234.26
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000192871",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000192871.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000192871.jpg",
+      "license": {
+        "name": "Attribution-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-sa/2.0/"
+      },
+      "sha256": "3b01c2d37f4e03a559a45270a5b06b290823bf71bc713c615a01300e899375a7",
+      "width": 640,
+      "height": 427,
+      "annotations": [
+        {
+          "category": "bowl",
+          "bbox": [
+            37.46,
+            147.15,
+            607.19,
+            427.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "orange",
+          "bbox": [
+            348.65,
+            245.79,
+            507.46999999999997,
+            393.84000000000003
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "orange",
+          "bbox": [
+            69.65,
+            158.23,
+            197.85,
+            310.65999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "orange",
+          "bbox": [
+            382.65,
+            165.94,
+            552.13,
+            299.3
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "banana",
+          "bbox": [
+            35.5,
+            354.07,
+            122.82,
+            416.44
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "apple",
+          "bbox": [
+            141.66,
+            161.41,
+            351.88,
+            366.74
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "orange",
+          "bbox": [
+            123.05,
+            306.83,
+            240.94,
+            421.27
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "orange",
+          "bbox": [
+            235.09,
+            318.06,
+            464.42,
+            425.53
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            485.53,
+            333.92,
+            640.0,
+            427.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            0.0,
+            350.08,
+            145.96,
+            427.0
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000138819",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000138819.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000138819.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-ShareAlike License",
+        "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
+      },
+      "sha256": "9af2254f27aa3dee46b1f91e2212b4e81931573d018aa672413e0d35a408126a",
+      "width": 640,
+      "height": 480,
+      "annotations": [
+        {
+          "category": "toilet",
+          "bbox": [
+            475.52,
+            368.2,
+            621.91,
+            480.0
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "sink",
+          "bbox": [
+            121.89,
+            21.57,
+            469.21,
+            227.6
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000146358",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000146358.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000146358.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "92c364eb8cd28fdd92f97567a8785259d1b7267bef9caa15dd7c2c72f176a8e5",
+      "width": 388,
+      "height": 640,
+      "annotations": [
+        {
+          "category": "person",
+          "bbox": [
+            178.3,
+            93.66,
+            315.21000000000004,
+            447.88
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            68.83,
+            179.31,
+            150.57,
+            246.89
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "tie",
+          "bbox": [
+            269.57,
+            185.25,
+            295.99,
+            266.2
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "cake",
+          "bbox": [
+            21.46,
+            262.29,
+            165.58,
+            422.03000000000003
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "wine glass",
+          "bbox": [
+            103.77,
+            221.48,
+            115.33,
+            260.82
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "chair",
+          "bbox": [
+            0.0,
+            179.07,
+            42.76,
+            242.14
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            244.94,
+            113.78,
+            387.15999999999997,
+            609.98
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            155.33,
+            134.09,
+            217.24,
+            215.94
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "knife",
+          "bbox": [
+            191.92,
+            258.99,
+            247.98,
+            279.87
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            143.41,
+            142.95,
+            185.87,
+            209.33999999999997
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "dining table",
+          "bbox": [
+            2.4,
+            367.72,
+            275.47999999999996,
+            609.0
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000161397",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000161397.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000161397.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "fcb95a366d4be811cf5e95ec5b4627c2754acb7556fbefbd909362610e50e43d",
+      "width": 640,
+      "height": 480,
+      "annotations": [
+        {
+          "category": "vase",
+          "bbox": [
+            90.61,
+            278.97,
+            239.52999999999997,
+            365.39000000000004
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "vase",
+          "bbox": [
+            0.0,
+            234.07,
+            110.02,
+            349.48
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            282.35,
+            0.0,
+            366.03000000000003,
+            180.23
+          ],
+          "iscrowd": false
+        }
+      ]
+    },
+    {
+      "id": "coco-val2017-000000212453",
+      "image_path": "../artifacts/ab-20260907/holdout/images/000000212453.jpg",
+      "split": "heldout",
+      "source_url": "http://images.cocodataset.org/val2017/000000212453.jpg",
+      "license": {
+        "name": "Attribution-NonCommercial-NoDerivs License",
+        "url": "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+      },
+      "sha256": "6af736b7cab73d86009eca2baa5ba34c5299649a36b3855e4b242a22376c8b0d",
+      "width": 480,
+      "height": 640,
+      "annotations": [
+        {
+          "category": "person",
+          "bbox": [
+            70.96,
+            0.0,
+            137.73,
+            111.52
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            138.1,
+            0.0,
+            201.73,
+            108.67
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            152.45,
+            113.62,
+            209.98,
+            208.54000000000002
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            313.88,
+            0.6,
+            359.78999999999996,
+            101.5
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            371.06,
+            15.82,
+            417.08,
+            99.24000000000001
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            406.07,
+            0.0,
+            453.61,
+            96.43
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            208.54,
+            108.58,
+            258.88,
+            207.45999999999998
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "person",
+          "bbox": [
+            362.87,
+            99.8,
+            398.4,
+            192.41
+          ],
+          "iscrowd": false
+        },
+        {
+          "category": "toilet",
+          "bbox": [
+            197.82,
+            312.52,
+            465.45,
+            640.0
+          ],
+          "iscrowd": false
+        }
+      ]
+    }
+  ],
+  "original_manifest_sha256": "d7b725b45f7acbb4b954d4575c614e695e224489234eed89b0fdd67236c7e425",
+  "selection_sha256": "91f1f2a9b1c3dd555b71a6f1334d7deb9b21ea02e8568f042549fe0196e2fdf0"
+}

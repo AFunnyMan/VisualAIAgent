@@ -206,3 +206,17 @@
 - 发现同一YOLO26n权重支持两套检测头。实际执行 `.export-venv/bin/python harness/artifacts/recognition-options/head_probe.py` 退出0：五个既有失败点分别运行端到端与传统头，640/0.35不变，共10次官方PT推理；使用独立模型实例，实际end2end标志分别True/False。桌面手机15秒由无框变为正确框0.48151，图已查看；桶误杯由0.60068变为0.75149，另外三个目标仍漏检。不是ONNX导出或整体验收，生产模型未变。摘要见 [检测头对照](evaluations/head-probe-20260907.json)。
 - 新候选包括按需轻量语义拒识、有限词表YOLOE全图复查、低分候选关联与静止物体定期确认。资料依据与项目推论分开记录：已有框复核不能找回无框漏检；需独立全图检查；未知率和漏报必须与误报一起评价。新组件CPU/ONNX兼容与三类效果尚未实测，不宣称已经优于基线。
 - 本轮仅新增研究文档和脱敏摘要，不修改业务代码、采样/事件契约或现行架构；无需重跑不受影响的92项离线软件用例。提交前核验JSON、链接、差异和敏感信息。
+
+## 2026-09-07T11:00:49+08:00 — 识别策略全轮离线对照完成
+
+- 按用户“开始上述测试”，主Agent与3个Sol并行完成5检测配置（n端到端/n传统/s端到端/s传统/YOLOE）、MobileCLIP2-S0和短期低分关联。未训练、未调用百炼或USB、未更换生产模型/依赖锁；实验权重、图片、完整日志与隔离环境均在忽略目录。
+- 实际导出并检查官方s权重、n/s传统内嵌NMS及s端到端。`.export-venv/bin/python scripts/prepare_detector_comparison.py`完成，随后`validate_detector_comparison.py`对5个原始顺序解码帧×4配置，20/20框数/类别一致，最大坐标差0.000245px、分数差3.82e-6。更早拼图JPEG对照另存，不作为原帧结果。
+- `.venv/bin/python scripts/detector_comparison.py --profiles harness/artifacts/ab-20260907/detectors/profiles.json --videos harness/evaluations/video-survey-20260907.json --output harness/artifacts/ab-20260907/video-results`与对应`--images .../holdout/manifest.json --output .../image-results`均退出0。四YOLO26各488视频帧+30图；YOLOE独立脚本也各488/30。五配置采样时点/帧索引一致，n端到端检出数逐视频复现原基线。
+- 新COCO2017 val固定seed20260907，推理前选定30图及全部295原标注；图片hash/尺寸/原始类别ID验证通过。三类GT52实例；固定.35/IoU.5原始计分：n端到端20TP/4FP/32FN，n传统21/4/31，s端到端27/7/25，s传统30/10/22，YOLOE21/8/31。非mAP/非部署域/非模型未见过数据；部分FP有标注/类别歧义，不修改GT。
+- CLIP开发帧固定23提示/10组、扩边20%、margin.015，123个真实heldout候选完成复核；s传统由30/10/22降为19/3/33，其他配置亦误拒明显。两配置各29个关键视频时点中，桶3次误杯全拒，但有真手机误拒与大量无候选。图像塔重参数化及ONNX导出通过123候选验证，接受决定不一致0，最大特征差1.35e-6。
+- YOLOE固定8词固化ONNX，保留mask分支。审查发现默认rect/NMS不一致，旧rect-auto结果保留，显式square/agnostic NMS后重跑；53帧PT与ORT的25框全匹配，纯ORT适配器也25/25，最低IoU.99427。桶仍误杯、工业装置误瓶、完整杯与儿童杯仍漏检。
+- `.venv/bin/python scripts/association_probe.py --input harness/artifacts/ab-20260907/video-results --output harness/artifacts/ab-20260907/association.json`退出0。固定high.35/low.1/IoU.3/高分后最多2秒，36组视频回放；不能无当前候选复制旧框或无限续期。补帧伴随新增错误/波动事件，未纳入生产，不当完整ByteTrack或事件准确率。
+- 所有并行推理结束后，独立进程四检测器→YOLOE→CLIP串行benchmark，5预热/30次。p50/p95 ms：n45.33/47.68、n传统45.54/48.41、s137.36/141.16、s传统137.57/146.19、YOLOE67.51/71.60、CLIP单候选完整复核46.57/48.02。RSS与计时范围分别见报告，不当稳态CPU/30分钟/Windows/8GB实机证明。
+- 核验Apple官方LICENSE_MODELS，模型限研究且排除产品开发，不能以MIT代码许可推定产品可用；MobileCLIP权重不纳入产品，YOLOE文本准备所用编码器许可链需另核验。现有候选均未全面胜出；保留生产配置，识别质量与USB/Windows实机仍开放。
+- 结果：[报告](../docs/recognition-ab-results-2026-09-07.md)、[可复算预测](evaluations/recognition-ab-20260907.json)、[原始标注子集](evaluations/recognition-holdout-20260907.json)、[审查](code_review/recognition-ab-review.md)。从归档预测复算五检测器/四复核的分类统计全部一致；修正归档manifest中selection相对路径并记录SHA。
+- 最终`.venv/bin/ruff check .`、`.venv/bin/ruff format --check .`通过（98份Python）；`.venv/bin/pytest -q`100 passed、3 deselected、7.13秒，新增8项计分/时序失败用例。计划基线SHA不变，链接和凭据模式检查通过。远程main只读核验仍9870c67，无未知提交；本里程碑正常提交同步，远程CI在实际返回后追加。
