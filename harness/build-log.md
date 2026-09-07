@@ -220,3 +220,8 @@
 - 核验Apple官方LICENSE_MODELS，模型限研究且排除产品开发，不能以MIT代码许可推定产品可用；MobileCLIP权重不纳入产品，YOLOE文本准备所用编码器许可链需另核验。现有候选均未全面胜出；保留生产配置，识别质量与USB/Windows实机仍开放。
 - 结果：[报告](../docs/recognition-ab-results-2026-09-07.md)、[可复算预测](evaluations/recognition-ab-20260907.json)、[原始标注子集](evaluations/recognition-holdout-20260907.json)、[审查](code_review/recognition-ab-review.md)。从归档预测复算五检测器/四复核的分类统计全部一致；修正归档manifest中selection相对路径并记录SHA。
 - 最终`.venv/bin/ruff check .`、`.venv/bin/ruff format --check .`通过（98份Python）；`.venv/bin/pytest -q`100 passed、3 deselected、7.13秒，新增8项计分/时序失败用例。计划基线SHA不变，链接和凭据模式检查通过。远程main只读核验仍9870c67，无未知提交；本里程碑正常提交同步，远程CI在实际返回后追加。
+
+## 2026-09-07T11:04:46+08:00 — 识别对照同步与双平台CI
+
+- 里程碑60b598f已正常推送。公开GitHub API确认 [run34078252826](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34078252826) 的macOS与Windows两job均completed/success，head SHA为60b598f9195a7920e717af0ba2df307def9dc89a。源码本机100项离线用例通过，远程锁定依赖、Ruff/格式、离线检查及doctor通过。
+- 此记录仅文档更新，使用skip ci提交；未增加百炼调用，未改变模型采用决定，也不关闭USB/Windows11实机及识别质量问题。
