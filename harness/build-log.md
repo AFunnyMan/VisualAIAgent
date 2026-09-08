@@ -330,3 +330,9 @@
 - 30个既有困难样本实际条件组合原/新TP/FP/FN均32/25/43；杯14/16/12。13张跳过，17张未补杯，新增正确杯/假杯均0；原锅桶四帧误报继承，不称修复。该刻意选样不能估计总体误报率。可分享数据与证据SHA：[摘要](evaluations/cup-scale-recheck-20260908.json)。
 - 正式页面重启沿用原data/acceptance/ui-crop-20260908，私有.env仅改本机完整720p与增强开启，密钥不输出/提交。22:12:52—22:14:51首120fresh中110cup，最大连续漏检1，1appeared/0missing/0fault，最大采样间隔1.094秒，推理p95 177.76ms（并发开发时），Agent运行0。页面目检杯子框正确；保持摄像头观察，已请求用户移出10秒再放回保持15秒，尚待其确认，不写移动闭环通过。
 - root回归首轮156pass/1fail：UI测试被本机新.env设置影响。离线fixture现在禁用dotenv并清空继承VAA变量、保留显式case设置和真实marker边界；复跑`.venv/bin/pytest`退出0：157 passed / 3 deselected。Ruff check/format（112文件）与diff --check通过。独立[审查](code_review/cup-scale-recheck-review.md)无阻断。下一步提交本里程碑并正常同步，用户移动与Windows实机不伪装成已通过。
+
+## 2026-09-08T22:21:00+08:00 — 杯子复查里程碑同步与双平台离线CI
+
+- 功能提交90cde26c50ef5792df566eac911d8a20fd877028已正常推送；推送前读取远程仍为71d50fe，未发现未知新历史，未强推。随后本地origin/main与HEAD一致、工作树干净。
+- GitHub公开API核验运行34237436514，head_sha为上述功能提交；`offline (windows-latest)`和`offline (macos-latest)`均completed/success。此为离线CI，不代表Windows USB实机验收。系统未安装gh CLI，改用无凭据公开只读API查询，没有安装工具或读取额外凭据。
+- 截至22:19:53页面仍为running/fresh，正确检测杯子（最新分数约0.39）；原数据库继续保留。从22:12启动至此只新增一次cup appeared，没有新missing。尚未收到用户移出/放回完成确认，继续保持页面采集，移动场景验收仍开放。本条仅补记已观察到的同步/CI结果，不再改业务代码。
