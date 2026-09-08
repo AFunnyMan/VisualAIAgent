@@ -4,6 +4,8 @@ from types import MethodType
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from visual_ai_agent.models import SceneObservation, ToolResult, utcnow
+
 
 @pytest.fixture
 def app(tmp_path, monkeypatch):
@@ -80,7 +82,7 @@ def _configured_app(tmp_path, monkeypatch, *, region="", fake_camera=False):
             running = False
 
             def __init__(self, *_args, **_kwargs):
-                pass
+                self.observation = None
 
             def start(self):
                 self.running = True
@@ -89,7 +91,7 @@ def _configured_app(tmp_path, monkeypatch, *, region="", fake_camera=False):
                 self.running = False
 
             def snapshot(self):
-                return None, None
+                return self.observation, None
 
         monkeypatch.setattr(runtime_module, "CameraSource", lambda **_kwargs: object())
         monkeypatch.setattr(runtime_module, "YoloOnnxDetector", lambda *_args, **_kwargs: object())
@@ -159,6 +161,68 @@ def test_changed_camera_settings_stop_then_start_with_selected_values(tmp_path, 
         assert kwargs["observation_region"] == (0.125, 0.0, 0.875, 1.0)
         assert any("当前启用设置（请求）" in item.value for item in tested_app.caption)
     finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()
+
+
+def _disconnect_running_camera(tested_app, runtime):
+    next(button for button in tested_app.button if button.label == "开始观察").click().run()
+    runtime._vision.observation = SceneObservation(
+        observed_at=utcnow(),
+        monotonic_at=0,
+        status="disconnected",
+        fresh=False,
+        error="Camera frame read failed",
+    )
+    runtime.memory.ingest(runtime._vision.observation, None)
+    tested_app.run()
+
+
+def test_same_settings_disconnected_camera_stops_then_restarts(tmp_path, monkeypatch):
+    tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
+    try:
+        _disconnect_running_camera(tested_app, created[0])
+        assert any("摄像头已断开" in item.value for item in tested_app.warning)
+        selected_resolution = next(
+            item.value for item in tested_app.selectbox if item.label == "采集清晰度"
+        )
+        calls.clear()
+
+        next(button for button in tested_app.button if button.label == "开始观察").click().run()
+
+        assert not tested_app.exception
+        assert [call[0] for call in calls] == ["stop", "start"]
+        _, args, kwargs = calls[-1]
+        assert args == (0, 1.0)
+        assert kwargs["resolution"] == selected_resolution
+        assert kwargs["observation_region"] == (0.0, 0.0, 1.0, 1.0)
+    finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()
+
+
+def test_disconnected_camera_stop_failure_does_not_restart(tmp_path, monkeypatch):
+    tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
+    try:
+        runtime = created[0]
+        _disconnect_running_camera(tested_app, runtime)
+
+        def failed_stop(self):
+            calls.append(("stop", (), {}))
+            return ToolResult(ok=False, error="摄像头工作线程尚未停止")
+
+        runtime.stop_camera = MethodType(failed_stop, runtime)
+        calls.clear()
+        next(button for button in tested_app.button if button.label == "开始观察").click().run()
+
+        assert not tested_app.exception
+        assert [call[0] for call in calls] == ["stop"]
+        assert any("摄像头工作线程尚未停止" in item.value for item in tested_app.error)
+    finally:
+        # Restore normal cleanup without recording another test action.
+        runtime.stop_camera = MethodType(type(runtime).stop_camera, runtime)
         for instance in created:
             instance.close()
         st.cache_resource.clear()

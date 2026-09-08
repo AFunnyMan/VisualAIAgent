@@ -157,7 +157,14 @@ with st.sidebar:
                 requested_interval,
             )
             active_settings = runtime.diagnostics()["camera_settings"]
-            if runtime.camera_running and active_settings != requested_settings:
+            active_observation, _ = runtime.snapshot()
+            needs_reconnect = active_observation is not None and active_observation.status in {
+                "disconnected",
+                "error",
+            }
+            if needs_reconnect or (
+                runtime.camera_running and active_settings != requested_settings
+            ):
                 stopped = runtime.stop_camera()
                 if not stopped.ok:
                     show_result(stopped)
@@ -227,7 +234,13 @@ def overview():
             if not scene.get("current"):
                 st.warning("上方为最后预览，当前画面无效，不能据此判断物品是否仍在。")
         else:
-            st.info("准备好摄像头和模型后，点击「开始观察」。")
+            effective_status = scene.get("effective_status")
+            if effective_status == "disconnected":
+                st.warning("摄像头已断开。请检查连接后，点击「开始观察」重新连接。")
+            elif effective_status == "error":
+                st.warning("摄像头观察异常。请检查设备后，点击「开始观察」重试。")
+            else:
+                st.info("准备好摄像头和模型后，点击「开始观察」。")
     with fact_col:
         st.subheader("最新观察")
         raw = scene.get("observation") or {}
