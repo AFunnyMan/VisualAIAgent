@@ -284,3 +284,14 @@
 - Sol增强辅助台，后续人工物品标记可保存最近新鲜原始输入PNG、点击/采集/检测时间、序号、年龄及SHA；无图/过期明确不可用，非fresh状态清空原图关联。正常采样只保留最近输入，不录像。新增3项有意义失败/时间关联用例。`.venv/bin/pytest -q --junitxml=harness/artifacts/camera-20260908/pytest-operator-review.xml` 121 passed、3 deselected、7.53秒，Ruff/格式108文件及差异检查通过。
 - 新版辅助台实际`--camera 0 --backend 1200 --duration 10 --output data/acceptance/obsbot-console-smoke-20260908-1842 --port 8766`退出0，10.010秒有效覆盖、10有效观察、故障0、最大间隔1.016秒、正常停止，17条完整增量样本落盘。没有伪造物品操作标记；PNG标记路径仅fake-frame用例验证，不称真实点击验收。当前无测试摄像头占用。
 - 修复提交6b0abad的GitHub工作流[run34214518296](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34214518296)已用完整head SHA只读核验completed/success。托管CI不代替Windows11 USB。此前短SHA查询为空，未当成失败或通过。
+
+## 2026-09-08T19:57:00+08:00 — 资料驱动取景改进与真实杯子复验
+
+- 用户要求查资料并开始解决实机误识别/漏检。查阅AXIS部署、SAHI、Frigate过滤和静止对象原始资料；依据、项目推论、失败结果及范围见[实机改进](../docs/camera-remediation-2026-09-08.md)。并行研究/实现/审查子Agent均为Sol，未使用更高成本子模型。
+- 私有诊断实际执行`.venv/bin/python harness/artifacts/camera-remediation-20260908/geometry_probe.py`、`paired_camera_probe.py`、`resolution_probe.py`；4张错误missing旧图及1张空目标旧图另作同图复测。640裁剪仅一个开发JPEG恢复，4张旧错误图和新30帧杯子均失败；旋转/更大模型未证明可用。720/1080与桌面范围组合短试各12/12，单纯提高分辨率整图均0/12。不隐去失败，不把开发样本当独立准确率。
+- 已实现Config/.env示例/页面三档采集清晰度和可选归一化观察范围；CameraSource裁剪新鲜帧，检测/预览/证据统一相对观察坐标。切换设备、分辨率或范围在旧worker完整停止后重建事件基线，保留last_seen/历史/关注，避免把裁掉旧目标当missing。默认模型、0.35阈值、三次/五秒不变。验收脚本、benchmark和doctor同步配置与范围记录。
+- 两轮实际命令：`.venv/bin/python scripts/camera_acceptance.py --camera 0 --backend 1200 --width 1920 --height 1080 --region .25 .4166666666666667 .9375 1 --duration 120 --output data/acceptance/obsbot-crop-1080-20260908 --port 8765`；随后尺寸改为1280×720、目录改为`obsbot-crop-720-20260908`，其余相同。19:47—19:49及19:49—19:51，均退出0、120有效观察、故障0、正常释放，只一次cup appeared、0 missing、0云/Agent调用。1080杯94/120，720杯119/120；最长未检出4/1采样。p95推理82.09/81.55ms，有效采样CPU均值46.28%/32.36%（单核100%），峰值RSS442.89/406.05MiB。原始观察与事件在对应被忽略目录。仅证明这只静止杯子局部改善，不是99.2%总体识别或90%事件达标。
+- 选择720p+当前桌面范围写入仅本机`.env`，保持现有Key和0600权限，不提交私人配置；代码通用默认仍640全图。没有下载新依赖、训练或云端看图。
+- 独立审查发现全幅tuple文案误标，主任务已规范化并复验；主任务另外修复无效采样间隔测试、小数ROI舍入、请求尺寸误称实际尺寸等问题。详见[审查记录](code_review/camera-roi-review.md)。实际`.venv/bin/ruff check .`、`.venv/bin/ruff format --check .`、`.venv/bin/pytest -q`、`git diff --check`退出0：147 passed、3 deselected、8.93秒，109个Python文件格式通过；live API/camera标记用例不由离线测试替代。
+- 浏览器实际检查新页面，独立`VAA_DATA_DIR=data/acceptance/ui-crop-20260908`，启动真实摄像头0、展示720p请求/880×420观察范围/真实杯框，然后点击停止成功。数据库Agent/tool/watch/notification记录均0，仅一个杯子出现事件；本地`ui-smoke-summary.json`保存实际观察计数与源码SHA。页面留在127.0.0.1:8501以便后续实物测试，摄像头已停止释放，不在后台继续检测。
+- 尚待用户配合：固定候选设置的空背景、杯子移出/放回、完整瓶子与手机分别/同时入镜、每类十轮及真实Agent联合提醒；720p三十分钟与Windows实机也未完成。当前静止场景收益不关闭上述验收条件。

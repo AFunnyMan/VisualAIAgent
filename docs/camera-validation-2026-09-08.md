@@ -60,3 +60,5 @@ uv run --locked python scripts/camera_acceptance.py \
 总体及每类至少 90% 的原始验收条件保持不变。遮挡、物理断连、完整应用内真实 Agent 提醒和 Windows 11 实机仍按 [用户辅助验收](user-acceptance.md) 分别执行。稳定性通过不能关闭这些验收项。
 
 完整执行进度与后续结果以 [build-log](../harness/build-log.md) 为准。
+
+后续用户要求查资料并开始修复，已执行输入几何、分辨率及两轮正式工作器复验，并加入可选取景配置。局部收益、失败样本及未关闭项见[实机改进记录](camera-remediation-2026-09-08.md)。

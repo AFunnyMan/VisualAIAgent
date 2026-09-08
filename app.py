@@ -81,14 +81,123 @@ with st.sidebar:
         ["标准 · 每秒一次", "省电 · 每两秒一次"],
         index=0 if runtime.config.sample_interval == 1 else 1,
     )
+    resolutions = [(640, 480), (1280, 720), (1920, 1080)]
+    configured_resolution = (runtime.config.camera_width, runtime.config.camera_height)
+    resolution = st.selectbox(
+        "采集清晰度",
+        resolutions,
+        index=resolutions.index(configured_resolution),
+        format_func=lambda value: f"{value[0]} × {value[1]}",
+    )
+    with st.expander("观察范围"):
+        configured_region = runtime.config.observation_region
+        range_mode = st.radio(
+            "范围",
+            ["完整画面", "自定义"],
+            index=1 if configured_region else 0,
+            horizontal=True,
+        )
+        initial_region = configured_region or (0.0, 0.0, 1.0, 1.0)
+        region_left = st.number_input(
+            "左边界（%）",
+            0.0,
+            99.99,
+            initial_region[0] * 100,
+            1.0,
+            format="%.2f",
+        )
+        region_top = st.number_input(
+            "上边界（%）",
+            0.0,
+            99.99,
+            initial_region[1] * 100,
+            1.0,
+            format="%.2f",
+        )
+        region_right = st.number_input(
+            "右边界（%）",
+            0.01,
+            100.0,
+            initial_region[2] * 100,
+            1.0,
+            format="%.2f",
+        )
+        region_bottom = st.number_input(
+            "下边界（%）",
+            0.01,
+            100.0,
+            initial_region[3] * 100,
+            1.0,
+            format="%.2f",
+        )
+        st.caption(
+            "只判断预览范围；物品移出范围只表示在当前画面中持续未检测到，不代表它从整个环境中消失。"
+        )
+    selected_region = (
+        (0.0, 0.0, 1.0, 1.0)
+        if range_mode == "完整画面"
+        else (
+            region_left / 100,
+            region_top / 100,
+            region_right / 100,
+            region_bottom / 100,
+        )
+    )
     left, right = st.columns(2)
     if left.button("开始观察", type="primary", width="stretch"):
-        show_result(
-            runtime.start_camera(int(camera_index), 1.0 if speed.startswith("标准") else 2.0)
-        )
+        if range_mode == "自定义" and (region_left >= region_right or region_top >= region_bottom):
+            st.error("观察范围无效：左边界须小于右边界，上边界须小于下边界。")
+        else:
+            requested_interval = 1.0 if speed.startswith("标准") else 2.0
+            requested_settings = (
+                int(camera_index),
+                resolution[0],
+                resolution[1],
+                None if selected_region == (0.0, 0.0, 1.0, 1.0) else selected_region,
+                requested_interval,
+            )
+            active_settings = runtime.diagnostics()["camera_settings"]
+            if runtime.camera_running and active_settings != requested_settings:
+                stopped = runtime.stop_camera()
+                if not stopped.ok:
+                    show_result(stopped)
+                else:
+                    show_result(
+                        runtime.start_camera(
+                            int(camera_index),
+                            requested_interval,
+                            resolution=resolution,
+                            observation_region=selected_region,
+                        )
+                    )
+            else:
+                show_result(
+                    runtime.start_camera(
+                        int(camera_index),
+                        requested_interval,
+                        resolution=resolution,
+                        observation_region=selected_region,
+                    )
+                )
     if right.button("停止观察", width="stretch"):
         show_result(runtime.stop_camera())
     st.caption("启动后使用非镜像坐标。停止、断连或过期画面均表示当前未知。")
+    active_settings = runtime.diagnostics()["camera_settings"]
+    if active_settings:
+        active_camera, active_width, active_height, active_region, active_interval = active_settings
+        region_text = (
+            "完整画面"
+            if active_region is None
+            else "左 {:.0%}、上 {:.0%}、右 {:.0%}、下 {:.0%}".format(*active_region)
+        )
+        st.caption(
+            f"当前启用设置（请求）：摄像头 {active_camera} · "
+            f"{active_width} × {active_height} · "
+            f"{region_text} · 每 {active_interval:g} 秒采样"
+        )
+        active_observation, _ = runtime.snapshot()
+        if active_observation and active_observation.width and active_observation.height:
+            st.caption(f"当前预览尺寸：{active_observation.width} × {active_observation.height}")
     st.divider()
     if runtime.config.agent_connected:
         st.success("Agent 已配置")

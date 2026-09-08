@@ -10,6 +10,7 @@ import ast
 import hashlib
 import hmac
 import json
+import math
 import os
 import threading
 import time
@@ -73,15 +74,19 @@ class CameraSource:
         width: int = 640,
         height: int = 480,
         backend: int | None = None,
+        observation_region: tuple[float, float, float, float] | None = None,
     ) -> None:
         self.device_index = device_index
         self.requested_width = width
         self.requested_height = height
         self.backend = backend
+        self.observation_region = _validate_observation_region(observation_region)
         self.status: CameraStatus = "stopped"
         self.last_error: str | None = None
         self.actual_width = 0
         self.actual_height = 0
+        self.observation_width = 0
+        self.observation_height = 0
         self.backend_name: str | None = None
         self._capture: cv2.VideoCapture | None = None
 
@@ -101,6 +106,9 @@ class CameraSource:
         capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.requested_height)
         self.actual_width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.actual_height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        left, top, right, bottom = self.region_pixels(self.actual_width, self.actual_height)
+        self.observation_width = right - left
+        self.observation_height = bottom - top
         try:
             self.backend_name = capture.getBackendName()
         except cv2.error:
@@ -121,13 +129,53 @@ class CameraSource:
             return None
         self.status = "running"
         self.last_error = None
-        return cast(Frame, frame)
+        frame_height, frame_width = frame.shape[:2]
+        left, top, right, bottom = self.region_pixels(frame_width, frame_height)
+        self.observation_width = right - left
+        self.observation_height = bottom - top
+        if self.observation_region is None:
+            return cast(Frame, frame)
+        return cast(Frame, frame[top:bottom, left:right].copy())
+
+    def region_pixels(self, width: int, height: int) -> tuple[int, int, int, int]:
+        """Return the configured observation bounds for a concrete frame size."""
+        if width < 1 or height < 1:
+            return (0, 0, max(0, width), max(0, height))
+        if self.observation_region is None:
+            return (0, 0, width, height)
+        left, top, right, bottom = self.observation_region
+        x1 = min(width - 1, max(0, math.floor(left * width)))
+        y1 = min(height - 1, max(0, math.floor(top * height)))
+        x2 = min(width, max(x1 + 1, math.ceil(right * width)))
+        y2 = min(height, max(y1 + 1, math.ceil(bottom * height)))
+        return (x1, y1, x2, y2)
 
     def close(self) -> None:
         capture, self._capture = self._capture, None
         if capture is not None:
             capture.release()
         self.status = "stopped"
+
+
+def _validate_observation_region(
+    region: tuple[float, float, float, float] | None,
+) -> tuple[float, float, float, float] | None:
+    if region is None:
+        return None
+    if not isinstance(region, tuple) or len(region) != 4:
+        raise ValueError("observation_region must be a four-value tuple")
+    try:
+        left, top, right, bottom = (float(value) for value in region)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("observation_region values must be finite numbers") from exc
+    if not all(math.isfinite(value) for value in (left, top, right, bottom)):
+        raise ValueError("observation_region values must be finite numbers")
+    if not (0 <= left < right <= 1 and 0 <= top < bottom <= 1):
+        raise ValueError(
+            "observation_region must satisfy 0 <= left < right <= 1 and 0 <= top < bottom <= 1"
+        )
+    values = (left, top, right, bottom)
+    return None if values == (0.0, 0.0, 1.0, 1.0) else values
 
 
 class ReplaySource:

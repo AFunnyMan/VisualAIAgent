@@ -1,5 +1,6 @@
 """Explicit environment configuration. Loading never opens devices or networks."""
 
+import math
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,6 +25,9 @@ class Config:
     sample_interval: float = 1.0
     confidence: float = 0.35
     camera_index: int = 0
+    camera_width: int = 640
+    camera_height: int = 480
+    observation_region: tuple[float, float, float, float] | None = None
 
     def __post_init__(self):
         ZoneInfo(self.timezone)
@@ -43,6 +47,27 @@ class Config:
             raise ValueError("Sample interval must be 1 or 2 seconds")
         if not 0 < self.confidence < 1 or self.camera_index < 0:
             raise ValueError("Invalid confidence or camera index")
+        if (self.camera_width, self.camera_height) not in {
+            (640, 480),
+            (1280, 720),
+            (1920, 1080),
+        }:
+            raise ValueError("Camera resolution must be 640x480, 1280x720, or 1920x1080")
+        region = self.observation_region
+        if region is not None:
+            if not isinstance(region, tuple) or len(region) != 4:
+                raise ValueError("Observation region must contain four values")
+            values = tuple(float(value) for value in region)
+            left, top, right, bottom = values
+            if not all(math.isfinite(value) for value in values) or not (
+                0 <= left < right <= 1 and 0 <= top < bottom <= 1
+            ):
+                raise ValueError("Observation region must be finite and inside the frame")
+            object.__setattr__(
+                self,
+                "observation_region",
+                None if values == (0.0, 0.0, 1.0, 1.0) else values,
+            )
 
     @property
     def agent_connected(self) -> bool:
@@ -52,6 +77,15 @@ class Config:
     def from_env(cls, *, dotenv_path: str | Path | None = ".env") -> "Config":
         if dotenv_path is not None:
             load_dotenv(dotenv_path, override=False)
+        raw_region = os.getenv("VAA_OBSERVATION_REGION", "").strip()
+        try:
+            observation_region = (
+                tuple(float(value.strip()) for value in raw_region.split(","))
+                if raw_region
+                else None
+            )
+        except ValueError as exc:
+            raise ValueError("VAA_OBSERVATION_REGION must contain four numbers") from exc
         return cls(
             data_dir=Path(os.getenv("VAA_DATA_DIR", "data")),
             model_path=Path(os.getenv("VAA_MODEL_PATH", "models/yolo26n-e2e.onnx")),
@@ -66,4 +100,7 @@ class Config:
             sample_interval=float(os.getenv("VAA_SAMPLE_INTERVAL", "1")),
             confidence=float(os.getenv("VAA_CONFIDENCE", "0.35")),
             camera_index=int(os.getenv("VAA_CAMERA_INDEX", "0")),
+            camera_width=int(os.getenv("VAA_CAMERA_WIDTH", "640")),
+            camera_height=int(os.getenv("VAA_CAMERA_HEIGHT", "480")),
+            observation_region=observation_region,  # type: ignore[arg-type]
         )

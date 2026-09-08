@@ -179,6 +179,7 @@ class ConsoleState:
     output: Path
     duration: float
     max_raw_age_seconds: float = 2.5
+    observation_region: tuple[float, float, float, float] | None = None
     started_wall: str = field(default_factory=_utcnow)
     started_mono: float = field(default_factory=time.monotonic)
     csrf: str = field(default_factory=lambda: secrets.token_urlsafe(24))
@@ -213,6 +214,7 @@ class ConsoleState:
                 "started_at": self.started_wall,
                 "elapsed_seconds": round(elapsed, 3),
                 "target_seconds": self.duration,
+                "observation_region": self.observation_region,
                 "acceptance_elapsed_seconds": round(acceptance_elapsed, 3),
                 "latest": self.latest,
                 "fresh_observations": self.fresh_count,
@@ -363,7 +365,7 @@ def _page(csrf: str) -> str:
 <span>杯子：</span><button onclick="send('placed','cup')">已放入</button><button onclick="send('removed','cup')">已移出</button><br>
 <span>瓶子：</span><button onclick="send('placed','bottle')">已放入</button><button onclick="send('removed','bottle')">已移出</button><br>
 <button onclick="send('stop')">提前停止（本次不通过）</button></div>
-<script>const statusBox=document.getElementById('status'),errorBox=document.getElementById('error'),previewImage=document.getElementById('preview');const csrf={json.dumps(csrf)};const names={{'cell phone':'手机',cup:'杯子',bottle:'瓶子'}},states={{running:'正常采集',stopped:'已停止',stale:'画面过期',disconnected:'已断开',error:'异常',paused:'已暂停'}},regions={{left:'左侧',center:'中间',right:'右侧'}};async function send(action,category){{try{{let p={{action,csrf}};if(category)p.category=category;let r=await fetch('/api/action',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(p)}});if(!r.ok)throw new Error(await r.text());errorBox.textContent='操作已记录'}}catch(e){{errorBox.textContent='操作失败：'+e.message}}await poll()}}async function poll(){{try{{let r=await fetch('/api/state',{{cache:'no-store'}});if(!r.ok)throw new Error('状态读取失败');let s=await r.json(),l=s.latest||{{}},left=Math.max(0,s.target_seconds-s.acceptance_elapsed_seconds),ds=(l.detections||[]).map(d=>names[d.category]+' '+Math.round(d.confidence*100)+'%（'+(regions[d.region]||d.region)+'）').join('、')||'暂无';statusBox.innerHTML='摄像头状态：<b>'+(states[l.status]||'启动中')+'</b><br>剩余时长：'+Math.ceil(left)+' 秒<br>有效画面：'+s.fresh_observations+'，异常状态：'+s.fault_observations+'<br>当前检测：'+ds+'<br>视觉事件：'+s.event_count+'，人工标记：'+s.marker_count;previewImage.src='/latest.jpg?t='+Date.now()}}catch(e){{errorBox.textContent='页面更新失败：'+e.message}}}}setInterval(poll,1000);poll()</script>"""
+<script>const statusBox=document.getElementById('status'),errorBox=document.getElementById('error'),previewImage=document.getElementById('preview');const csrf={json.dumps(csrf)};const names={{'cell phone':'手机',cup:'杯子',bottle:'瓶子'}},states={{running:'正常采集',stopped:'已停止',stale:'画面过期',disconnected:'已断开',error:'异常',paused:'已暂停'}},regions={{left:'左侧',center:'中间',right:'右侧'}};async function send(action,category){{try{{let p={{action,csrf}};if(category)p.category=category;let r=await fetch('/api/action',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(p)}});if(!r.ok)throw new Error(await r.text());errorBox.textContent='操作已记录'}}catch(e){{errorBox.textContent='操作失败：'+e.message}}await poll()}}async function poll(){{try{{let r=await fetch('/api/state',{{cache:'no-store'}});if(!r.ok)throw new Error('状态读取失败');let s=await r.json(),l=s.latest||{{}},left=Math.max(0,s.target_seconds-s.acceptance_elapsed_seconds),ds=(l.detections||[]).map(d=>names[d.category]+' '+Math.round(d.confidence*100)+'%（'+(regions[d.region]||d.region)+'）').join('、')||'暂无';statusBox.innerHTML='摄像头状态：<b>'+(states[l.status]||'启动中')+'</b><br>剩余时长：'+Math.ceil(left)+' 秒<br>有效画面：'+s.fresh_observations+'，异常状态：'+s.fault_observations+'<br>观察范围：'+(s.observation_region?'仅预览中的裁剪范围（范围外不判断）':'全画面')+'<br>当前检测：'+ds+'<br>视觉事件：'+s.event_count+'，人工标记：'+s.marker_count;previewImage.src='/latest.jpg?t='+Date.now()}}catch(e){{errorBox.textContent='页面更新失败：'+e.message}}}}setInterval(poll,1000);poll()</script>"""
 
 
 def run(args: argparse.Namespace) -> int:
@@ -380,7 +382,17 @@ def run(args: argparse.Namespace) -> int:
     )
     process = psutil.Process()
     process.cpu_percent()
-    source = CameraSource(args.camera, width=args.width, height=args.height, backend=args.backend)
+    width = args.width if args.width is not None else config.camera_width
+    height = args.height if args.height is not None else config.camera_height
+    region = tuple(args.region) if args.region is not None else config.observation_region
+    source = CameraSource(
+        args.camera,
+        width=width,
+        height=height,
+        backend=args.backend,
+        observation_region=region,
+    )
+    state.observation_region = source.observation_region
     detector = RecentInputDetector(
         YoloOnnxDetector(
             config.model_path,
@@ -550,8 +562,10 @@ def run(args: argparse.Namespace) -> int:
         "result_reason": reason,
         "platform": platform.platform(),
         "camera_index": args.camera,
-        "requested_size": [args.width, args.height],
+        "requested_size": [width, height],
         "actual_size": [source.actual_width, source.actual_height],
+        "observation_size": [source.observation_width, source.observation_height],
+        "observation_region": source.observation_region,
         "backend": source.backend_name,
         "cloud_or_agent_calls": 0,
         "worker_stop_failed": stop_failed,
@@ -590,16 +604,23 @@ def main() -> None:
     parser.add_argument("--output", required=True, type=Path, help="必须是尚不存在的新目录")
     parser.add_argument("--duration", type=float, default=1800)
     parser.add_argument("--camera", type=int, default=0)
-    parser.add_argument("--width", type=int, default=640)
-    parser.add_argument("--height", type=int, default=480)
+    parser.add_argument("--width", type=int, help="默认使用 VAA_CAMERA_WIDTH")
+    parser.add_argument("--height", type=int, help="默认使用 VAA_CAMERA_HEIGHT")
+    parser.add_argument(
+        "--region",
+        type=float,
+        nargs=4,
+        metavar=("LEFT", "TOP", "RIGHT", "BOTTOM"),
+        help="归一化观察范围；默认使用配置，0 0 1 1 表示全画面",
+    )
     parser.add_argument("--backend", type=int)
     parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()
     if (
         args.duration <= 0
         or args.camera < 0
-        or args.width <= 0
-        or args.height <= 0
+        or (args.width is not None and args.width <= 0)
+        or (args.height is not None and args.height <= 0)
         or not 0 <= args.port <= 65535
     ):
         parser.error("时长、摄像头编号、尺寸或端口无效")

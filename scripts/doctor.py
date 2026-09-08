@@ -39,6 +39,8 @@ def main():
         if model_exists
         else None,
         "sample_interval_seconds": config.sample_interval,
+        "requested_camera_size": [config.camera_width, config.camera_height],
+        "observation_region": config.observation_region,
         "camera_tested": False,
         "live_api_tested": False,
     }

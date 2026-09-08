@@ -74,7 +74,12 @@ def main():
             )
             worker = VisionWorker(
                 detector,
-                CameraSource(args.camera),
+                CameraSource(
+                    args.camera,
+                    width=config.camera_width,
+                    height=config.camera_height,
+                    observation_region=config.observation_region,
+                ),
                 store.ingest,
                 inference_interval=config.sample_interval,
                 stale_after=config.sample_interval * 2.5,
@@ -134,6 +139,10 @@ def main():
         "invalid_samples": sum(not row["fresh"] for row in rows),
         "model_requests": 0,
         "recognition_quality_accepted": False,
+        "requested_camera_size": [config.camera_width, config.camera_height]
+        if args.camera is not None
+        else None,
+        "observation_region": config.observation_region if args.camera is not None else None,
         "note": (
             "Performance recording only; camera scene accuracy and alert latency require scoring."
         ),

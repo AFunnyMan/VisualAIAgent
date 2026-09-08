@@ -31,6 +31,12 @@ class ApplicationRuntime:
         self._thread: Thread | None = None
         self._vision = None
         self._detector = None
+        self._active_camera_settings: (
+            tuple[int, int, int, tuple[float, float, float, float] | None, float] | None
+        ) = None
+        self._last_view_key: (
+            tuple[int, int, int, tuple[float, float, float, float] | None] | None
+        ) = None
         self.last_error: str | None = None
         try:
             self.memory = MemoryStore(config.data_dir, max_gap_seconds=config.sample_interval * 2.5)
@@ -178,24 +184,57 @@ class ApplicationRuntime:
             loop.run_until_complete(loop.shutdown_asyncgens())
             loop.close()
 
-    def start_camera(self, camera_index: int | None = None, interval: float | None = None):
+    def start_camera(
+        self,
+        camera_index: int | None = None,
+        interval: float | None = None,
+        *,
+        resolution: tuple[int, int] | None = None,
+        observation_region: tuple[float, float, float, float] | None = None,
+    ):
         with self._camera_lock:
-            return self._start_camera(camera_index, interval)
+            return self._start_camera(camera_index, interval, resolution, observation_region)
 
-    def _start_camera(self, camera_index: int | None, interval: float | None):
+    def _start_camera(self, camera_index, interval, resolution, observation_region):
         with self._lock:
             if self._closed:
                 return ToolResult(ok=False, error="应用已关闭")
-            if self._vision is not None:
-                if self._vision.running:
-                    return ToolResult(ok=True, data={"status": "already_running"})
-                return ToolResult(ok=False, error="上一次摄像头工作线程尚未完成停止清理。")
             try:
+                width, height = resolution or (self.config.camera_width, self.config.camera_height)
                 config = replace(
                     self.config,
                     camera_index=self.config.camera_index if camera_index is None else camera_index,
                     sample_interval=self.config.sample_interval if interval is None else interval,
+                    camera_width=width,
+                    camera_height=height,
+                    observation_region=(
+                        self.config.observation_region
+                        if observation_region is None
+                        else observation_region
+                    ),
                 )
+                settings = (
+                    config.camera_index,
+                    config.camera_width,
+                    config.camera_height,
+                    config.observation_region,
+                    config.sample_interval,
+                )
+                if self._vision is not None:
+                    if self._vision.running:
+                        if (
+                            self._active_camera_settings is None
+                            or settings == self._active_camera_settings
+                        ):
+                            return ToolResult(
+                                ok=True,
+                                data={"status": "already_running", "settings": settings},
+                            )
+                        return ToolResult(
+                            ok=False,
+                            error="观察设置已更改，请先停止观察，再重新开始。",
+                        )
+                    return ToolResult(ok=False, error="上一次摄像头工作线程尚未完成停止清理。")
                 if self._detector is None:
                     self._detector = YoloOnnxDetector(
                         config.model_path,
@@ -203,7 +242,15 @@ class ApplicationRuntime:
                         expected_sha256=config.model_sha256 or None,
                     )
                 self.memory.set_max_gap_seconds(config.sample_interval * 2.5)
-                source = CameraSource(device_index=config.camera_index)
+                view_key = settings[:4]
+                if self._last_view_key is not None and view_key != self._last_view_key:
+                    self.memory.reset_event_baseline()
+                source = CameraSource(
+                    device_index=config.camera_index,
+                    width=config.camera_width,
+                    height=config.camera_height,
+                    observation_region=config.observation_region,
+                )
                 self._vision = VisionWorker(
                     self._detector,
                     source,
@@ -212,8 +259,10 @@ class ApplicationRuntime:
                     stale_after=config.sample_interval * 2.5,
                 )
                 self._vision.start()
+                self._active_camera_settings = settings
+                self._last_view_key = view_key
                 self.last_error = None
-                return ToolResult(ok=True, data={"status": "starting"})
+                return ToolResult(ok=True, data={"status": "starting", "settings": settings})
             except Exception as exc:
                 self.last_error = (
                     f"启动失败（{type(exc).__name__}）。请检查模型校验、摄像头权限和设备。"
@@ -251,6 +300,7 @@ class ApplicationRuntime:
             )
             if self._vision is worker:
                 self._vision = None
+                self._active_camera_settings = None
         return ToolResult(ok=True, data={"status": "stopped"})
 
     def snapshot(self) -> tuple[SceneObservation | None, bytes | None]:
@@ -283,4 +333,5 @@ class ApplicationRuntime:
             "queued_requests": self._jobs.qsize(),
             "agent_configured": self.config.agent_connected,
             "error": self.last_error,
+            "camera_settings": self._active_camera_settings,
         }

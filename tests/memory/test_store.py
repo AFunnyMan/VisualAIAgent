@@ -118,6 +118,22 @@ def test_changing_max_gap_resets_pending_confirmation(tmp_path) -> None:
     assert [event.kind for event in store.ingest(observation(4))] == ["appeared"]
 
 
+def test_reset_event_baseline_forgets_presence_but_preserves_history(tmp_path) -> None:
+    store = MemoryStore(tmp_path, clock=lambda: BASE)
+    for second in range(3):
+        appeared = store.ingest(observation(second))
+    appeared_id = appeared[0].event_id
+
+    store.reset_event_baseline()
+    for second in (3, 6, 9):
+        assert store.ingest(observation(second, None)) == []
+    assert store.get_event(appeared_id) is not None
+    assert store.find_object("cup").data["found"] is True
+    assert store.ingest(observation(10)) == []
+    assert store.ingest(observation(11)) == []
+    assert [event.kind for event in store.ingest(observation(12))] == ["appeared"]
+
+
 def test_failed_database_transaction_does_not_advance_machine(tmp_path, monkeypatch) -> None:
     store = MemoryStore(tmp_path, clock=lambda: BASE)
     store.ingest(observation(0))

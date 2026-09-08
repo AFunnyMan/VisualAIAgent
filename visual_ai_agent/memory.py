@@ -316,6 +316,12 @@ class MemoryStore:
             self._machine.max_gap_seconds = seconds
             self._machine.reset_continuity()
 
+    def reset_event_baseline(self) -> None:
+        """Forget current presence for a changed view while retaining durable history."""
+        with self._lock:
+            self._machine = EventStateMachine(max_gap_seconds=self.max_gap_seconds)
+            self._has_session_observation = False
+
     def _write_evidence(self, jpeg: bytes | None) -> tuple[str, str, str, int] | None:
         if not jpeg:
             return None

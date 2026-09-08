@@ -280,3 +280,126 @@ def test_source_close_failure_is_not_overwritten_or_restarted(tmp_path):
             ApplicationRuntime(Config(data_dir=tmp_path))
     finally:
         runtime._instance.close()
+
+
+def test_camera_settings_are_forwarded_and_running_changes_are_rejected(tmp_path, monkeypatch):
+    import visual_ai_agent.runtime as module
+
+    sources = []
+
+    class FakeSource:
+        def __init__(self, **kwargs):
+            sources.append(kwargs)
+
+    class FakeWorker:
+        running = False
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def start(self):
+            self.running = True
+
+        def stop(self):
+            self.running = False
+
+        def snapshot(self):
+            return None, None
+
+    monkeypatch.setattr(module, "CameraSource", FakeSource)
+    monkeypatch.setattr(module, "YoloOnnxDetector", lambda *_args, **_kwargs: object())
+    monkeypatch.setattr(module, "VisionWorker", FakeWorker)
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path))
+    try:
+        started = runtime.start_camera(
+            2,
+            2,
+            resolution=(1280, 720),
+            observation_region=(0.1, 0.2, 0.9, 0.8),
+        )
+        assert started.ok
+        assert sources == [
+            {
+                "device_index": 2,
+                "width": 1280,
+                "height": 720,
+                "observation_region": (0.1, 0.2, 0.9, 0.8),
+            }
+        ]
+        assert (
+            runtime.start_camera(
+                2,
+                2,
+                resolution=(1280, 720),
+                observation_region=(0.1, 0.2, 0.9, 0.8),
+            ).data["status"]
+            == "already_running"
+        )
+        changed = runtime.start_camera(2, 2, resolution=(1920, 1080))
+        assert not changed.ok
+        assert "先停止" in changed.error
+        assert len(sources) == 1
+    finally:
+        runtime.close()
+
+
+def test_view_change_resets_presence_without_creating_missing_event(tmp_path, monkeypatch):
+    import visual_ai_agent.runtime as module
+
+    class FakeWorker:
+        running = False
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def start(self):
+            self.running = True
+
+        def stop(self):
+            self.running = False
+
+        def snapshot(self):
+            return None, None
+
+    monkeypatch.setattr(module, "CameraSource", lambda **_kwargs: object())
+    monkeypatch.setattr(module, "YoloOnnxDetector", lambda *_args, **_kwargs: object())
+    monkeypatch.setattr(module, "VisionWorker", FakeWorker)
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path))
+    now = utcnow()
+    try:
+        for second in range(3):
+            runtime.memory.ingest(
+                SceneObservation(
+                    observed_at=now + timedelta(seconds=second),
+                    monotonic_at=second,
+                    status="running",
+                    fresh=True,
+                    detections=[
+                        Detection(
+                            category="cup", confidence=0.9, bbox=(1, 1, 20, 20), region="left"
+                        )
+                    ],
+                    source="test",
+                )
+            )
+        assert runtime.start_camera().ok
+        assert runtime.stop_camera().ok
+        assert runtime.start_camera(observation_region=(0.0, 0.0, 0.5, 1.0)).ok
+        for second in range(10, 17):
+            runtime.memory.ingest(
+                SceneObservation(
+                    observed_at=now + timedelta(seconds=second),
+                    monotonic_at=second,
+                    status="running",
+                    fresh=True,
+                    detections=[],
+                    source="test",
+                )
+            )
+        events = runtime.memory.search_events(
+            "cup", now - timedelta(minutes=1), now + timedelta(minutes=1)
+        ).data["events"]
+        assert all(event["kind"] != "missing" for event in events)
+        assert runtime.memory.find_object("cup").data["found"] is True
+    finally:
+        runtime.close()

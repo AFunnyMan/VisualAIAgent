@@ -35,3 +35,40 @@ def test_naive_observation_time_is_rejected():
         SceneObservation(
             observed_at=datetime(2026, 1, 1), monotonic_at=1, status="running", fresh=True
         )
+
+
+@pytest.mark.parametrize("resolution", [(800, 600), (1280, 480), (1920, 720)])
+def test_rejects_unsupported_camera_resolution(resolution):
+    with pytest.raises(ValueError, match="Camera resolution"):
+        Config(camera_width=resolution[0], camera_height=resolution[1])
+
+
+@pytest.mark.parametrize(
+    "region",
+    [
+        (float("nan"), 0, 1, 1),
+        (0, 0, float("inf"), 1),
+        (-0.1, 0, 1, 1),
+        (0, 0, 1.1, 1),
+        (0.8, 0, 0.2, 1),
+        (0, 0.7, 1, 0.7),
+    ],
+)
+def test_rejects_invalid_observation_region(region):
+    with pytest.raises(ValueError, match="Observation region"):
+        Config(observation_region=region)
+
+
+def test_environment_loads_camera_settings_and_canonicalizes_full_frame(monkeypatch):
+    monkeypatch.setenv("VAA_CAMERA_WIDTH", "1280")
+    monkeypatch.setenv("VAA_CAMERA_HEIGHT", "720")
+    monkeypatch.setenv("VAA_OBSERVATION_REGION", "0, 0, 1, 1")
+    config = Config.from_env(dotenv_path=None)
+    assert (config.camera_width, config.camera_height) == (1280, 720)
+    assert config.observation_region is None
+
+
+def test_environment_rejects_malformed_observation_region(monkeypatch):
+    monkeypatch.setenv("VAA_OBSERVATION_REGION", "0,broken,1,1")
+    with pytest.raises(ValueError, match="VAA_OBSERVATION_REGION"):
+        Config.from_env(dotenv_path=None)
