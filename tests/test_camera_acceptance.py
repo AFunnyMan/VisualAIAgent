@@ -75,7 +75,7 @@ def test_object_marker_saves_recent_completed_input_with_distinct_times(tmp_path
     state.add_marker("empty_ready", None)
     assert not (tmp_path / "raw_markers").exists()
     state.add_marker("placed", "cup")
-    manifest = json.loads((tmp_path / "raw_markers" / "manifest.json").read_text())
+    manifest = json.loads((tmp_path / "raw_markers" / "manifest.json").read_text(encoding="utf-8"))
     assert len(manifest) == 1
     reference = manifest[0]
     assert reference["marker_server_time"] != reference["observation_captured_at"]
@@ -242,6 +242,6 @@ def test_all_markers_are_persisted_even_when_public_view_is_bounded(tmp_path: Pa
     state = camera_acceptance.ConsoleState(output=tmp_path, duration=10)
     for _ in range(61):
         state.add_marker("empty_ready", None)
-    saved = __import__("json").loads((tmp_path / "markers.json").read_text())
+    saved = __import__("json").loads((tmp_path / "markers.json").read_text(encoding="utf-8"))
     assert len(saved) == 61
     assert len(state.public()["markers"]) == 60

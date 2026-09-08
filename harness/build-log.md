@@ -295,3 +295,8 @@
 - 独立审查发现全幅tuple文案误标，主任务已规范化并复验；主任务另外修复无效采样间隔测试、小数ROI舍入、请求尺寸误称实际尺寸等问题。详见[审查记录](code_review/camera-roi-review.md)。实际`.venv/bin/ruff check .`、`.venv/bin/ruff format --check .`、`.venv/bin/pytest -q`、`git diff --check`退出0：147 passed、3 deselected、8.93秒，109个Python文件格式通过；live API/camera标记用例不由离线测试替代。
 - 浏览器实际检查新页面，独立`VAA_DATA_DIR=data/acceptance/ui-crop-20260908`，启动真实摄像头0、展示720p请求/880×420观察范围/真实杯框，然后点击停止成功。数据库Agent/tool/watch/notification记录均0，仅一个杯子出现事件；本地`ui-smoke-summary.json`保存实际观察计数与源码SHA。页面留在127.0.0.1:8501以便后续实物测试，摄像头已停止释放，不在后台继续检测。
 - 尚待用户配合：固定候选设置的空背景、杯子移出/放回、完整瓶子与手机分别/同时入镜、每类十轮及真实Agent联合提醒；720p三十分钟与Windows实机也未完成。当前静止场景收益不关闭上述验收条件。
+
+## 2026-09-08T20:05:00+08:00 — 远程Windows编码失败修复
+
+- 取景里程碑`2e04668`已正常提交/推送，远程[检查34223770172](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34223770172)为Mac成功、Windows失败。实际读取GitHub失败注释定位到既有`test_object_marker_saves_recent_completed_input_with_distinct_times`：生产脚本写UTF-8中文JSON，测试Path.read_text未指定编码，在Windows cp1252解码失败；不是摄像头取景运行故障。
+- 测试读取两处辅助台JSON均明确`encoding="utf-8"`，不改生产输出、不删除中文说明或验收断言。实际`.venv/bin/python scripts/ci_checks.py`全套147 passed、3 deselected、9.32秒，报告为被忽略的`data/ci-results.xml`。待重新推送后的Windows检查确认，不以本机通过代替。
