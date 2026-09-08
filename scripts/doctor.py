@@ -41,6 +41,7 @@ def main():
         "sample_interval_seconds": config.sample_interval,
         "requested_camera_size": [config.camera_width, config.camera_height],
         "observation_region": config.observation_region,
+        "cup_scale_recheck": config.cup_scale_recheck,
         "camera_tested": False,
         "live_api_tested": False,
     }

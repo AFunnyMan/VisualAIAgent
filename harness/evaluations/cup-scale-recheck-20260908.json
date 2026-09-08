@@ -1,0 +1,100 @@
+{
+  "recorded_date": "2026-09-08",
+  "timezone": "Asia/Shanghai",
+  "scope": "Single physical transparent cup development and prospective static retest, not general accuracy",
+  "model_sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+  "threshold": 0.35,
+  "transform": {
+    "scale": 0.75,
+    "padding": 114,
+    "extra_passes_max": 1,
+    "extra_categories": [
+      "cup"
+    ],
+    "trigger": "no primary cup",
+    "acceptance_observations_per_frame": 1
+  },
+  "development": {
+    "raw_stills": 6,
+    "geometry_trials": 28,
+    "photometric_trials": 18,
+    "frozen_six_cup_hits": 6
+  },
+  "prospective_same_frame_pair": {
+    "scope": "prospective fixed scale .75 current static scene, same fresh frame paired n; production worker/memory; no API; not diverse scene accuracy",
+    "actual_size": [
+      1280,
+      720
+    ],
+    "fresh": 120,
+    "faults_after_start": 0,
+    "primary_cup": 0,
+    "scaled_cup": 120,
+    "wall_seconds": 127.7261855409015,
+    "cpu_percent_one_core": 31.101677257306758,
+    "rss_max_mib": 421.234375,
+    "paired_inference_p95_ms": 134.4347250647843,
+    "worker_stopped": true,
+    "last_callback_error": null,
+    "appeared_events": 1,
+    "missing_events": 0
+  },
+  "biased_30_image_composite": {
+    "primary": {
+      "tp": 32,
+      "fp": 25,
+      "fn": 43
+    },
+    "composite": {
+      "tp": 32,
+      "fp": 25,
+      "fn": 43
+    },
+    "primary_cup": {
+      "tp": 14,
+      "fp": 16,
+      "fn": 12
+    },
+    "composite_cup": {
+      "tp": 14,
+      "fp": 16,
+      "fn": 12
+    },
+    "skip_recheck": 13,
+    "recheck": 17,
+    "added_cups": 0,
+    "limitations": "Selected difficult samples, existing pot/bucket cup errors inherited, not general false positive rate"
+  },
+  "private_evidence_root": "harness/artifacts/cup-slant-20260908",
+  "evidence_hashes": {
+    "inputs/manifest.json": "959e9fcc773469d7fa53dcd85a845ea02ed73d9a46653d5b8bea19224b610092",
+    "geometry.json": "2a163fb2dc2cdd34fa775ab066b518aa37caa9042634b8cb6617b2d30d791c53",
+    "photometric.json": "c20205641cadc9114b71b9c81aa9fa3fbe34905db4b3f50ecad4264e3c357c31",
+    "frozen-scale.json": "b0e3d3fb960c8a4754e7a540b7aa2da5708af7d729b3391c0085def158f2e35b",
+    "live-scale/paired.jsonl": "04a7d37b141f7f1b46f567a9f45bbf044338e8a755982f0d048e5bb7a246bdaf",
+    "live-scale/summary.json": "97cbbc6442aefe86def0c491f57dd10a2efce66eba12cabdfa117cb6ef1c1a98",
+    "model-trial/n-scale-075-hard-negatives/composite.json": "532e8d929dd851f21f1be38bc33b1a2cac4d7806f1f757cc7f080e8998df24f0",
+    "ui-first120.json": "d0df5a1aff2bb8cd9c8b62e6484ee343f2e6edf29ec3d0f81d7528c88627ef81"
+  },
+  "diagnostic_exit_note": "First live pairing exited 1 after evidence save and completed worker.stop, due to an invalid MemoryStore.close cleanup call. Removed from helper. Not a production exception.",
+  "production_ui_first120": {
+    "scope": "first 120 fresh production Streamlit observations after enabling .75 cup recheck, one static scene",
+    "first": "2026-09-08T14:12:52.078017+00:00",
+    "last": "2026-09-08T14:14:51.999054+00:00",
+    "fresh": 120,
+    "cup_samples": 110,
+    "max_consecutive_no_cup": 1,
+    "events": [
+      {
+        "kind": "appeared",
+        "category": "cup",
+        "observed_at": "2026-09-08T14:12:52.078017+00:00",
+        "confirmed_at": "2026-09-08T14:12:54.094963+00:00"
+      }
+    ],
+    "p95_inference_ms": 177.76283295825124,
+    "maximum_sample_gap_seconds": 1.0935813339892775,
+    "faults": 0,
+    "api_runs_since_restart": 0
+  }
+}

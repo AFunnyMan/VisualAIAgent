@@ -15,7 +15,12 @@ from visual_ai_agent.config import Config
 from visual_ai_agent.instance_lock import InstanceLock
 from visual_ai_agent.memory import MemoryStore
 from visual_ai_agent.models import SceneObservation, ToolResult, utcnow
-from visual_ai_agent.vision import CameraSource, VisionWorker, YoloOnnxDetector
+from visual_ai_agent.vision import (
+    CameraSource,
+    CupScaleRecheckDetector,
+    VisionWorker,
+    YoloOnnxDetector,
+)
 from visual_ai_agent.watches import WatchService
 
 
@@ -32,10 +37,10 @@ class ApplicationRuntime:
         self._vision = None
         self._detector = None
         self._active_camera_settings: (
-            tuple[int, int, int, tuple[float, float, float, float] | None, float] | None
+            tuple[int, int, int, tuple[float, float, float, float] | None, float, bool] | None
         ) = None
         self._last_view_key: (
-            tuple[int, int, int, tuple[float, float, float, float] | None] | None
+            tuple[int, int, int, tuple[float, float, float, float] | None, bool] | None
         ) = None
         self.last_error: str | None = None
         try:
@@ -191,11 +196,16 @@ class ApplicationRuntime:
         *,
         resolution: tuple[int, int] | None = None,
         observation_region: tuple[float, float, float, float] | None = None,
+        cup_scale_recheck: bool | None = None,
     ):
         with self._camera_lock:
-            return self._start_camera(camera_index, interval, resolution, observation_region)
+            return self._start_camera(
+                camera_index, interval, resolution, observation_region, cup_scale_recheck
+            )
 
-    def _start_camera(self, camera_index, interval, resolution, observation_region):
+    def _start_camera(
+        self, camera_index, interval, resolution, observation_region, cup_scale_recheck
+    ):
         with self._lock:
             if self._closed:
                 return ToolResult(ok=False, error="应用已关闭")
@@ -212,6 +222,11 @@ class ApplicationRuntime:
                         if observation_region is None
                         else observation_region
                     ),
+                    cup_scale_recheck=(
+                        self.config.cup_scale_recheck
+                        if cup_scale_recheck is None
+                        else cup_scale_recheck
+                    ),
                 )
                 settings = (
                     config.camera_index,
@@ -219,6 +234,7 @@ class ApplicationRuntime:
                     config.camera_height,
                     config.observation_region,
                     config.sample_interval,
+                    config.cup_scale_recheck,
                 )
                 if self._vision is not None:
                     if self._vision.running:
@@ -242,7 +258,7 @@ class ApplicationRuntime:
                         expected_sha256=config.model_sha256 or None,
                     )
                 self.memory.set_max_gap_seconds(config.sample_interval * 2.5)
-                view_key = settings[:4]
+                view_key = (*settings[:4], settings[5])
                 if self._last_view_key is not None and view_key != self._last_view_key:
                     self.memory.reset_event_baseline()
                 source = CameraSource(
@@ -251,8 +267,13 @@ class ApplicationRuntime:
                     height=config.camera_height,
                     observation_region=config.observation_region,
                 )
+                active_detector = (
+                    CupScaleRecheckDetector(self._detector)
+                    if config.cup_scale_recheck
+                    else self._detector
+                )
                 self._vision = VisionWorker(
-                    self._detector,
+                    active_detector,
                     source,
                     self.ingest,
                     inference_interval=config.sample_interval,

@@ -72,3 +72,11 @@ def test_environment_rejects_malformed_observation_region(monkeypatch):
     monkeypatch.setenv("VAA_OBSERVATION_REGION", "0,broken,1,1")
     with pytest.raises(ValueError, match="VAA_OBSERVATION_REGION"):
         Config.from_env(dotenv_path=None)
+
+
+def test_environment_loads_strict_cup_scale_recheck(monkeypatch):
+    monkeypatch.setenv("VAA_CUP_SCALE_RECHECK", "TRUE")
+    assert Config.from_env(dotenv_path=None).cup_scale_recheck is True
+    monkeypatch.setenv("VAA_CUP_SCALE_RECHECK", "yes")
+    with pytest.raises(ValueError, match="VAA_CUP_SCALE_RECHECK"):
+        Config.from_env(dotenv_path=None)

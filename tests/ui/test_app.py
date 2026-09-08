@@ -159,7 +159,31 @@ def test_changed_camera_settings_stop_then_start_with_selected_values(tmp_path, 
         assert args == (0, 1.0)
         assert kwargs["resolution"] == (1280, 720)
         assert kwargs["observation_region"] == (0.125, 0.0, 0.875, 1.0)
+        assert kwargs["cup_scale_recheck"] is False
         assert any("当前启用设置（请求）" in item.value for item in tested_app.caption)
+    finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()
+
+
+def test_cup_recheck_checkbox_uses_config_and_restarts_when_changed(tmp_path, monkeypatch):
+    monkeypatch.setenv("VAA_CUP_SCALE_RECHECK", "true")
+    tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
+    try:
+        checkbox = next(
+            item for item in tested_app.checkbox if item.label == "增强杯子检测（本地复查）"
+        )
+        assert checkbox.value is True
+        next(button for button in tested_app.button if button.label == "开始观察").click().run()
+        checkbox = next(
+            item for item in tested_app.checkbox if item.label == "增强杯子检测（本地复查）"
+        )
+        checkbox.uncheck().run()
+        calls.clear()
+        next(button for button in tested_app.button if button.label == "开始观察").click().run()
+        assert [call[0] for call in calls] == ["stop", "start"]
+        assert calls[-1][2]["cup_scale_recheck"] is False
     finally:
         for instance in created:
             instance.close()

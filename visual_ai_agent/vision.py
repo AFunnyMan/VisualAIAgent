@@ -479,6 +479,68 @@ class YoloOnnxDetector:
         return sorted(detections, key=lambda detection: detection.confidence, reverse=True)
 
 
+class CupScaleRecheckDetector:
+    """Retry cup detection once with a bounded scale transform."""
+
+    def __init__(self, detector: Detector, scale: float = 0.75) -> None:
+        if not 0 < scale < 1:
+            raise ValueError("scale must be between 0 and 1")
+        self.detector = detector
+        self.scale = scale
+
+    def detect(self, frame_bgr: Frame) -> list[Detection]:
+        primary = self.detector.detect(frame_bgr)
+        if any(detection.category == "cup" for detection in primary):
+            return primary
+
+        height, width = frame_bgr.shape[:2]
+        resized_width = max(1, round(width * self.scale))
+        resized_height = max(1, round(height * self.scale))
+        scale_x = resized_width / width
+        scale_y = resized_height / height
+        offset_x = (width - resized_width) // 2
+        offset_y = (height - resized_height) // 2
+        resized = cv2.resize(
+            frame_bgr,
+            (resized_width, resized_height),
+            interpolation=cv2.INTER_LINEAR,
+        )
+        canvas = np.full_like(frame_bgr, 114)
+        canvas[offset_y : offset_y + resized_height, offset_x : offset_x + resized_width] = resized
+        retry = self.detector.detect(canvas)
+
+        cups: list[Detection] = []
+        content_right = offset_x + resized_width
+        content_bottom = offset_y + resized_height
+        for detection in retry:
+            if detection.category != "cup":
+                continue
+            x1, y1, x2, y2 = detection.bbox
+            x1 = min(content_right, max(offset_x, x1))
+            y1 = min(content_bottom, max(offset_y, y1))
+            x2 = min(content_right, max(offset_x, x2))
+            y2 = min(content_bottom, max(offset_y, y2))
+            if x2 <= x1 or y2 <= y1:
+                continue
+            mapped = (
+                max(0.0, min(float(width), (x1 - offset_x) / scale_x)),
+                max(0.0, min(float(height), (y1 - offset_y) / scale_y)),
+                max(0.0, min(float(width), (x2 - offset_x) / scale_x)),
+                max(0.0, min(float(height), (y2 - offset_y) / scale_y)),
+            )
+            if mapped[2] <= mapped[0] or mapped[3] <= mapped[1]:
+                continue
+            cups.append(
+                Detection(
+                    category="cup",
+                    confidence=detection.confidence,
+                    bbox=mapped,
+                    region=region_for_box(mapped, width),
+                )
+            )
+        return sorted([*primary, *cups], key=lambda item: item.confidence, reverse=True)
+
+
 def annotate_frame(frame: Frame, detections: list[Detection]) -> Frame:
     """Draw local detections with Supervision, preserving all same-class candidates."""
     if not detections:

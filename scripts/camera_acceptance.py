@@ -35,7 +35,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from visual_ai_agent.config import Config  # noqa: E402
 from visual_ai_agent.memory import MemoryStore  # noqa: E402
 from visual_ai_agent.models import CATEGORIES, SceneObservation  # noqa: E402
-from visual_ai_agent.vision import CameraSource, VisionWorker, YoloOnnxDetector  # noqa: E402
+from visual_ai_agent.vision import (  # noqa: E402
+    CameraSource,
+    CupScaleRecheckDetector,
+    VisionWorker,
+    YoloOnnxDetector,
+)
 
 MAX_BODY_BYTES = 1024
 KNOWN_ACTIONS = frozenset({"empty_ready", "placed", "removed", "stop"})
@@ -393,13 +398,14 @@ def run(args: argparse.Namespace) -> int:
         observation_region=region,
     )
     state.observation_region = source.observation_region
-    detector = RecentInputDetector(
-        YoloOnnxDetector(
-            config.model_path,
-            confidence=config.confidence,
-            expected_sha256=config.model_sha256 or None,
-        )
+    local_detector = YoloOnnxDetector(
+        config.model_path,
+        confidence=config.confidence,
+        expected_sha256=config.model_sha256 or None,
     )
+    if config.cup_scale_recheck:
+        local_detector = CupScaleRecheckDetector(local_detector)
+    detector = RecentInputDetector(local_detector)
 
     def observe(observation: SceneObservation, jpeg: bytes | None) -> None:
         key = observation_key(observation)
@@ -565,6 +571,7 @@ def run(args: argparse.Namespace) -> int:
         "requested_size": [width, height],
         "actual_size": [source.actual_width, source.actual_height],
         "observation_size": [source.observation_width, source.observation_height],
+        "cup_scale_recheck": config.cup_scale_recheck,
         "observation_region": source.observation_region,
         "backend": source.backend_name,
         "cloud_or_agent_calls": 0,

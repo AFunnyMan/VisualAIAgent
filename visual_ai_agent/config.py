@@ -10,6 +10,18 @@ from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 
 
+def _strict_bool_env(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    normalized = raw.strip().lower()
+    if normalized == "true":
+        return True
+    if normalized == "false":
+        return False
+    raise ValueError(f"{name} must be true or false")
+
+
 @dataclass(frozen=True)
 class Config:
     data_dir: Path = Path("data")
@@ -28,9 +40,12 @@ class Config:
     camera_width: int = 640
     camera_height: int = 480
     observation_region: tuple[float, float, float, float] | None = None
+    cup_scale_recheck: bool = False
 
     def __post_init__(self):
         ZoneInfo(self.timezone)
+        if not isinstance(self.cup_scale_recheck, bool):
+            raise ValueError("cup_scale_recheck must be a boolean")
         if self.api_mode not in ("responses", "chat_completions"):
             raise ValueError("VAA_API_MODE must be responses or chat_completions")
         if self.api_base_url:
@@ -103,4 +118,5 @@ class Config:
             camera_width=int(os.getenv("VAA_CAMERA_WIDTH", "640")),
             camera_height=int(os.getenv("VAA_CAMERA_HEIGHT", "480")),
             observation_region=observation_region,  # type: ignore[arg-type]
+            cup_scale_recheck=_strict_bool_env("VAA_CUP_SCALE_RECHECK", False),
         )

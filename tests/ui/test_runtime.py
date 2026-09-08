@@ -343,6 +343,59 @@ def test_camera_settings_are_forwarded_and_running_changes_are_rejected(tmp_path
         runtime.close()
 
 
+def test_cup_recheck_wraps_reused_detector_and_participates_in_settings(tmp_path, monkeypatch):
+    import visual_ai_agent.runtime as module
+
+    base_detector = object()
+    wrappers = []
+    workers = []
+
+    class FakeWrapper:
+        def __init__(self, detector):
+            assert detector is base_detector
+            wrappers.append(self)
+
+    class FakeWorker:
+        running = False
+
+        def __init__(self, detector, *_args, **_kwargs):
+            self.detector = detector
+            workers.append(self)
+
+        def start(self):
+            self.running = True
+
+        def stop(self):
+            self.running = False
+
+        def snapshot(self):
+            return None, None
+
+    monkeypatch.setattr(module, "CameraSource", lambda **_kwargs: object())
+    monkeypatch.setattr(module, "YoloOnnxDetector", lambda *_args, **_kwargs: base_detector)
+    monkeypatch.setattr(module, "CupScaleRecheckDetector", FakeWrapper)
+    monkeypatch.setattr(module, "VisionWorker", FakeWorker)
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path, cup_scale_recheck=True))
+    try:
+        started = runtime.start_camera()
+        assert started.ok
+        assert started.data["settings"][-1] is True
+        assert workers[-1].detector is wrappers[-1]
+        assert runtime.start_camera().data["status"] == "already_running"
+        assert len(wrappers) == 1
+
+        changed = runtime.start_camera(cup_scale_recheck=False)
+        assert not changed.ok
+        assert "先停止" in changed.error
+        assert runtime.stop_camera().ok
+        assert runtime.start_camera(cup_scale_recheck=False).ok
+        assert workers[-1].detector is base_detector
+        assert len(wrappers) == 1
+        assert runtime._detector is base_detector
+    finally:
+        runtime.close()
+
+
 def test_view_change_resets_presence_without_creating_missing_event(tmp_path, monkeypatch):
     import visual_ai_agent.runtime as module
 

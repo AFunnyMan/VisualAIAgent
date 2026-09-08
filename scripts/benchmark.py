@@ -19,7 +19,12 @@ import psutil
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from visual_ai_agent.config import Config  # noqa: E402
 from visual_ai_agent.memory import MemoryStore  # noqa: E402
-from visual_ai_agent.vision import CameraSource, VisionWorker, YoloOnnxDetector  # noqa: E402
+from visual_ai_agent.vision import (  # noqa: E402
+    CameraSource,
+    CupScaleRecheckDetector,
+    VisionWorker,
+    YoloOnnxDetector,
+)
 
 
 def main():
@@ -39,6 +44,8 @@ def main():
     detector = YoloOnnxDetector(
         config.model_path, confidence=config.confidence, expected_sha256=config.model_sha256 or None
     )
+    if config.cup_scale_recheck:
+        detector = CupScaleRecheckDetector(detector)
     process = psutil.Process()
     process.cpu_percent()
     rows = []
@@ -142,6 +149,7 @@ def main():
         "requested_camera_size": [config.camera_width, config.camera_height]
         if args.camera is not None
         else None,
+        "cup_scale_recheck": config.cup_scale_recheck,
         "observation_region": config.observation_region if args.camera is not None else None,
         "note": (
             "Performance recording only; camera scene accuracy and alert latency require scoring."

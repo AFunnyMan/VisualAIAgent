@@ -320,3 +320,13 @@
 - 旧Streamlit进程即使重新创建连接仍失败，停止采集后仅正常终止已核验监听8501的项目进程，使用同一`VAA_DATA_DIR=data/acceptance/ui-crop-20260908`重启。实际浏览器恢复实时画面，21:36:21—21:37:07累计46有效观察、最大间隔1.065秒、首帧后故障0，880×420预览；21:00后视觉事件0、Agent运行0。恢复快照保存在本地`recovery.json`。可判断进程重启恢复有效，不能进一步证明唯一原生驱动根因，也不等于用户拔插USB验收。
 - Sol仅修改app.py/tests/ui/test_app.py：断连/error时用户显式点击开始观察执行stop→start，stop失败不start，健康同配置保留幂等；无画面时显示明确重连提示。没有新增后台重试，没有更改摄像头线程、3次/5秒或模型阈值。它修复原按钮只返回already_running的缺陷，但不承诺能代替本次所需的整个进程重启。
 - Sol全套149 passed、3 deselected及Ruff/格式通过；主任务审查差异并实际执行UI/runtime定向16 passed（7.71秒）、Ruff/格式和git diff --check通过。README记录重连仍失败时的进程重启方式。当前保持恢复后的实时观察供用户继续斜视角测试；杯子仍未检出，识别问题尚未解决。
+
+## 2026-09-08T22:16:00+08:00 — 当前斜拍透明杯：固定缩放复查与正式页面恢复
+
+- 用户确认杯子已放置，要求开始检测并解决漏检。恢复现场HEAD为71d50fe，工作树原干净；既有页面60新鲜采样0cup。暂停页面后摄像头0保存6张原始PNG，正常关闭；未访问其他摄像头。Sol分别执行只读资料/模型对照、困难样本检查和有界核心实现，另Sol只读审查，无高于Sol子Agent。
+- 依据官方TTA、SAHI、OpenCV资料进行有界实测。28次旋转/上下文、18次光度/缩放开发尝试，仅原始全画面0.75缩小居中114填充恢复n杯子；冻结六图6/6。m/RF局部有改善但未采用，保留原n/0.35/一秒档与模型SHA。细节与来源见[报告](../docs/cup-scale-recheck-2026-09-08.md)。
+- `.venv/bin/python harness/artifacts/cup-slant-20260908/live_scale.py`：120新鲜采样同帧原图0cup、缩放120cup，仅1appeared、0missing/0fault；worker正常停止。结果保存后误调不存在的MemoryStore.close导致退出1，辅助脚本已移除该调用，未伪报退出0。配对p95 134.43ms、CPU均值31.10%（含启动，单核100%）、峰值RSS421.23MiB；非隔离性能基准。
+- 新增默认关闭的CupScaleRecheckDetector和VAA_CUP_SCALE_RECHECK/UI开关；最多同帧追加一次同模型杯子复查，原图证据/坐标、观察计数与三次/五秒条件保留。切换后stop再start并重置当前事件基线，原历史保留。doctor、benchmark、camera_acceptance与.env.example同步。未新增依赖、训练或云端视觉。
+- 30个既有困难样本实际条件组合原/新TP/FP/FN均32/25/43；杯14/16/12。13张跳过，17张未补杯，新增正确杯/假杯均0；原锅桶四帧误报继承，不称修复。该刻意选样不能估计总体误报率。可分享数据与证据SHA：[摘要](evaluations/cup-scale-recheck-20260908.json)。
+- 正式页面重启沿用原data/acceptance/ui-crop-20260908，私有.env仅改本机完整720p与增强开启，密钥不输出/提交。22:12:52—22:14:51首120fresh中110cup，最大连续漏检1，1appeared/0missing/0fault，最大采样间隔1.094秒，推理p95 177.76ms（并发开发时），Agent运行0。页面目检杯子框正确；保持摄像头观察，已请求用户移出10秒再放回保持15秒，尚待其确认，不写移动闭环通过。
+- root回归首轮156pass/1fail：UI测试被本机新.env设置影响。离线fixture现在禁用dotenv并清空继承VAA变量、保留显式case设置和真实marker边界；复跑`.venv/bin/pytest`退出0：157 passed / 3 deselected。Ruff check/format（112文件）与diff --check通过。独立[审查](code_review/cup-scale-recheck-review.md)无阻断。下一步提交本里程碑并正常同步，用户移动与Windows实机不伪装成已通过。

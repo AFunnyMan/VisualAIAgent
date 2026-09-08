@@ -109,3 +109,5 @@ uv run --locked python scripts/doctor.py
 | 来源与第三方许可 | [references](docs/references.md)、[notices](docs/third-party-notices.md) |
 
 远程仓库：[AFunnyMan/VisualAIAgent](https://github.com/AFunnyMan/VisualAIAgent)。项目自身发布许可证尚未选择；依赖与模型保留各自许可证，ONNX 导出不会改变模型许可。私人画面、数据库、Key、权重、环境和完整运行日志不提交。
+
+当前透明杯难例可尝试侧栏“增强杯子检测（本地复查）”，每张画面最多追加一次本地识别，默认关闭；本机有效设置是720p完整画面。它不保证所有杯子或姿态都成功，也不能消除桶/锅误报，详见[实测与限制](docs/cup-scale-recheck-2026-09-08.md)。

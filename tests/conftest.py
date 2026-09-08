@@ -17,6 +17,12 @@ def offline_boundaries(request, monkeypatch):
     if request.node.get_closest_marker("live_api") or request.node.get_closest_marker("camera"):
         return
 
+    # Local user settings must not alter offline cases or load private credentials.
+    monkeypatch.setenv("PYTHON_DOTENV_DISABLED", "1")
+    for variable in tuple(os.environ):
+        if variable.startswith("VAA_"):
+            monkeypatch.delenv(variable, raising=False)
+
     def denied(*args, **kwargs):
         raise AssertionError("Offline test attempted external network or physical camera access")
 

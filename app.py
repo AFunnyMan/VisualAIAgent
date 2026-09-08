@@ -89,6 +89,11 @@ with st.sidebar:
         index=resolutions.index(configured_resolution),
         format_func=lambda value: f"{value[0]} × {value[1]}",
     )
+    cup_scale_recheck = st.checkbox(
+        "增强杯子检测（本地复查）",
+        value=runtime.config.cup_scale_recheck,
+        help="会增加一次本地运算，仅对当前观察画面起作用；开启不保证所有杯子都能检出。",
+    )
     with st.expander("观察范围"):
         configured_region = runtime.config.observation_region
         range_mode = st.radio(
@@ -155,6 +160,7 @@ with st.sidebar:
                 resolution[1],
                 None if selected_region == (0.0, 0.0, 1.0, 1.0) else selected_region,
                 requested_interval,
+                cup_scale_recheck,
             )
             active_settings = runtime.diagnostics()["camera_settings"]
             active_observation, _ = runtime.snapshot()
@@ -175,6 +181,7 @@ with st.sidebar:
                             requested_interval,
                             resolution=resolution,
                             observation_region=selected_region,
+                            cup_scale_recheck=cup_scale_recheck,
                         )
                     )
             else:
@@ -184,6 +191,7 @@ with st.sidebar:
                         requested_interval,
                         resolution=resolution,
                         observation_region=selected_region,
+                        cup_scale_recheck=cup_scale_recheck,
                     )
                 )
     if right.button("停止观察", width="stretch"):
@@ -191,7 +199,14 @@ with st.sidebar:
     st.caption("启动后使用非镜像坐标。停止、断连或过期画面均表示当前未知。")
     active_settings = runtime.diagnostics()["camera_settings"]
     if active_settings:
-        active_camera, active_width, active_height, active_region, active_interval = active_settings
+        (
+            active_camera,
+            active_width,
+            active_height,
+            active_region,
+            active_interval,
+            active_cup_recheck,
+        ) = active_settings
         region_text = (
             "完整画面"
             if active_region is None
@@ -200,7 +215,8 @@ with st.sidebar:
         st.caption(
             f"当前启用设置（请求）：摄像头 {active_camera} · "
             f"{active_width} × {active_height} · "
-            f"{region_text} · 每 {active_interval:g} 秒采样"
+            f"{region_text} · 每 {active_interval:g} 秒采样 · "
+            f"杯子增强{'已开启' if active_cup_recheck else '未开启'}"
         )
         active_observation, _ = runtime.snapshot()
         if active_observation and active_observation.width and active_observation.height:
