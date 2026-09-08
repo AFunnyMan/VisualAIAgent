@@ -1,8 +1,8 @@
 """Run a local, manual camera acceptance console without any cloud/Agent calls.
 
 The operator must arrange each real scene and click the matching marker. Markers
-are operator notes, not proof that detection was correct. Only the latest preview
-and MemoryStore's event evidence are retained; this tool never records video.
+are operator notes, not proof that detection was correct. The tool retains the
+latest preview, event evidence, and explicit marker snapshots, never full video.
 """
 
 # The embedded single-file HTML keeps deployment and review simple.
@@ -11,6 +11,7 @@ and MemoryStore's event evidence are retained; this tool never records video.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -26,6 +27,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs
 
+import cv2
 import psutil
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -75,6 +77,34 @@ def observation_bucket(observation: SceneObservation, has_fresh: bool) -> str:
     if observation.status in {"stale", "disconnected", "error"}:
         return "fault"
     return "other"
+
+
+class RecentInputDetector:
+    """Keep one raw detector input in memory for explicit operator snapshots."""
+
+    def __init__(self, detector: Any) -> None:
+        self.detector = detector
+        self._lock = threading.Lock()
+        self._sequence = 0
+        self._latest: tuple[Any, dict[str, Any]] | None = None
+
+    def detect(self, frame_bgr: Any) -> Any:
+        with self._lock:
+            self._sequence += 1
+            metadata = {
+                "detector_sequence": self._sequence,
+                "detector_input_at": _utcnow(),
+                "detector_input_monotonic": time.monotonic(),
+            }
+            self._latest = (frame_bgr.copy(), metadata)
+        return self.detector.detect(frame_bgr)
+
+    def snapshot(self) -> tuple[Any, dict[str, Any]] | None:
+        with self._lock:
+            if self._latest is None:
+                return None
+            frame, metadata = self._latest
+            return frame.copy(), dict(metadata)
 
 
 def validate_command(payload: dict[str, Any], csrf: str) -> tuple[str, str | None]:
@@ -148,6 +178,7 @@ def acceptance_result(
 class ConsoleState:
     output: Path
     duration: float
+    max_raw_age_seconds: float = 2.5
     started_wall: str = field(default_factory=_utcnow)
     started_mono: float = field(default_factory=time.monotonic)
     csrf: str = field(default_factory=lambda: secrets.token_urlsafe(24))
@@ -167,6 +198,8 @@ class ConsoleState:
     first_fresh_mono: float | None = None
     last_fresh_mono: float | None = None
     fresh_received_monos: list[float] = field(default_factory=list)
+    latest_completed_raw: tuple[Any, dict[str, Any]] | None = None
+    raw_manifest: list[dict[str, Any]] = field(default_factory=list)
 
     def public(self) -> dict[str, Any]:
         with self.lock:
@@ -197,8 +230,53 @@ class ConsoleState:
             _atomic_json(self.output / "progress.json", self.public())
 
     def add_marker(self, action: str, category: str | None) -> None:
-        marker = {"server_time": _utcnow(), "action": action, "category": category}
+        marker_id = secrets.token_hex(8)
+        marker = {
+            "marker_id": marker_id,
+            "server_time": _utcnow(),
+            "action": action,
+            "category": category,
+        }
         with self.lock:
+            if action in {"placed", "removed"}:
+                if self.latest_completed_raw is None:
+                    marker["raw_input_unavailable"] = "没有可关联的正常新鲜检测输入"
+                else:
+                    frame, alignment = self.latest_completed_raw
+                    age = max(0.0, time.monotonic() - alignment["observation_monotonic_at"])
+                    if age > self.max_raw_age_seconds:
+                        marker["raw_input_unavailable"] = "最近检测输入已超过新鲜度上限"
+                        marker["raw_input_age_seconds"] = round(age, 6)
+                    else:
+                        relative_path = f"raw_markers/{marker_id}.png"
+                        encoded_ok, encoded = cv2.imencode(".png", frame)
+                        if not encoded_ok:
+                            marker["raw_input_unavailable"] = "原始输入PNG编码失败"
+                        else:
+                            png = encoded.tobytes()
+                            destination = self.output / relative_path
+                            destination.parent.mkdir(exist_ok=True)
+                            temporary = destination.with_suffix(".png.tmp")
+                            temporary.write_bytes(png)
+                            os.replace(temporary, destination)
+                            reference = {
+                                "marker_id": marker_id,
+                                "raw_image": relative_path,
+                                "png_sha256": hashlib.sha256(png).hexdigest(),
+                                "raw_input_age_seconds": round(age, 6),
+                                "marker_server_time": marker["server_time"],
+                                **alignment,
+                                "qualification": (
+                                    "该图是点击前最近一次已完成检测的原始输入；点击时间与画面采集、"
+                                    "检测输入时间不同，不代表同一瞬间。"
+                                ),
+                            }
+                            marker["raw_input_reference"] = reference
+                            self.raw_manifest.append(reference)
+                            _atomic_json(
+                                self.output / "raw_markers" / "manifest.json",
+                                self.raw_manifest,
+                            )
             self.markers.append(marker)
             _atomic_json(self.output / "markers.json", self.markers)
             self.write_progress()
@@ -295,12 +373,20 @@ def run(args: argparse.Namespace) -> int:
     output.mkdir(parents=True, exist_ok=False)
     config = Config.from_env()
     store = MemoryStore(output / "memory", max_gap_seconds=config.sample_interval * 2.5)
-    state = ConsoleState(output=output, duration=args.duration)
+    state = ConsoleState(
+        output=output,
+        duration=args.duration,
+        max_raw_age_seconds=config.sample_interval * 2.5,
+    )
     process = psutil.Process()
     process.cpu_percent()
     source = CameraSource(args.camera, width=args.width, height=args.height, backend=args.backend)
-    detector = YoloOnnxDetector(
-        config.model_path, confidence=config.confidence, expected_sha256=config.model_sha256 or None
+    detector = RecentInputDetector(
+        YoloOnnxDetector(
+            config.model_path,
+            confidence=config.confidence,
+            expected_sha256=config.model_sha256 or None,
+        )
     )
 
     def observe(observation: SceneObservation, jpeg: bytes | None) -> None:
@@ -331,6 +417,19 @@ def run(args: argparse.Namespace) -> int:
             state.samples.append(sample)
             serialized_events = [item.model_dump(mode="json") for item in events]
             state.events.extend(serialized_events)
+            raw_snapshot = detector.snapshot()
+            if observation.fresh and observation.status == "running" and raw_snapshot is not None:
+                raw_frame, raw_metadata = raw_snapshot
+                state.latest_completed_raw = (
+                    raw_frame,
+                    raw_metadata
+                    | {
+                        "observation_captured_at": observation.observed_at.isoformat(),
+                        "observation_monotonic_at": observation.monotonic_at,
+                    },
+                )
+            elif not observation.fresh or observation.status != "running":
+                state.latest_completed_raw = None
             _append_jsonl(output / "samples.jsonl", sample)
             for event in serialized_events:
                 _append_jsonl(output / "events.jsonl", event)
@@ -424,6 +523,7 @@ def run(args: argparse.Namespace) -> int:
         samples = list(state.samples)
         all_events = list(state.events)
         all_markers = list(state.markers)
+        raw_manifest = list(state.raw_manifest)
     inference_values = [
         item["inference_ms"] for item in samples if item["inference_ms"] is not None
     ]
@@ -461,6 +561,7 @@ def run(args: argparse.Namespace) -> int:
         "rss_mib": metrics(rss_values),
         "events": all_events,
         "markers": all_markers,
+        "raw_marker_manifest": raw_manifest,
         "samples": samples,
     }
     _atomic_json(output / "summary.json", summary)

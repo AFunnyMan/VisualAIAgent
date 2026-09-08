@@ -90,7 +90,7 @@ uv run --locked python scripts/camera_acceptance.py --camera 0 --duration 1800 -
 
 | 平台 | 锁定安装 | 离线测试 | 实际摄像头 | 三十分钟运行 |
 |---|---|---|---|---|
-| 当前 Apple M2 Pro Mac | 已执行 | 最新数量与执行范围见日志 | OBSBOT短时采集、三轮底层及两轮应用启停通过；场景评分待操作 | 视频回放1800秒通过；USB持续验收进行中，见日志 |
+| 当前 Apple M2 Pro Mac | 已执行 | 最新数量与执行范围见日志 | OBSBOT短时采集、三轮底层及两轮应用启停通过；场景评分待操作 | 视频回放1800秒通过；USB本地视觉1800.005秒/1791有效观察通过；识别与Agent联合项仍开放 |
 | GitHub macOS / Windows 托管 runner | 均通过 | 均通过，run 34058017128 | 不适用 | 未运行 |
 | Windows 11 x64、8GB 无独显基线 | 未实机执行 | 不以托管CI代替实机 | 待用户辅助 | 待用户辅助 |
 

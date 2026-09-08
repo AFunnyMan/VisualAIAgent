@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from visual_ai_agent.models import SceneObservation
@@ -39,6 +42,61 @@ def test_all_nonfresh_statuses_before_first_frame_are_startup_statuses() -> None
     for status in ("stopped", "paused", "stale", "disconnected", "error"):
         assert camera_acceptance.observation_bucket(_observation(status, False), False) == "startup"
     assert camera_acceptance.observation_bucket(_observation("stale", False), True) == "fault"
+
+
+def test_recent_input_detector_keeps_only_defensive_latest_raw_frame() -> None:
+    class FakeDetector:
+        def detect(self, frame):
+            frame[:] = 99
+            return ["result"]
+
+    wrapper = camera_acceptance.RecentInputDetector(FakeDetector())
+    frame = np.full((2, 3, 3), 7, dtype=np.uint8)
+    assert wrapper.detect(frame) == ["result"]
+    saved, metadata = wrapper.snapshot()
+    assert np.all(saved == 7)
+    assert metadata["detector_sequence"] == 1
+    saved[:] = 0
+    assert np.all(wrapper.snapshot()[0] == 7)
+
+
+def test_object_marker_saves_recent_completed_input_with_distinct_times(tmp_path: Path) -> None:
+    state = camera_acceptance.ConsoleState(output=tmp_path, duration=10)
+    state.latest_completed_raw = (
+        np.full((3, 4, 3), 17, dtype=np.uint8),
+        {
+            "detector_sequence": 4,
+            "detector_input_at": "2026-09-08T01:00:01+00:00",
+            "detector_input_monotonic": 11.0,
+            "observation_captured_at": "2026-09-08T01:00:00+00:00",
+            "observation_monotonic_at": time.monotonic(),
+        },
+    )
+    state.add_marker("empty_ready", None)
+    assert not (tmp_path / "raw_markers").exists()
+    state.add_marker("placed", "cup")
+    manifest = json.loads((tmp_path / "raw_markers" / "manifest.json").read_text())
+    assert len(manifest) == 1
+    reference = manifest[0]
+    assert reference["marker_server_time"] != reference["observation_captured_at"]
+    assert reference["detector_sequence"] == 4
+    assert (tmp_path / reference["raw_image"]).is_file()
+    assert len(reference["png_sha256"]) == 64
+    assert reference["raw_input_age_seconds"] <= state.max_raw_age_seconds
+    assert "最近一次" in reference["qualification"]
+
+
+def test_object_marker_rejects_expired_raw_input_but_keeps_marker(tmp_path: Path) -> None:
+    state = camera_acceptance.ConsoleState(output=tmp_path, duration=10, max_raw_age_seconds=1)
+    state.latest_completed_raw = (
+        np.zeros((2, 2, 3), dtype=np.uint8),
+        {"observation_monotonic_at": time.monotonic() - 2},
+    )
+    state.add_marker("removed", "bottle")
+    assert len(state.markers) == 1
+    assert "超过新鲜度" in state.markers[0]["raw_input_unavailable"]
+    assert state.markers[0]["raw_input_age_seconds"] >= 2
+    assert not (tmp_path / "raw_markers").exists()
 
 
 def test_commands_require_csrf_known_action_category_and_no_extra_fields() -> None:
