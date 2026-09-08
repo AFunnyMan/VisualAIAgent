@@ -140,6 +140,9 @@ def test_repeated_start_reuses_model_and_camera_worker(tmp_path, monkeypatch):
         def stop(self):
             self.running = False
 
+        def snapshot(self):
+            return None, None
+
     models = []
 
     def detector(*args, **kwargs):
@@ -164,22 +167,52 @@ def test_repeated_start_reuses_model_and_camera_worker(tmp_path, monkeypatch):
         runtime.close()
 
 
-def test_stop_timeout_is_visible_and_does_not_claim_stopped(tmp_path):
+def test_stop_timeout_is_visible_and_does_not_allow_replacement(tmp_path, monkeypatch):
+    import visual_ai_agent.runtime as module
+
     runtime = ApplicationRuntime(Config(data_dir=tmp_path))
+    constructed = []
+
+    class ReplacementWorker:
+        def __init__(self, *_args, **_kwargs):
+            constructed.append(self)
+
+        running = False
+
+        def start(self):
+            self.running = True
+
+        def stop(self):
+            self.running = False
+
+        def snapshot(self):
+            return None, None
+
+    monkeypatch.setattr(module, "YoloOnnxDetector", lambda *_args, **_kwargs: object())
+    monkeypatch.setattr(module, "VisionWorker", ReplacementWorker)
 
     class BlockedWorker:
         running = True
+        stopped_cleanly = False
+        observation = None
 
         def stop(self):
-            runtime.memory.ingest(
-                SceneObservation(
+            if self.running:
+                self.observation = SceneObservation(
                     observed_at=utcnow(),
                     monotonic_at=0,
                     status="error",
                     fresh=False,
                     error="worker did not stop",
                 )
-            )
+                runtime.memory.ingest(self.observation)
+            else:
+                self.stopped_cleanly = True
+
+        def snapshot(self):
+            if self.stopped_cleanly:
+                return None, None
+            return self.observation, None
 
     worker = BlockedWorker()
     runtime._vision = worker
@@ -189,6 +222,61 @@ def test_stop_timeout_is_visible_and_does_not_claim_stopped(tmp_path):
         assert "尚未停止" in result.error
         assert runtime.memory.get_current_scene().data["effective_status"] == "error"
         assert runtime.start_camera().data["status"] == "already_running"
+
+        worker.running = False
+        result = runtime.start_camera()
+        assert not result.ok
+        assert "停止清理" in result.error
+        assert runtime._vision is worker
+        assert not constructed
+
+        assert runtime.stop_camera().ok
+        assert runtime._vision is None
+        assert runtime.start_camera().ok
+        assert len(constructed) == 1
     finally:
         worker.running = False
         runtime.close()
+
+
+def test_source_close_failure_is_not_overwritten_or_restarted(tmp_path):
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path))
+    close_error = SceneObservation(
+        observed_at=utcnow(),
+        monotonic_at=0,
+        status="error",
+        fresh=False,
+        error="Source close failed: synthetic release failure",
+    )
+
+    class CloseFailingWorker:
+        running = True
+
+        def stop(self):
+            self.running = False
+            runtime.ingest(close_error, None)
+
+        def snapshot(self):
+            return close_error, None
+
+    worker = CloseFailingWorker()
+    runtime._vision = worker
+    try:
+        result = runtime.stop_camera()
+        assert not result.ok
+        assert result.error == close_error.error
+        assert runtime.last_error == close_error.error
+        assert runtime._vision is worker
+        assert runtime.memory.get_current_scene().data["effective_status"] == "error"
+
+        restart = runtime.start_camera()
+        assert not restart.ok
+        assert "停止清理" in restart.error
+        assert runtime._vision is worker
+
+        runtime.close()
+        assert runtime.last_error == close_error.error
+        with pytest.raises(RuntimeError, match="已有应用实例"):
+            ApplicationRuntime(Config(data_dir=tmp_path))
+    finally:
+        runtime._instance.close()

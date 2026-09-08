@@ -5,7 +5,7 @@ import atexit
 from concurrent.futures import Future
 from dataclasses import replace
 from queue import Empty, Full, Queue
-from threading import Event, RLock, Thread
+from threading import Event, Lock, RLock, Thread
 from time import monotonic
 from typing import Any
 from uuid import uuid4
@@ -23,6 +23,7 @@ class ApplicationRuntime:
     def __init__(self, config: Config):
         self.config = config
         self._lock = RLock()
+        self._camera_lock = Lock()
         self._instance = InstanceLock(config.data_dir / "app.lock")
         self._closed = False
         self._stop = Event()
@@ -178,11 +179,17 @@ class ApplicationRuntime:
             loop.close()
 
     def start_camera(self, camera_index: int | None = None, interval: float | None = None):
+        with self._camera_lock:
+            return self._start_camera(camera_index, interval)
+
+    def _start_camera(self, camera_index: int | None, interval: float | None):
         with self._lock:
             if self._closed:
                 return ToolResult(ok=False, error="应用已关闭")
-            if self.camera_running:
-                return ToolResult(ok=True, data={"status": "already_running"})
+            if self._vision is not None:
+                if self._vision.running:
+                    return ToolResult(ok=True, data={"status": "already_running"})
+                return ToolResult(ok=False, error="上一次摄像头工作线程尚未完成停止清理。")
             try:
                 config = replace(
                     self.config,
@@ -214,22 +221,36 @@ class ApplicationRuntime:
                 return ToolResult(ok=False, error=self.last_error)
 
     def stop_camera(self):
+        with self._camera_lock:
+            return self._stop_camera()
+
+    def _stop_camera(self):
         # Do not hold the runtime lock while joining the callback thread.
-        worker = self._vision
+        with self._lock:
+            worker = self._vision
         if worker:
             worker.stop()
             if worker.running:
                 self.last_error = "摄像头工作线程尚未停止，请退出进程后检查设备。"
                 return ToolResult(ok=False, error=self.last_error)
-        self.memory.ingest(
-            SceneObservation(
-                observed_at=utcnow(),
-                monotonic_at=0,
-                status="stopped",
-                fresh=False,
-            ),
-            None,
-        )
+            observation, _ = worker.snapshot()
+            if observation is not None and observation.status == "error":
+                self.last_error = observation.error or "摄像头资源释放失败，请退出应用后重试。"
+                return ToolResult(ok=False, error=self.last_error)
+        with self._lock:
+            # Keep the old worker reachable until its threads have joined and the
+            # stopped fact is durable, so start_camera cannot replace it midway.
+            self.memory.ingest(
+                SceneObservation(
+                    observed_at=utcnow(),
+                    monotonic_at=0,
+                    status="stopped",
+                    fresh=False,
+                ),
+                None,
+            )
+            if self._vision is worker:
+                self._vision = None
         return ToolResult(ok=True, data={"status": "stopped"})
 
     def snapshot(self) -> tuple[SceneObservation | None, bytes | None]:
@@ -248,8 +269,10 @@ class ApplicationRuntime:
             self._stop.set()
             if self._thread:
                 self._thread.join(timeout=self.config.api_timeout_seconds * 3 + 5)
-            if (self._thread and self._thread.is_alive()) or self.camera_running:
-                self.last_error = "工作线程尚未停止；保留实例锁，避免重复访问设备。"
+            if (self._thread and self._thread.is_alive()) or self._vision is not None:
+                self.last_error = self.last_error or (
+                    "工作线程尚未停止；保留实例锁，避免重复访问设备。"
+                )
             else:
                 self._instance.close()
                 atexit.unregister(self.close)

@@ -493,6 +493,7 @@ class VisionWorker:
         self._sequence = 0
         self._capture_thread: threading.Thread | None = None
         self._inference_thread: threading.Thread | None = None
+        self._capture_close_error: str | None = None
 
     @property
     def running(self) -> bool:
@@ -502,10 +503,13 @@ class VisionWorker:
         )
 
     def start(self) -> None:
-        if self.running:
+        # Handles are cleared only by a completed stop(). After a stop timeout,
+        # require that cleanup before a later native read can be replaced.
+        if self._capture_thread is not None or self._inference_thread is not None:
             return
         self._stop.clear()
         self._latest = None
+        self._capture_close_error = None
         self._capture_thread = threading.Thread(
             target=self._capture_loop, name="vision-capture", daemon=True
         )
@@ -523,12 +527,6 @@ class VisionWorker:
         self._stop.set()
         with self._condition:
             self._condition.notify_all()
-        close_error: str | None = None
-        try:
-            # Releasing a native capture is the only available way to interrupt a blocked read.
-            self.source.close()
-        except Exception as exc:
-            close_error = f"Source close failed: {exc}"
         deadline = time.monotonic() + timeout
         for thread in (self._capture_thread, self._inference_thread):
             if thread is not None and thread is not threading.current_thread():
@@ -540,14 +538,13 @@ class VisionWorker:
         ]
         if alive:
             detail = f"Vision worker did not stop within {timeout:.3f}s: {', '.join(alive)}"
-            if close_error:
-                detail = f"{detail}; {close_error}"
             self._publish(self._status_observation("error", detail), None)
             # Keep the handles: start() must not create a second worker over blocked threads.
             return
         self._capture_thread = None
         self._inference_thread = None
         previous, _ = self.snapshot()
+        close_error = self._capture_close_error
         status: CameraStatus = "error" if close_error else "stopped"
         observation = self._status_observation(status, close_error, previous)
         self._publish(observation, None)
@@ -590,7 +587,12 @@ class VisionWorker:
                     )
                     self._condition.notify_all()
         finally:
-            self.source.close()
+            try:
+                # VideoCapture must be released by the same thread that owns read().
+                # Releasing it from stop() can race a native AVFoundation callback.
+                self.source.close()
+            except Exception as exc:
+                self._capture_close_error = f"Source close failed: {exc}"
             with self._condition:
                 self._condition.notify_all()
 

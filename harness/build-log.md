@@ -257,3 +257,19 @@
 - 官方来源与采用次序见 [后续方案分析](../docs/recognition-next-strategy.md)，来源SHA/规则/分类计数见 [互补性摘要](evaluations/recognition-complementarity-20260907.json)。建议先验证s主检测+RF周期/事件窗口复查，再评估局部硬负例拒识；不能直接求交集或并集。计算预算137+210×追加比例为粗估，不是组合benchmark。
 - 本机只读检查cv2 4.14.0无TrackerKCF_create/TrackerCSRT_create/legacy；跟踪仅可建议ROI，不能刷新last_seen或补凑三次确认。SigLIP2的Apache-2.0与接口已核验，但未验证本项目ORT/CPU；SAM2官方GPU基准不作CPU证据。当前60图已看过，后续必须另设按视频/场景隔离的新验证集。
 - 仅新增分析文档和脱敏摘要，不改变软件/依赖/验收条件，不重复执行105项软件回归。提交前核验来源SHA、JSON、Markdown链接、敏感信息模式及差异；生产识别质量与实机待验证项继续开放。
+
+## 2026-09-08T17:58:52+08:00 — 真实OBSBOT摄像头接入与初检失败
+
+- 用户明确已接入真实摄像头并要求开始验证。macOS设备清单及AVFoundation枚举确认实体OBSBOT Meet StreamCamera为index0，系统授权状态3；排除虚拟摄像头和其他设备。首次读帧请求自动权限审核超时、未执行，按审核提示重试一次后成功。
+- 本机忽略目录camera-20260908/probe.py实际采集3.029秒/93帧、640×480/AVFOUNDATION，正式n模型0.35首次推理69.12ms，退出0且设备释放；图片仅留本机。初始框落在饮料罐上，旁边塑料瓶未框出，未将该单帧当准确率。用户空桌面/物品操作标签仍待提供。
+- 现有benchmark.py --camera 0 --duration 60运行后退出139、未写summary；SQLite保留57条running和3条启动stopped、1条bottle appeared。这不是验收通过。原生崩溃为EXC_BAD_ACCESS/SIGSEGV，故障栈在CaptureDelegate grabImageUntilDate→VideoCapture::read，疑似停止线程提前release与采集read竞争。已交由Sol定向修复及离线线程用例，另一Sol准备用户操作标记辅助页；两者不占摄像头。修复后必须重新实测启停和持续运行。
+
+## 2026-09-08T18:13:54+08:00 — 摄像头停止修复与真实复验
+
+- 将VideoCapture释放移入读帧所属线程，stop只通知并join，超时保留句柄。运行时串行启停，旧工作器在完成停止清理前不得替换。停止超时及线程迟到退出的离线失败用例覆盖该约束。
+- 同一benchmark.py --camera 0 --duration 60修复后退出0：60.624秒，56条唯一running/fresh、4条启动前stopped，无运行期断流/过期；p50/p95 74.54/77.36ms、峰值RSS401.72MiB、CPU均值25.06%（单核100%口径）。不是30分钟/识别正确率验收。
+- restart_probe.py在同一VisionWorker/CameraSource三轮启停均退出0，每轮3有效观察，停止67.90/58.40/66.47ms，无存活线程及callback错误。runtime_probe.py两轮真实应用运行时启停也退出0，重复start均already_running、stop后worker清空/记忆stopped；停止80.27/58.78ms。实际配置Agent但未提交对话/关注，数据库agent_runs/watches/notifications均0。
+- 新增仅127.0.0.1的camera_acceptance.py，用户标记实际操作时间、展示最新带框画面，使用正式本地视觉/MemoryStore，无云调用及完整录像。初版页面已通过本机浏览器读屏/截图检查。30分钟运行于2026-09-08T18:09:24+08启动，运行目录data/acceptance/obsbot-mac-20260908-1810，结果尚未完成，不能算通过；执行脚本快照及代码/模型SHA已保存，以区分后续辅助脚本健壮性修订。
+- 初始保存JPEG的三个本地候选模型只作诊断：n框饮料罐；s分类阈值框塑料瓶；RF框塑料瓶同时误框饮料罐及桌面矩形配件为手机。未由单帧计算误报率/切换生产配置。用户空桌面及物品动作标签仍待提供。详细范围见[实机记录](../docs/camera-validation-2026-09-08.md)。
+- 辅助台独立审查后补强：写入串行锁、完整人工标签保存、HTTP字段/类型限制、首帧起算及有效采样最大间隔判定；后续版本继续保留同帧running→stale/断连状态转换并增量持久化完整采样/事件。正在运行的30分钟使用已保存旧脚本快照，不冒充后续版本30分钟实测。新增运行时释放异常不会被stopped覆盖的失败用例，释放不明时保留实例锁。
+- 最终 `.venv/bin/pytest -q --junitxml=harness/artifacts/camera-20260908/pytest-final.xml`：118 passed、3 deselected、7.70秒；Ruff检查/格式108文件及git diff --check全部通过。11个本里程碑文件敏感模式/文档链接检查通过，原始计划SHA不变。只读远程main仍ae2af9f，无未知提交。

@@ -241,31 +241,32 @@ def test_disconnect_invalidates_buffered_pixels_without_inference() -> None:
     assert all(not item.fresh and item.detections == [] for item in disconnected)
 
 
-class CloseUnblocksSource:
+class DelayedReadSource:
     source_name = "test"
 
     def __init__(self) -> None:
         self.status = "stopped"
         self.last_error: str | None = None
         self.read_started = threading.Event()
-        self.unblock = threading.Event()
+        self.owner_thread: int | None = None
+        self.close_thread: int | None = None
 
     def open(self) -> None:
         self.status = "running"
-        self.unblock.clear()
+        self.owner_thread = threading.get_ident()
 
     def read(self) -> None:
         self.read_started.set()
-        self.unblock.wait()
+        time.sleep(0.05)
         return None
 
     def close(self) -> None:
+        self.close_thread = threading.get_ident()
         self.status = "stopped"
-        self.unblock.set()
 
 
-def test_stop_releases_source_before_waiting_for_a_blocked_read() -> None:
-    source = CloseUnblocksSource()
+def test_capture_thread_owns_close_after_read_returns() -> None:
+    source = DelayedReadSource()
     worker = VisionWorker(RecordingDetector(), source, lambda *_args: None)
     worker.start()
     assert source.read_started.wait(1)
@@ -275,17 +276,37 @@ def test_stop_releases_source_before_waiting_for_a_blocked_read() -> None:
 
     assert time.monotonic() - started < 0.3
     assert not worker.running
+    assert source.close_thread == source.owner_thread
+    assert source.close_thread != threading.get_ident()
     observation, _ = worker.snapshot()
     assert observation is not None and observation.status == "stopped"
 
 
-class IgnoringCloseSource(CloseUnblocksSource):
+class BlockedReadSource:
+    source_name = "test"
+
+    def __init__(self) -> None:
+        self.status = "stopped"
+        self.last_error: str | None = None
+        self.read_started = threading.Event()
+        self.unblock = threading.Event()
+        self.close_calls = 0
+
+    def open(self) -> None:
+        self.status = "running"
+
+    def read(self) -> None:
+        self.read_started.set()
+        self.unblock.wait()
+        return None
+
     def close(self) -> None:
+        self.close_calls += 1
         self.status = "stopped"
 
 
 def test_stop_timeout_does_not_claim_stopped_or_allow_duplicate_start() -> None:
-    source = IgnoringCloseSource()
+    source = BlockedReadSource()
     worker = VisionWorker(RecordingDetector(), source, lambda *_args: None)
     worker.start()
     assert source.read_started.wait(1)
@@ -293,6 +314,7 @@ def test_stop_timeout_does_not_claim_stopped_or_allow_duplicate_start() -> None:
     worker.stop(timeout=0.02)
     observation, _ = worker.snapshot()
     assert worker.running
+    assert source.close_calls == 0
     assert observation is not None and observation.status == "error"
     assert "did not stop" in (observation.error or "")
 
@@ -304,6 +326,12 @@ def test_stop_timeout_does_not_claim_stopped_or_allow_duplicate_start() -> None:
     deadline = time.monotonic() + 1
     while worker.running and time.monotonic() < deadline:
         time.sleep(0.01)
+    assert source.close_calls == 1
+
+    worker.start()
+    assert worker._capture_thread is original_thread
+    assert source.close_calls == 1
+
     worker.stop(timeout=0.5)
     assert not worker.running
 

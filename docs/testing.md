@@ -70,7 +70,7 @@ uv run --locked python scripts/recognition_survey.py \
 
 ```sh
 uv run --locked pytest tests/agent -m live_api -v
-uv run --locked python scripts/benchmark.py --camera 0 --duration 1800
+uv run --locked python scripts/camera_acceptance.py --camera 0 --duration 1800 --output data/acceptance/new-camera-session
 ```
 
 第一条没有开关/配置时只跳过，不算真实通过；第二条会打开真实摄像头，需用户准备设备及场景。模型凭据不写入测试输出。真实模型测试使用明确 `source=test` 的临时事实，摄像头质量单独验收。
@@ -90,7 +90,7 @@ uv run --locked python scripts/benchmark.py --camera 0 --duration 1800
 
 | 平台 | 锁定安装 | 离线测试 | 实际摄像头 | 三十分钟运行 |
 |---|---|---|---|---|
-| 当前 Apple M2 Pro Mac | 已执行 | 92项通过，数量见日志 | 待用户辅助 | 视频回放1800秒通过；USB待用户 |
+| 当前 Apple M2 Pro Mac | 已执行 | 最新数量与执行范围见日志 | OBSBOT短时采集、三轮底层及两轮应用启停通过；场景评分待操作 | 视频回放1800秒通过；USB持续验收进行中，见日志 |
 | GitHub macOS / Windows 托管 runner | 均通过 | 均通过，run 34058017128 | 不适用 | 未运行 |
 | Windows 11 x64、8GB 无独显基线 | 未实机执行 | 不以托管CI代替实机 | 待用户辅助 | 待用户辅助 |
 
