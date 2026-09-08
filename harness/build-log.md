@@ -300,3 +300,8 @@
 
 - 取景里程碑`2e04668`已正常提交/推送，远程[检查34223770172](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34223770172)为Mac成功、Windows失败。实际读取GitHub失败注释定位到既有`test_object_marker_saves_recent_completed_input_with_distinct_times`：生产脚本写UTF-8中文JSON，测试Path.read_text未指定编码，在Windows cp1252解码失败；不是摄像头取景运行故障。
 - 测试读取两处辅助台JSON均明确`encoding="utf-8"`，不改生产输出、不删除中文说明或验收断言。实际`.venv/bin/python scripts/ci_checks.py`全套147 passed、3 deselected、9.32秒，报告为被忽略的`data/ci-results.xml`。待重新推送后的Windows检查确认，不以本机通过代替。
+
+## 2026-09-08T20:07:14+08:00 — 取景改进双平台检查完成
+
+- 修复提交`89e2d20`已正常推送；[远程检查34224101212](https://github.com/AFunnyMan/VisualAIAgent/actions/runs/34224101212)已completed/success，Mac与Windows离线矩阵通过。它验证安装、静态检查和离线回归，不替代Windows实机摄像头验收。
+- 新配置浏览器复验汇总为31条观察，其中22条有效新鲜观察全部检出杯子，1条appeared，最终stopped，Agent运行0。用户测试页面保留，摄像头已释放。未关闭剩余实物场景质量项。
