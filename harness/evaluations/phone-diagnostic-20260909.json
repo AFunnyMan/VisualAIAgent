@@ -1,0 +1,136 @@
+{
+  "started_at": "2026-09-09T09:23:40.686802+00:00",
+  "finished_at": "2026-09-09T09:23:41.572589+00:00",
+  "crop_box": [
+    480,
+    260,
+    1000,
+    660
+  ],
+  "phone_reference": [
+    532,
+    337,
+    706,
+    623
+  ],
+  "limits": "Two known, correlated development frames; manual context crop and approximate visual phone box. Not automatic ROI validation or general accuracy. Scores below .35 are diagnostic only. No camera, training or production changes.",
+  "rows": [
+    {
+      "frame_index": 30,
+      "input_sha256": "2fc0f0ad98a7d90e6e4bfad74118511feb93b32a5d8dcd11d8d969847a61d6be",
+      "model": "official_n",
+      "variant": "full",
+      "highest_matching_phone_score": 0.026620447635650635,
+      "accepted_business_categories": [],
+      "cup_recheck_scores": [
+        0.4486996829509735
+      ],
+      "top_phone_area_category": "book",
+      "top_phone_area_score": 0.04809197783470154
+    },
+    {
+      "frame_index": 30,
+      "input_sha256": "2fc0f0ad98a7d90e6e4bfad74118511feb93b32a5d8dcd11d8d969847a61d6be",
+      "model": "official_n",
+      "variant": "manual_context_crop",
+      "highest_matching_phone_score": 0.09565052390098572,
+      "accepted_business_categories": [
+        "cup"
+      ],
+      "cup_recheck_scores": [
+        0.4486996829509735
+      ],
+      "top_phone_area_category": "cell phone",
+      "top_phone_area_score": 0.09565052390098572
+    },
+    {
+      "frame_index": 30,
+      "input_sha256": "2fc0f0ad98a7d90e6e4bfad74118511feb93b32a5d8dcd11d8d969847a61d6be",
+      "model": "r02",
+      "variant": "full",
+      "highest_matching_phone_score": 0.012957006692886353,
+      "accepted_business_categories": [],
+      "cup_recheck_scores": [
+        0.5482457876205444
+      ],
+      "top_phone_area_category": "book",
+      "top_phone_area_score": 0.024698644876480103
+    },
+    {
+      "frame_index": 30,
+      "input_sha256": "2fc0f0ad98a7d90e6e4bfad74118511feb93b32a5d8dcd11d8d969847a61d6be",
+      "model": "r02",
+      "variant": "manual_context_crop",
+      "highest_matching_phone_score": 0.10448741912841797,
+      "accepted_business_categories": [
+        "cup"
+      ],
+      "cup_recheck_scores": [
+        0.5482457876205444
+      ],
+      "top_phone_area_category": "cell phone",
+      "top_phone_area_score": 0.10448741912841797
+    },
+    {
+      "frame_index": 60,
+      "input_sha256": "8a47157959efde61e114d7529a47ebe150e1f24bd0b09258c0e9c178bdc8d742",
+      "model": "official_n",
+      "variant": "full",
+      "highest_matching_phone_score": 0.0136546790599823,
+      "accepted_business_categories": [],
+      "cup_recheck_scores": [
+        0.5053468346595764
+      ],
+      "top_phone_area_category": "book",
+      "top_phone_area_score": 0.024187803268432617
+    },
+    {
+      "frame_index": 60,
+      "input_sha256": "8a47157959efde61e114d7529a47ebe150e1f24bd0b09258c0e9c178bdc8d742",
+      "model": "official_n",
+      "variant": "manual_context_crop",
+      "highest_matching_phone_score": 0.16823244094848633,
+      "accepted_business_categories": [
+        "cup"
+      ],
+      "cup_recheck_scores": [
+        0.5053468346595764
+      ],
+      "top_phone_area_category": "book",
+      "top_phone_area_score": 0.19457563757896423
+    },
+    {
+      "frame_index": 60,
+      "input_sha256": "8a47157959efde61e114d7529a47ebe150e1f24bd0b09258c0e9c178bdc8d742",
+      "model": "r02",
+      "variant": "full",
+      "highest_matching_phone_score": 0.014305531978607178,
+      "accepted_business_categories": [],
+      "cup_recheck_scores": [
+        0.5968212485313416
+      ],
+      "top_phone_area_category": "book",
+      "top_phone_area_score": 0.02973198890686035
+    },
+    {
+      "frame_index": 60,
+      "input_sha256": "8a47157959efde61e114d7529a47ebe150e1f24bd0b09258c0e9c178bdc8d742",
+      "model": "r02",
+      "variant": "manual_context_crop",
+      "highest_matching_phone_score": 0.15557721257209778,
+      "accepted_business_categories": [
+        "cup"
+      ],
+      "cup_recheck_scores": [
+        0.5968212485313416
+      ],
+      "top_phone_area_category": "cell phone",
+      "top_phone_area_score": 0.15557721257209778
+    }
+  ],
+  "source_sha256": "cd034ad779344be9ce8d6b7e12de41b4878dbcb6d40775bd8fd0f69c6849b637",
+  "production_changed": false,
+  "new_training": false,
+  "camera_opened": false,
+  "cloud_or_agent_calls": 0
+}
