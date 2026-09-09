@@ -1,0 +1,103 @@
+{
+  "started_at": "2026-09-09T09:02:21.110128+00:00",
+  "finished_at": "2026-09-09T09:05:29.363959+00:00",
+  "reached_deadline": true,
+  "worker_stop_error": null,
+  "fault_observations": 0,
+  "requested_size": [
+    1280,
+    720
+  ],
+  "actual_size": [
+    1280,
+    720
+  ],
+  "backend": "AVFOUNDATION",
+  "candidate_sha256": "ad6a55f338c8c1a0525698ad73f72c5b3e580996ed30d3c2eb7fde62d57061e3",
+  "baseline_sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+  "confidence": 0.35,
+  "sample_interval_seconds": 1.0,
+  "inference_ms": {
+    "candidate": {
+      "p50": 75.824,
+      "p95": 80.686,
+      "max": 195.084
+    },
+    "baseline": {
+      "p50": 53.389,
+      "p95": 54.983,
+      "max": 121.291
+    }
+  },
+  "retained_png_counts": {
+    "periodic": 7,
+    "disagreement": 0
+  },
+  "cloud_or_agent_calls": 0,
+  "execution_order": "candidate single pass, then production baseline (one or two passes)",
+  "baseline_pipeline": "official YOLO26n + CupScaleRecheckDetector",
+  "production_changed": false,
+  "fresh_samples": 180,
+  "unique_input_hashes": 180,
+  "first_fresh": "2026-09-09T09:02:28.966859+00:00",
+  "last_fresh": "2026-09-09T09:05:28.616289+00:00",
+  "maximum_fresh_gap_seconds": 1.026183,
+  "source_summary_sha256": "7d130e1fb3ec79c6959436ab680735ee9a46700c539f70f3646f8d57dce6ab98",
+  "manual_review": {
+    "periodic_images": 7,
+    "visible_objects": "cup and partly truncated phone in all seven saved periodic frames",
+    "video_recorded": false,
+    "full_frame_gt": false,
+    "cup_instances": 1,
+    "independent_session_count": 1
+  },
+  "limits": [
+    "Stationary same-session sampling, not independent trials or general accuracy.",
+    "Phone is partly outside image; both detectors miss it.",
+    "No bottle present; no removed/replaced test, negative-only session or Windows test.",
+    "Candidate always runs first; latency is non-isolated paired-run timing.",
+    "Current posture differs from earlier recorded failure; no claim that previous continuous failure was resolved."
+  ],
+  "candidate": {
+    "detection_frames": {
+      "cup": 180,
+      "bottle": 0,
+      "cell phone": 0
+    },
+    "events": [
+      {
+        "category": "cup",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T09:02:28.966859Z",
+        "confirmed_at": "2026-09-09T09:02:30.970514Z"
+      }
+    ],
+    "event_evidence_verified": true,
+    "cup_confidence": {
+      "min": 0.6461870670318604,
+      "median": 0.7239765822887421,
+      "max": 0.7721741795539856
+    }
+  },
+  "baseline": {
+    "detection_frames": {
+      "cup": 180,
+      "bottle": 0,
+      "cell phone": 0
+    },
+    "events": [
+      {
+        "category": "cup",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T09:02:28.966859Z",
+        "confirmed_at": "2026-09-09T09:02:30.970514Z"
+      }
+    ],
+    "event_evidence_verified": true,
+    "cup_confidence": {
+      "min": 0.592033326625824,
+      "median": 0.6624763607978821,
+      "max": 0.7076340317726135
+    }
+  }
+}
