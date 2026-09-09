@@ -1,0 +1,113 @@
+{
+  "started_at": "2026-09-09T09:12:39.915392+00:00",
+  "finished_at": "2026-09-09T09:14:48.181407+00:00",
+  "reached_deadline": true,
+  "worker_stop_error": null,
+  "fault_observations": 0,
+  "requested_size": [
+    1280,
+    720
+  ],
+  "actual_size": [
+    1280,
+    720
+  ],
+  "backend": "AVFOUNDATION",
+  "candidate_sha256": "ad6a55f338c8c1a0525698ad73f72c5b3e580996ed30d3c2eb7fde62d57061e3",
+  "baseline_sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+  "confidence": 0.35,
+  "sample_interval_seconds": 1.0,
+  "inference_ms": {
+    "candidate": {
+      "p50": 73.552,
+      "p95": 80.899,
+      "max": 284.985
+    },
+    "baseline": {
+      "p50": 106.365,
+      "p95": 109.752,
+      "max": 125.727
+    }
+  },
+  "retained_png_counts": {
+    "periodic": 5,
+    "disagreement": 12
+  },
+  "cloud_or_agent_calls": 0,
+  "execution_order": "candidate single pass, then production baseline (one or two passes)",
+  "baseline_pipeline": "official YOLO26n + CupScaleRecheckDetector",
+  "production_changed": false,
+  "fresh_samples": 120,
+  "first_fresh": "2026-09-09T09:12:47.757187+00:00",
+  "last_fresh": "2026-09-09T09:14:47.198324+00:00",
+  "maximum_fresh_gap_seconds": 1.025538,
+  "unique_input_hashes": 120,
+  "source_summary_sha256": "e49a33e4a75cf5b742e4cb5721881b22bbe6f615f0cf7528adc942e7e6430c08",
+  "manual_review": {
+    "periodic_images": 5,
+    "unobstructed_center_phone_reviewed_at_fresh_indices": [
+      30,
+      60
+    ],
+    "cup_repositioned": true,
+    "video_recorded": false,
+    "full_frame_gt": false,
+    "missing_event_images_reviewed": 2
+  },
+  "limits": [
+    "Sampling output counts, not full-frame annotated accuracy or independent trials.",
+    "Cup was repositioned during this session; it is not a constant-pose comparison with the previous session.",
+    "No controlled object removal, empty-scene session, new training, or Windows validation.",
+    "Fixed candidate-first paired CPU timing is not an isolated speed benchmark."
+  ],
+  "candidate": {
+    "detection_frames": {
+      "cup": 29,
+      "cell phone": 0,
+      "bottle": 0
+    },
+    "events": [
+      {
+        "category": "cup",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T09:12:47.757187Z",
+        "confirmed_at": "2026-09-09T09:12:49.775148Z",
+        "evidence_sha256": "0832965b2e28be4e552ebf48207b958a758527a35c1959d39512f27b0ba63dc1"
+      },
+      {
+        "category": "cup",
+        "kind": "missing",
+        "observed_at": "2026-09-09T09:13:15.853579Z",
+        "confirmed_at": "2026-09-09T09:13:20.880026Z",
+        "evidence_sha256": "b0ff69968b24f12b3ed7398e5ccc4300400b1a303a039a8aebf6d634f967662d",
+        "manual_review": "False cup disappearance: cup visibly present in event evidence."
+      }
+    ],
+    "false_cup_missing_events": 1
+  },
+  "baseline": {
+    "detection_frames": {
+      "cup": 87,
+      "cell phone": 0,
+      "bottle": 3
+    },
+    "events": [
+      {
+        "category": "cup",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T09:12:48.765872Z",
+        "confirmed_at": "2026-09-09T09:12:50.766381Z",
+        "evidence_sha256": "5f784e23dc5829a62ffea019444c44f71b8d69d962bb86cdf706f147a1cc4971"
+      },
+      {
+        "category": "cup",
+        "kind": "missing",
+        "observed_at": "2026-09-09T09:14:16.078626Z",
+        "confirmed_at": "2026-09-09T09:14:21.087817Z",
+        "evidence_sha256": "5b88eef60c87606dfa397678426490b86bd2231de1862a0d48835963a7f197a4",
+        "manual_review": "False cup disappearance: cup visibly present in event evidence."
+      }
+    ],
+    "false_cup_missing_events": 1
+  }
+}
