@@ -165,6 +165,7 @@ def main():
         "official_single": baseline,
         "production_two_pass": CupScaleRecheckDetector(baseline),
         "finetuned_single": candidate,
+        "finetuned_two_pass": CupScaleRecheckDetector(candidate),
     }
     result = {
         "started_at": datetime.now(UTC).isoformat(),

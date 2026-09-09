@@ -1,0 +1,1062 @@
+{
+  "started_at": "2026-09-09T11:20:19.916551+00:00",
+  "completed_at": "2026-09-09T11:29:30.504581+00:00",
+  "training_elapsed_seconds": 549.4895167499781,
+  "elapsed_seconds": 550.5852029579692,
+  "source_weights_sha256": "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+  "trained_weights_sha256": "6e646ed2f567dee2a941a63639e0dd3aeb4e5bbb114630cdb54590133cadb094",
+  "exported_onnx_sha256": "f71abc2197aeb433fb6ba21f97113b5797c2bdbbaeded3fe37466e5ee1a4d004",
+  "versions": {
+    "python": "3.11.16",
+    "torch": "2.14.0",
+    "ultralytics": "8.4.142"
+  },
+  "head_mode": "preserved_coco_80",
+  "schema_version": 1,
+  "scope": "Local cup/phone focus; no new local bottle collection required; production unchanged",
+  "parameters": {
+    "amp": false,
+    "batch": 4,
+    "close_mosaic": 5,
+    "copy_paste": 0.0,
+    "deterministic": true,
+    "device": "mps",
+    "epochs": 30,
+    "freeze": 10,
+    "imgsz": 640,
+    "lr0": 0.0002,
+    "mixup": 0.0,
+    "mosaic": 0.2,
+    "optimizer": "AdamW",
+    "patience": 0,
+    "seed": 20260909,
+    "warmup_bias_lr": 0.01,
+    "warmup_epochs": 1.0,
+    "workers": 0
+  },
+  "train_val_fingerprint": "2b951e264c623e2adffc17c4e1e4f6e56b14d1102fc5d4d20364b61e611fd320",
+  "selection": {
+    "source_epoch": 29,
+    "macro_f1": 0.8996537187594098,
+    "manifest_sha256": "d3ea8707ce2c5b92b21bf8e71f3b192cc32adbb5f374460f1d120d3bdc280541",
+    "group_count": 4,
+    "development_only": true
+  },
+  "data": {
+    "scene_train": 36,
+    "scene_val": 18,
+    "public_train": 96,
+    "public_val": 24,
+    "historical_test": 4,
+    "label_rows_train_val": 1589,
+    "user_final_test_read": false
+  },
+  "export_comparison_passed": true,
+  "export_compared_inputs": 168,
+  "datasets": {
+    "scene_val": {
+      "count": 18,
+      "manifest_sha256": "e37a1bf52cd0b5cf2a357cec9acd2634d9a37eec0861ffd14aa6e74764349acb",
+      "scores": {
+        "official_single": {
+          "bottle": {
+            "tp": 0,
+            "fp": 1,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 0.0,
+            "recall": null
+          },
+          "cup": {
+            "tp": 3,
+            "fp": 0,
+            "fn": 6,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.3333333333333333
+          },
+          "cell phone": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 4,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.3333333333333333
+          }
+        },
+        "production_two_pass": {
+          "bottle": {
+            "tp": 0,
+            "fp": 1,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 0.0,
+            "recall": null
+          },
+          "cup": {
+            "tp": 3,
+            "fp": 0,
+            "fn": 6,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.3333333333333333
+          },
+          "cell phone": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 4,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.3333333333333333
+          }
+        },
+        "finetuned_single": {
+          "bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": null,
+            "recall": null
+          },
+          "cup": {
+            "tp": 9,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "cell phone": {
+            "tp": 6,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          }
+        },
+        "finetuned_two_pass": {
+          "bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": null,
+            "recall": null
+          },
+          "cup": {
+            "tp": 9,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "cell phone": {
+            "tp": 6,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          }
+        }
+      },
+      "cpu_ms": {
+        "official_single": {
+          "median": 45.409229351207614,
+          "p95": 46.21235434897243
+        },
+        "production_two_pass": {
+          "median": 90.9149789949879,
+          "p95": 92.88565979804844
+        },
+        "finetuned_single": {
+          "median": 45.458749984391034,
+          "p95": 46.382226794958115
+        },
+        "finetuned_two_pass": {
+          "median": 68.55952052865177,
+          "p95": 98.90993584413081
+        }
+      }
+    },
+    "public_val": {
+      "count": 24,
+      "manifest_sha256": "0cd4fc303af2b265bd081929ecb62f69b1868736244927d645699492f96c194a",
+      "scores": {
+        "official_single": {
+          "bottle": {
+            "tp": 12,
+            "fp": 1,
+            "fn": 23,
+            "ignored": 0,
+            "precision": 0.9230769230769231,
+            "recall": 0.34285714285714286
+          },
+          "cup": {
+            "tp": 10,
+            "fp": 2,
+            "fn": 15,
+            "ignored": 0,
+            "precision": 0.8333333333333334,
+            "recall": 0.4
+          },
+          "cell phone": {
+            "tp": 4,
+            "fp": 0,
+            "fn": 4,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.5
+          }
+        },
+        "production_two_pass": {
+          "bottle": {
+            "tp": 12,
+            "fp": 1,
+            "fn": 23,
+            "ignored": 0,
+            "precision": 0.9230769230769231,
+            "recall": 0.34285714285714286
+          },
+          "cup": {
+            "tp": 11,
+            "fp": 2,
+            "fn": 14,
+            "ignored": 0,
+            "precision": 0.8461538461538461,
+            "recall": 0.44
+          },
+          "cell phone": {
+            "tp": 4,
+            "fp": 0,
+            "fn": 4,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.5
+          }
+        },
+        "finetuned_single": {
+          "bottle": {
+            "tp": 16,
+            "fp": 3,
+            "fn": 19,
+            "ignored": 0,
+            "precision": 0.8421052631578947,
+            "recall": 0.45714285714285713
+          },
+          "cup": {
+            "tp": 11,
+            "fp": 5,
+            "fn": 14,
+            "ignored": 0,
+            "precision": 0.6875,
+            "recall": 0.44
+          },
+          "cell phone": {
+            "tp": 5,
+            "fp": 2,
+            "fn": 3,
+            "ignored": 0,
+            "precision": 0.7142857142857143,
+            "recall": 0.625
+          }
+        },
+        "finetuned_two_pass": {
+          "bottle": {
+            "tp": 16,
+            "fp": 3,
+            "fn": 19,
+            "ignored": 0,
+            "precision": 0.8421052631578947,
+            "recall": 0.45714285714285713
+          },
+          "cup": {
+            "tp": 12,
+            "fp": 6,
+            "fn": 13,
+            "ignored": 0,
+            "precision": 0.6666666666666666,
+            "recall": 0.48
+          },
+          "cell phone": {
+            "tp": 5,
+            "fp": 2,
+            "fn": 3,
+            "ignored": 0,
+            "precision": 0.7142857142857143,
+            "recall": 0.625
+          }
+        }
+      },
+      "cpu_ms": {
+        "official_single": {
+          "median": 45.57425051461905,
+          "p95": 50.66048309672623
+        },
+        "production_two_pass": {
+          "median": 90.6205625506118,
+          "p95": 100.98297863733022
+        },
+        "finetuned_single": {
+          "median": 47.66310390550643,
+          "p95": 51.198406191542745
+        },
+        "finetuned_two_pass": {
+          "median": 91.23164543416351,
+          "p95": 109.62603575317188
+        }
+      }
+    },
+    "public60": {
+      "count": 60,
+      "manifest_sha256": "ce041325689a02c0c049ce9f5d2e318615e8b262404763211637c5e2be6b567f",
+      "scores": {
+        "official_single": {
+          "bottle": {
+            "tp": 23,
+            "fp": 9,
+            "fn": 57,
+            "ignored": 0,
+            "precision": 0.71875,
+            "recall": 0.2875
+          },
+          "cup": {
+            "tp": 24,
+            "fp": 10,
+            "fn": 24,
+            "ignored": 0,
+            "precision": 0.7058823529411765,
+            "recall": 0.5
+          },
+          "cell phone": {
+            "tp": 9,
+            "fp": 2,
+            "fn": 18,
+            "ignored": 0,
+            "precision": 0.8181818181818182,
+            "recall": 0.3333333333333333
+          }
+        },
+        "production_two_pass": {
+          "bottle": {
+            "tp": 23,
+            "fp": 9,
+            "fn": 57,
+            "ignored": 0,
+            "precision": 0.71875,
+            "recall": 0.2875
+          },
+          "cup": {
+            "tp": 24,
+            "fp": 10,
+            "fn": 24,
+            "ignored": 0,
+            "precision": 0.7058823529411765,
+            "recall": 0.5
+          },
+          "cell phone": {
+            "tp": 9,
+            "fp": 2,
+            "fn": 18,
+            "ignored": 0,
+            "precision": 0.8181818181818182,
+            "recall": 0.3333333333333333
+          }
+        },
+        "finetuned_single": {
+          "bottle": {
+            "tp": 26,
+            "fp": 13,
+            "fn": 54,
+            "ignored": 0,
+            "precision": 0.6666666666666666,
+            "recall": 0.325
+          },
+          "cup": {
+            "tp": 31,
+            "fp": 15,
+            "fn": 17,
+            "ignored": 0,
+            "precision": 0.6739130434782609,
+            "recall": 0.6458333333333334
+          },
+          "cell phone": {
+            "tp": 14,
+            "fp": 8,
+            "fn": 13,
+            "ignored": 0,
+            "precision": 0.6363636363636364,
+            "recall": 0.5185185185185185
+          }
+        },
+        "finetuned_two_pass": {
+          "bottle": {
+            "tp": 26,
+            "fp": 13,
+            "fn": 54,
+            "ignored": 0,
+            "precision": 0.6666666666666666,
+            "recall": 0.325
+          },
+          "cup": {
+            "tp": 31,
+            "fp": 15,
+            "fn": 17,
+            "ignored": 0,
+            "precision": 0.6739130434782609,
+            "recall": 0.6458333333333334
+          },
+          "cell phone": {
+            "tp": 14,
+            "fp": 8,
+            "fn": 13,
+            "ignored": 0,
+            "precision": 0.6363636363636364,
+            "recall": 0.5185185185185185
+          }
+        }
+      },
+      "cpu_ms": {
+        "official_single": {
+          "median": 45.364479534327984,
+          "p95": 48.403804434929036
+        },
+        "production_two_pass": {
+          "median": 90.19014600198716,
+          "p95": 101.39766181819141
+        },
+        "finetuned_single": {
+          "median": 50.72531243786216,
+          "p95": 51.53823966393247
+        },
+        "finetuned_two_pass": {
+          "median": 100.84372956771404,
+          "p95": 102.75428814347833
+        }
+      }
+    },
+    "public30": {
+      "count": 30,
+      "manifest_sha256": "d7b725b45f7acbb4b954d4575c614e695e224489234eed89b0fdd67236c7e425",
+      "scores": {
+        "official_single": {
+          "bottle": {
+            "tp": 8,
+            "fp": 0,
+            "fn": 15,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.34782608695652173
+          },
+          "cup": {
+            "tp": 7,
+            "fp": 4,
+            "fn": 13,
+            "ignored": 0,
+            "precision": 0.6363636363636364,
+            "recall": 0.35
+          },
+          "cell phone": {
+            "tp": 5,
+            "fp": 0,
+            "fn": 4,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.5555555555555556
+          }
+        },
+        "production_two_pass": {
+          "bottle": {
+            "tp": 8,
+            "fp": 0,
+            "fn": 15,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.34782608695652173
+          },
+          "cup": {
+            "tp": 7,
+            "fp": 4,
+            "fn": 13,
+            "ignored": 0,
+            "precision": 0.6363636363636364,
+            "recall": 0.35
+          },
+          "cell phone": {
+            "tp": 5,
+            "fp": 0,
+            "fn": 4,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.5555555555555556
+          }
+        },
+        "finetuned_single": {
+          "bottle": {
+            "tp": 9,
+            "fp": 1,
+            "fn": 14,
+            "ignored": 0,
+            "precision": 0.9,
+            "recall": 0.391304347826087
+          },
+          "cup": {
+            "tp": 8,
+            "fp": 3,
+            "fn": 12,
+            "ignored": 0,
+            "precision": 0.7272727272727273,
+            "recall": 0.4
+          },
+          "cell phone": {
+            "tp": 6,
+            "fp": 1,
+            "fn": 3,
+            "ignored": 0,
+            "precision": 0.8571428571428571,
+            "recall": 0.6666666666666666
+          }
+        },
+        "finetuned_two_pass": {
+          "bottle": {
+            "tp": 9,
+            "fp": 1,
+            "fn": 14,
+            "ignored": 0,
+            "precision": 0.9,
+            "recall": 0.391304347826087
+          },
+          "cup": {
+            "tp": 8,
+            "fp": 3,
+            "fn": 12,
+            "ignored": 0,
+            "precision": 0.7272727272727273,
+            "recall": 0.4
+          },
+          "cell phone": {
+            "tp": 6,
+            "fp": 1,
+            "fn": 3,
+            "ignored": 0,
+            "precision": 0.8571428571428571,
+            "recall": 0.6666666666666666
+          }
+        }
+      },
+      "cpu_ms": {
+        "official_single": {
+          "median": 45.345042017288506,
+          "p95": 48.55279005132615
+        },
+        "production_two_pass": {
+          "median": 89.97462457045913,
+          "p95": 100.97822500392795
+        },
+        "finetuned_single": {
+          "median": 50.6330409552902,
+          "p95": 52.24630864104256
+        },
+        "finetuned_two_pass": {
+          "median": 101.02664586156607,
+          "p95": 103.20232076337561
+        }
+      }
+    },
+    "hard30": {
+      "count": 30,
+      "manifest_sha256": "d4010120c198cb44fb624ce47d5083e5b3ff6b5ed0b4c443207f19a96d01def5",
+      "scores": {
+        "official_single": {
+          "bottle": {
+            "tp": 17,
+            "fp": 9,
+            "fn": 27,
+            "ignored": 0,
+            "precision": 0.6538461538461539,
+            "recall": 0.38636363636363635
+          },
+          "cup": {
+            "tp": 14,
+            "fp": 16,
+            "fn": 12,
+            "ignored": 0,
+            "precision": 0.4666666666666667,
+            "recall": 0.5384615384615384
+          },
+          "cell phone": {
+            "tp": 1,
+            "fp": 0,
+            "fn": 4,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.2
+          }
+        },
+        "production_two_pass": {
+          "bottle": {
+            "tp": 17,
+            "fp": 9,
+            "fn": 27,
+            "ignored": 0,
+            "precision": 0.6538461538461539,
+            "recall": 0.38636363636363635
+          },
+          "cup": {
+            "tp": 14,
+            "fp": 16,
+            "fn": 12,
+            "ignored": 0,
+            "precision": 0.4666666666666667,
+            "recall": 0.5384615384615384
+          },
+          "cell phone": {
+            "tp": 1,
+            "fp": 0,
+            "fn": 4,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.2
+          }
+        },
+        "finetuned_single": {
+          "bottle": {
+            "tp": 18,
+            "fp": 12,
+            "fn": 26,
+            "ignored": 0,
+            "precision": 0.6,
+            "recall": 0.4090909090909091
+          },
+          "cup": {
+            "tp": 19,
+            "fp": 22,
+            "fn": 7,
+            "ignored": 0,
+            "precision": 0.4634146341463415,
+            "recall": 0.7307692307692307
+          },
+          "cell phone": {
+            "tp": 3,
+            "fp": 1,
+            "fn": 2,
+            "ignored": 0,
+            "precision": 0.75,
+            "recall": 0.6
+          }
+        },
+        "finetuned_two_pass": {
+          "bottle": {
+            "tp": 18,
+            "fp": 12,
+            "fn": 26,
+            "ignored": 0,
+            "precision": 0.6,
+            "recall": 0.4090909090909091
+          },
+          "cup": {
+            "tp": 19,
+            "fp": 22,
+            "fn": 7,
+            "ignored": 0,
+            "precision": 0.4634146341463415,
+            "recall": 0.7307692307692307
+          },
+          "cell phone": {
+            "tp": 3,
+            "fp": 1,
+            "fn": 2,
+            "ignored": 0,
+            "precision": 0.75,
+            "recall": 0.6
+          }
+        }
+      },
+      "cpu_ms": {
+        "official_single": {
+          "median": 45.535021112300456,
+          "p95": 51.39108771691099
+        },
+        "production_two_pass": {
+          "median": 89.7075419779867,
+          "p95": 101.87349753687158
+        },
+        "finetuned_single": {
+          "median": 50.71331246290356,
+          "p95": 51.60385813796893
+        },
+        "finetuned_two_pass": {
+          "median": 51.39731301460415,
+          "p95": 103.3408974763006
+        }
+      }
+    },
+    "old_scene": {
+      "count": 4,
+      "manifest_sha256": "1d9d28fc42352b64940a91fe676478887b2d6ca0fac3174eba2279fa743eae6c",
+      "scores": {
+        "official_single": {
+          "bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": null,
+            "recall": null
+          },
+          "cup": {
+            "tp": 3,
+            "fp": 0,
+            "fn": 1,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.75
+          },
+          "cell phone": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 4,
+            "ignored": 0,
+            "precision": null,
+            "recall": 0.0
+          }
+        },
+        "production_two_pass": {
+          "bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": null,
+            "recall": null
+          },
+          "cup": {
+            "tp": 3,
+            "fp": 0,
+            "fn": 1,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 0.75
+          },
+          "cell phone": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 4,
+            "ignored": 0,
+            "precision": null,
+            "recall": 0.0
+          }
+        },
+        "finetuned_single": {
+          "bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": null,
+            "recall": null
+          },
+          "cup": {
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "cell phone": {
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          }
+        },
+        "finetuned_two_pass": {
+          "bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": null,
+            "recall": null
+          },
+          "cup": {
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "cell phone": {
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          }
+        }
+      },
+      "cpu_ms": {
+        "official_single": {
+          "median": 45.44914606958628,
+          "p95": 49.99757941113785
+        },
+        "production_two_pass": {
+          "median": 47.95600054785609,
+          "p95": 84.79926439467816
+        },
+        "finetuned_single": {
+          "median": 50.71922892238945,
+          "p95": 50.79422113485634
+        },
+        "finetuned_two_pass": {
+          "median": 50.801313132978976,
+          "p95": 51.90137780737132
+        }
+      }
+    },
+    "known_center": {
+      "count": 2,
+      "manifest_sha256": "fd6e6d9dc412bc06f948360772fe64c3a3f98388a766e74b0d631fa6f94e237d",
+      "scores": {
+        "official_single": {
+          "bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": null,
+            "recall": null
+          },
+          "cup": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 2,
+            "ignored": 0,
+            "precision": null,
+            "recall": 0.0
+          },
+          "cell phone": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 2,
+            "ignored": 0,
+            "precision": null,
+            "recall": 0.0
+          }
+        },
+        "production_two_pass": {
+          "bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": null,
+            "recall": null
+          },
+          "cup": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "cell phone": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 2,
+            "ignored": 0,
+            "precision": null,
+            "recall": 0.0
+          }
+        },
+        "finetuned_single": {
+          "bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": null,
+            "recall": null
+          },
+          "cup": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "cell phone": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          }
+        },
+        "finetuned_two_pass": {
+          "bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": null,
+            "recall": null
+          },
+          "cup": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "cell phone": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "ignored": 0,
+            "precision": 1.0,
+            "recall": 1.0
+          }
+        }
+      },
+      "cpu_ms": {
+        "official_single": {
+          "median": 45.342603931203485,
+          "p95": 45.38177277427167
+        },
+        "production_two_pass": {
+          "median": 90.68143751937896,
+          "p95": 90.80606919014826
+        },
+        "finetuned_single": {
+          "median": 50.79031258355826,
+          "p95": 50.81181855639443
+        },
+        "finetuned_two_pass": {
+          "median": 50.65483367070556,
+          "p95": 50.730808498337865
+        }
+      }
+    }
+  },
+  "replay": {
+    "scope": "1 Hz offline simulated timestamps; same development validation videos; no dense GT",
+    "created_at": "2026-09-09T11:33:09.152294+00:00",
+    "videos": [
+      {
+        "clock": "18-00-19",
+        "sample_count": 18,
+        "video_sha256": "324ca1fece0ca9e6ee752a4ef146923a28611f1f63c077c1a0b6fd87d5f0038d",
+        "pipelines": {
+          "official_cup_scale": {
+            "event_counts": {},
+            "focus_detection_samples": {},
+            "empty_scene_false_appeared_events": 0,
+            "focus_missing_then_later_detection_events": [],
+            "invalid_stopped_after_7s_events": [],
+            "invalid_stopped_after_7s_created_missing": false,
+            "event_evidence_limit": 20
+          },
+          "r03_cup_scale": {
+            "event_counts": {},
+            "focus_detection_samples": {},
+            "empty_scene_false_appeared_events": 0,
+            "focus_missing_then_later_detection_events": [],
+            "invalid_stopped_after_7s_events": [],
+            "invalid_stopped_after_7s_created_missing": false,
+            "event_evidence_limit": 20
+          }
+        }
+      },
+      {
+        "clock": "18-00-48",
+        "sample_count": 15,
+        "video_sha256": "eea17d61d8c2753ee4a34ab325d128733b9d65c0d557e95ed1ba9605c739d0cb",
+        "pipelines": {
+          "official_cup_scale": {
+            "event_counts": {},
+            "focus_detection_samples": {
+              "cup": 3
+            },
+            "empty_scene_false_appeared_events": null,
+            "focus_missing_then_later_detection_events": [],
+            "invalid_stopped_after_7s_events": [],
+            "invalid_stopped_after_7s_created_missing": false,
+            "event_evidence_limit": 20
+          },
+          "r03_cup_scale": {
+            "event_counts": {
+              "cup:appeared": 1
+            },
+            "focus_detection_samples": {
+              "cup": 9
+            },
+            "empty_scene_false_appeared_events": null,
+            "focus_missing_then_later_detection_events": [],
+            "invalid_stopped_after_7s_events": [],
+            "invalid_stopped_after_7s_created_missing": false,
+            "event_evidence_limit": 20
+          }
+        }
+      },
+      {
+        "clock": "18-03-09",
+        "sample_count": 28,
+        "video_sha256": "18119d26e3dd9ade02d0f91b923c2477d13cb78e3d8452f3eab0be3e2af2e663",
+        "pipelines": {
+          "official_cup_scale": {
+            "event_counts": {
+              "cup:appeared": 1
+            },
+            "focus_detection_samples": {
+              "cup": 11,
+              "cell phone": 3
+            },
+            "empty_scene_false_appeared_events": null,
+            "focus_missing_then_later_detection_events": [],
+            "invalid_stopped_after_7s_events": [],
+            "invalid_stopped_after_7s_created_missing": false,
+            "event_evidence_limit": 20
+          },
+          "r03_cup_scale": {
+            "event_counts": {
+              "cell phone:appeared": 1,
+              "cup:appeared": 1
+            },
+            "focus_detection_samples": {
+              "cup": 24,
+              "cell phone": 28
+            },
+            "empty_scene_false_appeared_events": null,
+            "focus_missing_then_later_detection_events": [],
+            "invalid_stopped_after_7s_events": [],
+            "invalid_stopped_after_7s_created_missing": false,
+            "event_evidence_limit": 20
+          }
+        }
+      }
+    ],
+    "root_visual_event_review_count": 4,
+    "invalid_tail": "one stopped/fresh=false input at last sample +7 simulated seconds"
+  },
+  "limits": [
+    "Same day and same object instances; development validation used for checkpoint selection",
+    "168 evaluation inputs include overlapping regression sets; do not pool",
+    "Public regression recall improved with increased false positives",
+    "Train/val fingerprint excludes test files; regression manifests carry separate hashes",
+    "No live camera, Windows, or cloud calls in r03 training and evaluation",
+    "No production model replacement"
+  ]
+}

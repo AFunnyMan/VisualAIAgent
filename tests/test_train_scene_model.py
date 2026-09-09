@@ -1,14 +1,50 @@
+import hashlib
+import json
 from pathlib import Path
 
+import cv2
+import numpy as np
 import pytest
 import yaml
 
 from scripts.train_scene_model import (
     EXPECTED_NAMES,
     dataset_fingerprint,
+    grouped_macro_f1,
+    load_selection_manifest,
     normalize_names,
     official_names,
 )
+
+
+def make_selection_dataset(tmp_path: Path) -> tuple[Path, Path, dict]:
+    for split in ("train", "val", "test"):
+        (tmp_path / "images" / split).mkdir(parents=True)
+        cv2.imwrite(
+            str(tmp_path / "images" / split / f"{split}.jpg"),
+            np.zeros((20, 20, 3), dtype=np.uint8) + len(split),
+        )
+    dataset = tmp_path / "dataset.yaml"
+    dataset.write_text(
+        "path: .\ntrain: images/train\nval: images/val\ntest: images/test\n"
+        "names: [bottle, cup, cell phone]\n",
+        encoding="utf-8",
+    )
+    image = (tmp_path / "images/val/val.jpg").resolve()
+    sample = {
+        "id": "val-1",
+        "split": "val",
+        "group": "capture-val",
+        "selection_group": "scene-positive",
+        "image_path": str(image),
+        "sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
+        "width": 20,
+        "height": 20,
+        "annotations": [{"category": "cup", "bbox": [1, 1, 10, 10], "iscrowd": False}],
+    }
+    manifest = tmp_path / "selection.json"
+    manifest.write_text(json.dumps({"samples": [sample]}), encoding="utf-8")
+    return dataset, manifest, sample
 
 
 def make_dataset(tmp_path: Path, label_text: str, *, listed: bool = False) -> Path:
@@ -147,3 +183,91 @@ def test_preserve_coco_head_rejects_wrong_mapping(tmp_path: Path) -> None:
     dataset.write_text(yaml.safe_dump(config, sort_keys=False))
     with pytest.raises(ValueError, match="Expected exactly"):
         dataset_fingerprint(dataset, names)
+
+
+def test_selection_manifest_must_be_exact_val_image_with_matching_sha(tmp_path: Path) -> None:
+    dataset, manifest, sample = make_selection_dataset(tmp_path)
+    loaded = load_selection_manifest(dataset, manifest)
+    assert loaded["samples"][0]["image_path"] == str((tmp_path / "images/val/val.jpg").resolve())
+    sample["sha256"] = "0" * 64
+    manifest.write_text(json.dumps({"samples": [sample]}), encoding="utf-8")
+    with pytest.raises(ValueError, match="checksum mismatch"):
+        load_selection_manifest(dataset, manifest)
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        ({"split": "train"}, "split='val'"),
+        ({"image_path": "images/train/train.jpg"}, "not in dataset val"),
+        ({"selection_group": ""}, "selection_group"),
+        ({"group": ""}, "capture group"),
+        (
+            {
+                "annotations": [
+                    {"category": "cup", "bbox": [1, 1, float("nan"), 10], "iscrowd": False}
+                ]
+            },
+            "annotation box",
+        ),
+    ],
+)
+def test_selection_manifest_rejects_invalid_scope_and_boxes(
+    tmp_path: Path, change: dict, message: str
+) -> None:
+    dataset, manifest, sample = make_selection_dataset(tmp_path)
+    sample.update(change)
+    if "image_path" in change:
+        path = tmp_path / change["image_path"]
+        sample["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps({"samples": [sample]}), encoding="utf-8")
+    with pytest.raises(ValueError, match=message):
+        load_selection_manifest(dataset, manifest)
+
+
+def test_selection_rejects_capture_group_leaking_across_dataset_splits(tmp_path: Path) -> None:
+    dataset, manifest, sample = make_selection_dataset(tmp_path)
+    rows = [
+        sample,
+        {
+            "id": "train-1",
+            "split": "train",
+            "group": sample["group"],
+            "image_path": str((tmp_path / "images/train/train.jpg").resolve()),
+            "sha256": hashlib.sha256(
+                (tmp_path / "images/train/train.jpg").read_bytes()
+            ).hexdigest(),
+        },
+    ]
+    (tmp_path / "manifest.json").write_text(json.dumps({"samples": rows}), encoding="utf-8")
+    with pytest.raises(ValueError, match="span dataset splits"):
+        load_selection_manifest(dataset, manifest)
+
+
+def test_grouped_macro_f1_weights_selection_groups_equally_and_scores_negatives() -> None:
+    manifest = {
+        "samples": [
+            {
+                "id": "public-1",
+                "selection_group": "public",
+                "annotations": [{"category": "cup", "bbox": [0, 0, 10, 10], "iscrowd": False}],
+            },
+            {
+                "id": "public-2",
+                "selection_group": "public",
+                "annotations": [{"category": "cup", "bbox": [0, 0, 10, 10], "iscrowd": False}],
+            },
+            {"id": "negative", "selection_group": "negative", "annotations": []},
+        ]
+    }
+    correct = {"category": "cup", "confidence": 0.9, "bbox": [0, 0, 10, 10]}
+    predictions = [
+        {"id": "public-1", "detections": [correct]},
+        {"id": "public-2", "detections": [correct]},
+        {"id": "negative", "detections": []},
+    ]
+    assert grouped_macro_f1(manifest, predictions)["macro_f1"] == 1.0
+    predictions[-1]["detections"] = [correct]
+    result = grouped_macro_f1(manifest, predictions)
+    assert result["groups"]["negative"]["macro_f1"] == 0.0
+    assert result["macro_f1"] == 0.5

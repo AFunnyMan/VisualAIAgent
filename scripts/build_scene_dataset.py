@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import math
@@ -20,9 +21,17 @@ def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def build(manifests, output):
+def build(manifests, output, *, preserve_coco_head=False):
     if output.exists():
         raise ValueError("Refusing to overwrite a frozen dataset")
+    names = NAMES
+    if preserve_coco_head:
+        model_manifest = (
+            Path(__file__).resolve().parents[1] / "model_manifests/yolo26n-e2e.onnx.json"
+        )
+        names = ast.literal_eval(json.loads(model_manifest.read_text())["model_metadata"]["names"])
+        if set(names) != set(range(80)) or not set(NAMES.values()).issubset(names.values()):
+            raise ValueError("Invalid official COCO class mapping")
     samples, seen_ids, hashes, groups = [], set(), {}, {}
     sources = []
     for manifest_path in manifests:
@@ -63,7 +72,9 @@ def build(manifests, output):
                 raise ValueError(f"Image dimensions disagree: {sample_id}")
             labels = []
             for annotation in sample["annotations"]:
-                if annotation["category"] not in NAMES.values():
+                if annotation["category"] not in names.values():
+                    if preserve_coco_head:
+                        raise ValueError(f"Unknown COCO category: {annotation['category']}")
                     continue
                 if annotation.get("iscrowd", False):
                     raise ValueError("Training manifest must exclude target crowd images")
@@ -72,7 +83,7 @@ def build(manifests, output):
                     raise ValueError("Non-finite box")
                 if not (0 <= x1 < x2 <= width and 0 <= y1 < y2 <= height):
                     raise ValueError(f"Out-of-bounds box: {sample_id}")
-                class_id = next(k for k, v in NAMES.items() if v == annotation["category"])
+                class_id = next(k for k, v in names.items() if v == annotation["category"])
                 values = (
                     (x1 + x2) / (2 * width),
                     (y1 + y2) / (2 * height),
@@ -99,14 +110,15 @@ def build(manifests, output):
     record = {
         "created_at": datetime.now(UTC).isoformat(),
         "sources": sources,
-        "names": NAMES,
+        "names": names,
         "samples": frozen,
         "counts": {
             split: sum(s["split"] == split for s in frozen) for split in ("train", "val", "test")
         },
         "limits": (
-            "Same private cup instance across groups; test measures held-out view only. "
-            "COCO train-derived val is not unseen to pretrained weights."
+            "Capture groups do not establish independence of dates or object instances. "
+            "Source manifests define evaluation scope. COCO train-derived val is not unseen "
+            "to pretrained weights."
         ),
     }
     (output / "manifest.json").write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
@@ -129,7 +141,7 @@ def build(manifests, output):
                 "train": "images/train",
                 "val": "images/val",
                 "test": "images/test",
-                "names": NAMES,
+                "names": names,
             },
             sort_keys=False,
         )
@@ -141,8 +153,14 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--manifest", action="append", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--preserve-coco-head", action="store_true")
     args = p.parse_args()
-    print(json.dumps(build(args.manifest, args.output), ensure_ascii=False))
+    print(
+        json.dumps(
+            build(args.manifest, args.output, preserve_coco_head=args.preserve_coco_head),
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":

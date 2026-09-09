@@ -15,6 +15,7 @@ import json
 import math
 import os
 import platform
+import shutil
 import sys
 import time
 from datetime import UTC, datetime
@@ -22,10 +23,12 @@ from pathlib import Path
 from typing import Any
 
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPOSITORY_ROOT))
 DEFAULT_OUTPUT = REPOSITORY_ROOT / "harness/artifacts/finetune-20260909/runs"
 EXPECTED_NAMES = {0: "bottle", 1: "cup", 2: "cell phone"}
 OFFICIAL_MANIFEST = REPOSITORY_ROOT / "model_manifests/yolo26n-e2e.onnx.json"
 REQUIRED_CLASSES = {"bottle", "cup", "cell phone"}
+IMAGE_SUFFIXES = {".bmp", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
 
 # These must be set before importing Ultralytics. They keep its settings local,
 # suppress network update checks, and prohibit automatic dependency installation.
@@ -87,6 +90,200 @@ def split_roots(dataset_yaml: Path, config: dict[str, Any]) -> list[Path]:
             path = Path(text).expanduser()
             roots.append(path if path.is_absolute() else base / path)
     return [path.resolve() for path in roots]
+
+
+def split_images(dataset_yaml: Path, config: dict[str, Any], split: str) -> set[Path]:
+    """Resolve only image files reachable from a local YOLO split."""
+    base_value = config.get("path", "")
+    base = Path(base_value).expanduser() if base_value else dataset_yaml.parent
+    if not base.is_absolute():
+        base = dataset_yaml.parent / base
+    values = config.get(split)
+    if not values:
+        return set()
+    images: set[Path] = set()
+    for value in values if isinstance(values, list) else [values]:
+        text = str(value)
+        if "://" in text:
+            raise ValueError(f"Remote dataset split is prohibited: {text}")
+        path = Path(text).expanduser()
+        path = (path if path.is_absolute() else base / path).resolve()
+        if not path.exists():
+            raise FileNotFoundError(f"Dataset split path does not exist: {path}")
+        if path.is_dir():
+            images.update(
+                file.resolve()
+                for file in path.rglob("*")
+                if file.is_file() and file.suffix.lower() in IMAGE_SUFFIXES
+            )
+        elif path.suffix.lower() == ".txt":
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    image = Path(line.strip()).expanduser()
+                    image = (image if image.is_absolute() else path.parent / image).resolve()
+                    if not image.is_file() or image.suffix.lower() not in IMAGE_SUFFIXES:
+                        raise FileNotFoundError(f"Image list contains invalid image: {image}")
+                    images.add(image)
+        elif path.suffix.lower() in IMAGE_SUFFIXES:
+            images.add(path)
+    return images
+
+
+def _validate_annotation(sample_id: str, annotation: Any, width: int, height: int) -> None:
+    if not isinstance(annotation, dict) or annotation.get("category") not in REQUIRED_CLASSES:
+        raise ValueError(f"Selection sample has invalid annotations: {sample_id}")
+    bbox = annotation.get("bbox")
+    if (
+        not isinstance(bbox, list)
+        or len(bbox) != 4
+        or any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in bbox)
+        or not all(math.isfinite(float(value)) for value in bbox)
+        or float(bbox[0]) < 0
+        or float(bbox[1]) < 0
+        or float(bbox[2]) <= float(bbox[0])
+        or float(bbox[3]) <= float(bbox[1])
+        or float(bbox[2]) > width
+        or float(bbox[3]) > height
+        or not isinstance(annotation.get("iscrowd"), bool)
+    ):
+        raise ValueError(f"Selection sample has invalid annotation box: {sample_id}")
+
+
+def load_selection_manifest(dataset_yaml: Path, manifest_path: Path) -> dict[str, Any]:
+    """Validate selection images and capture groups against frozen dataset splits."""
+    import cv2
+    import yaml
+
+    config = yaml.safe_load(dataset_yaml.read_text(encoding="utf-8"))
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    samples = manifest.get("samples") if isinstance(manifest, dict) else None
+    if not isinstance(samples, list) or not samples:
+        raise ValueError("Selection manifest must contain non-empty samples")
+    splits = {name: split_images(dataset_yaml, config, name) for name in ("train", "val", "test")}
+    non_val_hashes = {sha256(path) for path in splits["train"] | splits["test"]}
+    seen_ids: set[str] = set()
+    seen_paths: set[Path] = set()
+    seen_hashes: set[str] = set()
+    capture_to_selection: dict[str, str] = {}
+    dataset_manifest_path = dataset_yaml.parent / "manifest.json"
+    dataset_rows: dict[str, dict[str, Any]] = {}
+    if dataset_manifest_path.is_file():
+        dataset_manifest = json.loads(dataset_manifest_path.read_text(encoding="utf-8"))
+        raw_rows = dataset_manifest.get("samples") if isinstance(dataset_manifest, dict) else None
+        if not isinstance(raw_rows, list):
+            raise ValueError("Dataset manifest must contain samples")
+        group_splits: dict[str, set[str]] = {}
+        for row in raw_rows:
+            if not isinstance(row, dict) or not isinstance(row.get("id"), str):
+                raise ValueError("Dataset manifest has invalid sample")
+            if row["id"] in dataset_rows:
+                raise ValueError("Dataset manifest sample IDs must be unique")
+            dataset_rows[row["id"]] = row
+            if isinstance(row.get("group"), str) and isinstance(row.get("split"), str):
+                group_splits.setdefault(row["group"], set()).add(row["split"])
+        leaked = sorted(group for group, values in group_splits.items() if len(values) > 1)
+        if leaked:
+            raise ValueError(f"Capture groups span dataset splits: {leaked[0]}")
+    normalized = []
+    for sample in samples:
+        if not isinstance(sample, dict) or sample.get("split") != "val":
+            raise ValueError("Every selection sample must have split='val'")
+        sample_id, capture_group = sample.get("id"), sample.get("group")
+        selection_group = sample.get("selection_group")
+        if not isinstance(sample_id, str) or not sample_id or sample_id in seen_ids:
+            raise ValueError("Selection sample IDs must be unique non-empty strings")
+        if not isinstance(capture_group, str) or not capture_group.strip():
+            raise ValueError(f"Selection sample {sample_id} requires a capture group")
+        if not isinstance(selection_group, str) or not selection_group.strip():
+            raise ValueError(f"Selection sample {sample_id} requires a selection_group")
+        previous_selection = capture_to_selection.setdefault(capture_group, selection_group)
+        if previous_selection != selection_group:
+            raise ValueError(f"Capture group spans selection groups: {capture_group}")
+        path_value = sample.get("image_path")
+        if not isinstance(path_value, str):
+            raise ValueError(f"Selection sample {sample_id} requires image_path")
+        path = Path(path_value).expanduser()
+        path = (path if path.is_absolute() else manifest_path.parent / path).resolve()
+        checksum = sha256(path) if path.is_file() else None
+        if path not in splits["val"]:
+            raise ValueError(f"Selection sample is not in dataset val: {sample_id}")
+        if sample.get("sha256") != checksum:
+            raise ValueError(f"Selection image checksum mismatch: {sample_id}")
+        if path in splits["train"] or path in splits["test"] or checksum in non_val_hashes:
+            raise ValueError(f"Selection sample overlaps train/test: {sample_id}")
+        annotations = sample.get("annotations")
+        if not isinstance(annotations, list):
+            raise ValueError(f"Selection sample has invalid annotations: {sample_id}")
+        frame = cv2.imread(str(path))
+        height, width = frame.shape[:2] if frame is not None else (0, 0)
+        if (
+            sample.get("width") != width
+            or sample.get("height") != height
+            or not width
+            or not height
+        ):
+            raise ValueError(f"Selection image dimensions mismatch: {sample_id}")
+        for annotation in annotations:
+            _validate_annotation(sample_id, annotation, width, height)
+        if dataset_rows:
+            frozen = dataset_rows.get(sample_id)
+            if (
+                frozen is None
+                or frozen.get("split") != "val"
+                or frozen.get("group") != capture_group
+            ):
+                raise ValueError(f"Selection sample differs from dataset manifest: {sample_id}")
+            frozen_path = Path(str(frozen.get("image_path", ""))).expanduser()
+            frozen_path = (
+                frozen_path
+                if frozen_path.is_absolute()
+                else dataset_manifest_path.parent / frozen_path
+            ).resolve()
+            if frozen_path != path or frozen.get("sha256") != checksum:
+                raise ValueError(
+                    f"Selection path/checksum differs from dataset manifest: {sample_id}"
+                )
+        if path in seen_paths or checksum in seen_hashes:
+            raise ValueError("Selection images must be unique by path and content")
+        seen_ids.add(sample_id)
+        seen_paths.add(path)
+        seen_hashes.add(checksum)
+        normalized.append({**sample, "image_path": str(path)})
+    return {**manifest, "samples": normalized, "_path": str(manifest_path.resolve())}
+
+
+def grouped_macro_f1(manifest: dict[str, Any], predictions: list[dict[str, Any]]) -> dict[str, Any]:
+    """Average class F1 inside each selection group, then weight groups equally."""
+    from scripts.score_detections import score_dataset
+
+    rows = {str(row["id"]): row for row in predictions}
+    sample_ids = [str(sample["id"]) for sample in manifest["samples"]]
+    if (
+        len(rows) != len(predictions)
+        or set(rows) != set(sample_ids)
+        or len(set(sample_ids)) != len(sample_ids)
+    ):
+        raise ValueError("Predictions must cover exactly the unique selection image IDs")
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for sample in manifest["samples"]:
+        groups.setdefault(sample["selection_group"], []).append(sample)
+    group_scores: dict[str, Any] = {}
+    for group, samples in groups.items():
+        score = score_dataset(
+            {"samples": samples}, [rows[str(sample["id"])] for sample in samples], 0.35
+        )
+        class_f1 = []
+        for category in REQUIRED_CLASSES:
+            counts = score["categories"][category]
+            denominator = 2 * counts["tp"] + counts["fp"] + counts["fn"]
+            if denominator:
+                class_f1.append(2 * counts["tp"] / denominator)
+        macro_f1 = sum(class_f1) / len(class_f1) if class_f1 else 1.0
+        group_scores[group] = {"macro_f1": macro_f1, "scores": score}
+    return {
+        "macro_f1": sum(row["macro_f1"] for row in group_scores.values()) / len(group_scores),
+        "groups": group_scores,
+    }
 
 
 def files_for_split(path: Path) -> list[Path]:
@@ -231,12 +428,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lr0", type=float, default=0.001)
     parser.add_argument("--patience", type=int, default=10)
     parser.add_argument("--warmup-epochs", type=float, default=1.0)
+    parser.add_argument("--warmup-bias-lr", type=float, default=0.1)
     parser.add_argument("--mosaic", type=float, default=0.5)
     parser.add_argument("--close-mosaic", type=int, default=5)
     parser.add_argument("--device", default="auto", help="auto, cpu, mps, or a CUDA device")
     parser.add_argument("--amp", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--export", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--check-only", action="store_true")
+    parser.add_argument(
+        "--selection-manifest", type=Path, help="Val-only deployment selection manifest"
+    )
     parser.add_argument(
         "--preserve-coco-head",
         action="store_true",
@@ -266,9 +467,21 @@ def main() -> None:
         raise SystemExit(f"Missing data YAML or source weights: {data}, {weights}")
     class_names = official_names() if args.preserve_coco_head else EXPECTED_NAMES
     data_hash, dataset_file_count, label_summary = dataset_fingerprint(data, class_names)
+    selection = (
+        load_selection_manifest(data, args.selection_manifest.resolve())
+        if args.selection_manifest
+        else None
+    )
     device = choose_device(args.device)
     amp = args.amp
     run_dir = output / args.name
+    from ultralytics import YOLO
+
+    source_model = YOLO(str(weights))
+    source_names = normalize_names(source_model.model.names)
+    expected_source_names = official_names()
+    if source_names != expected_source_names:
+        raise ValueError("Source checkpoint does not have the official 80-class head")
     parameters = {
         "data": str(data),
         "epochs": args.epochs,
@@ -284,6 +497,7 @@ def main() -> None:
         "lr0": args.lr0,
         "patience": args.patience,
         "warmup_epochs": args.warmup_epochs,
+        "warmup_bias_lr": args.warmup_bias_lr,
         "mosaic": args.mosaic,
         "close_mosaic": args.close_mosaic,
         "mixup": 0.0,
@@ -295,6 +509,7 @@ def main() -> None:
         "started_at": datetime.now(UTC).isoformat(),
         "source_weights": str(weights),
         "source_weights_sha256": sha256(weights),
+        "source_class_names": source_names,
         "dataset_yaml": str(data),
         "dataset_sha256": data_hash,
         "dataset_hashed_file_count": dataset_file_count,
@@ -302,6 +517,17 @@ def main() -> None:
         "class_names": class_names,
         "head_mode": "preserved_coco_80" if args.preserve_coco_head else "rebuilt_three_class",
         "parameters": parameters,
+        "selection": (
+            {
+                "manifest": selection["_path"],
+                "manifest_sha256": sha256(Path(selection["_path"])),
+                "confidence": 0.35,
+                "head": "EMA one2one end2end=True",
+                "metric": "equal-selection-group macro F1 over business classes",
+            }
+            if selection
+            else None
+        ),
         "versions": {
             "python": platform.python_version(),
             "torch": importlib.metadata.version("torch"),
@@ -332,7 +558,6 @@ def main() -> None:
     source_hash = preflight["source_weights_sha256"]
     started = time.monotonic()
     try:
-        from ultralytics import YOLO
         from ultralytics.utils import SETTINGS
 
         SETTINGS.update(
@@ -347,9 +572,71 @@ def main() -> None:
                 "wandb": False,
             }
         )
-        model = YOLO(str(weights))
+        model = source_model
         epoch_started = [0.0]
         active_epoch: list[int | None] = [None]
+        best_selection: dict[str, Any] = {"score": float("-inf"), "epoch": None, "details": None}
+
+        def select_deployment_checkpoint(trainer: Any) -> None:
+            if selection is None or int(trainer.epoch) != active_epoch[0]:
+                return
+            from copy import deepcopy
+
+            import cv2
+            import numpy as np
+            import torch
+
+            from scripts.evaluate_scene_model import decode
+            from visual_ai_agent.vision import letterbox
+
+            # Match save_model's fp16 serialization before returning to fp32 CPU inference.
+            ema = (
+                deepcopy(trainer.ema.ema)
+                .cpu()
+                .half()
+                .to(memory_format=torch.contiguous_format)
+                .float()
+                .eval()
+            )
+            for value in ema.state_dict().values():
+                if isinstance(value, torch.Tensor) and value.is_floating_point():
+                    torch.nan_to_num_(value)
+            ema.end2end = True
+            predictions = []
+            previous_threads = torch.get_num_threads()
+            try:
+                torch.set_num_threads(2)
+                for sample in selection["samples"]:
+                    frame = cv2.imread(sample["image_path"])
+                    if frame is None:
+                        raise ValueError(f"Unreadable selection image: {sample['id']}")
+                    tensor, transform = letterbox(frame, args.imgsz)
+                    with torch.inference_mode():
+                        raw = ema(torch.from_numpy(tensor))
+                    if isinstance(raw, tuple):
+                        raw = raw[0]
+                    detections = decode(
+                        np.asarray(raw.detach().numpy()), transform, 0.35, class_names
+                    )
+                    predictions.append(
+                        {
+                            "id": sample["id"],
+                            "detections": [d.model_dump(mode="json") for d in detections],
+                        }
+                    )
+            finally:
+                torch.set_num_threads(previous_threads)
+            details = grouped_macro_f1(selection, predictions)
+            epoch = int(trainer.epoch) + 1
+            row = {"epoch": epoch, **details}
+            with (run_dir / "selection_metrics.jsonl").open("a", encoding="utf-8") as stream:
+                stream.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+            if details["macro_f1"] > best_selection["score"]:
+                checkpoint = run_dir / "weights/deployment-best.pt"
+                if not trainer.last.is_file():
+                    raise FileNotFoundError("Trainer did not save the current EMA checkpoint")
+                shutil.copyfile(trainer.last, checkpoint)
+                best_selection.update(score=details["macro_f1"], epoch=epoch, details=details)
 
         def on_train_epoch_start(trainer: Any) -> None:
             epoch_started[0] = time.monotonic()
@@ -381,6 +668,7 @@ def main() -> None:
             }
             with (run_dir / "epoch_metrics.jsonl").open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+            select_deployment_checkpoint(trainer)
 
         model.add_callback("on_train_epoch_start", on_train_epoch_start)
         model.add_callback("on_fit_epoch_end", on_fit_epoch_end)
@@ -407,12 +695,25 @@ def main() -> None:
             "status": "completed",
             "training_completed_at": training_completed_at,
             "training_elapsed_seconds": training_elapsed_seconds,
-            "trained_weights": str(best),
-            "trained_weights_sha256": sha256(best),
+            "ultralytics_best": str(best),
+            "ultralytics_best_sha256": sha256(best),
         }
+        deployment_best = run_dir / "weights/deployment-best.pt" if selection else best
+        if selection:
+            if not deployment_best.is_file():
+                raise FileNotFoundError("Selection did not produce deployment-best.pt")
+            result["deployment_selection"] = {
+                "checkpoint": str(deployment_best),
+                "checkpoint_sha256": sha256(deployment_best),
+                "source_epoch": best_selection["epoch"],
+                "macro_f1": best_selection["score"],
+                "details": best_selection["details"],
+            }
+        result["trained_weights"] = str(deployment_best)
+        result["trained_weights_sha256"] = sha256(deployment_best)
         if args.export:
             exported = Path(
-                YOLO(str(best)).export(
+                YOLO(str(deployment_best)).export(
                     format="onnx",
                     imgsz=args.imgsz,
                     nms=False,
@@ -425,6 +726,8 @@ def main() -> None:
             result["exported_onnx"] = str(exported)
             result["exported_onnx_sha256"] = sha256(exported)
             result["export"] = {
+                "source_checkpoint": str(deployment_best),
+                "source_checkpoint_sha256": sha256(deployment_best),
                 "format": "onnx",
                 "imgsz": args.imgsz,
                 "nms": False,
