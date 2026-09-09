@@ -1,0 +1,81 @@
+{
+  "date": "2026-09-09",
+  "timezone": "Asia/Shanghai",
+  "status": "failed cup removal-return and failed static continuity at new view; waiting for complete in-frame placement",
+  "original_move_trial": {
+    "scope": "User reported cup removal 10s and return 15s; exact action timestamps unavailable, mixed presence window, not recall",
+    "first": "2026-09-09T03:38:45.368350+00:00",
+    "last": "2026-09-09T03:40:30.246315+00:00",
+    "fresh": 105,
+    "cup_samples": 1,
+    "bottle_samples": 27
+  },
+  "new_view_production": {
+    "scope": "First119 fresh production observations in fixed 118.592s window after reported camera viewpoint change; target visible in missing evidence; failed static continuity, not general accuracy",
+    "checked_at": "2026-09-09T03:52:35.244061+00:00",
+    "first": "2026-09-09T03:50:35.968253+00:00",
+    "last": "2026-09-09T03:52:34.560336+00:00",
+    "fresh": 119,
+    "cup_samples": 83,
+    "max_consecutive_no_cup": 8,
+    "cup_conf_min": 0.350040078163147,
+    "cup_conf_max": 0.5630642771720886,
+    "other_class_detections": 2,
+    "max_gap_seconds": 1.1326478340197355,
+    "events": [
+      {
+        "kind": "appeared",
+        "category": "cup",
+        "observed_at": "2026-09-09T03:50:35.968253+00:00",
+        "confirmed_at": "2026-09-09T03:50:37.938170+00:00"
+      },
+      {
+        "kind": "missing",
+        "category": "cup",
+        "observed_at": "2026-09-09T03:52:04.274697+00:00",
+        "confirmed_at": "2026-09-09T03:52:09.298022+00:00"
+      },
+      {
+        "kind": "appeared",
+        "category": "cup",
+        "observed_at": "2026-09-09T03:52:12.306004+00:00",
+        "confirmed_at": "2026-09-09T03:52:14.306142+00:00"
+      }
+    ],
+    "faults": 0,
+    "api_runs": 0
+  },
+  "flip_negative_delta": {
+    "tp": 0,
+    "fp": 1,
+    "fn": 0
+  },
+  "rf_fallback_negative_delta": {
+    "tp": 2,
+    "fp": 1,
+    "fn": -2
+  },
+  "rf_new_view": {
+    "cup": 0,
+    "bottle_on_cup": 3,
+    "confidence": [
+      0.88371,
+      0.91203,
+      0.889543
+    ]
+  },
+  "production_changed": false,
+  "private_evidence_root": "harness/artifacts/cup-return-20260909",
+  "evidence_sha256": {
+    "operator-return-review.json": "f2be5eed16ba0321b662fe3bef9c0bdc26e85bb07418c1f03fc0c7a53d224a9d",
+    "inputs/manifest.json": "337b9cef7a5228c408144c00c3a14382a9f8418fd9e2df78a4b4c4bf8ae5da1c",
+    "input-trial.json": "970812a1a2a7c95058f0330dbf29e3ae1df7f86d7a5c77a25f0b007f7dd797c8",
+    "frozen-flip.json": "bf05420fb9107e3a87a78109d95bcebab7cf0d9e4414ca0a64d7d80455f58c6f",
+    "negative-trial/results.json": "6d60bad202ee27aaff40e642762704efaddd4d4ba63c0070ccd367c9e8737c8f",
+    "rf-negative-trial/results.json": "1ee7363e562bf7fdabea00f126aec25ee315bd7e2120a75f63e1543e9b43eb15",
+    "model-trial/results.json": "c86f5042024d18477b8bad50c342fa511500dafc1f170ea71ad081ab501dd686",
+    "model-trial/new-view-rf/results.json": "26a61c5d8825963ee99169e22a8bcc4e69883675b30075c0d273365100fe4cb7",
+    "live-flip/results.json": "3b26f5cda6278ada1e2b03beb467d04aa2dfa2afdeb7927337b96a4db4914998",
+    "new-view-ui.json": "e715f97f1ad794d0e555cf84cfa02f44248368335a5003f9eebdce5bb56b7d66"
+  }
+}
