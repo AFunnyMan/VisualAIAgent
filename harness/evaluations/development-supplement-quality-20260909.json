@@ -1,0 +1,49 @@
+{
+  "checked_at": "2026-09-09T10:09:05.518023+00:00",
+  "status": "bottle_supplement_needed",
+  "training_started": false,
+  "unchanged_previous_video_count": 10,
+  "new_video_count": 6,
+  "total_video_count": 16,
+  "new_duration_seconds": 168.935,
+  "new_bytes": 29074573,
+  "full_ffmpeg_decode_ok_count": 6,
+  "visual_sample_count": 36,
+  "unique_sample_sha_count": 36,
+  "sampling_fractions": [
+    0.05,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    0.95
+  ],
+  "coverage_added": [
+    "all-business-absent desk samples",
+    "all-business-absent samples with hand motion",
+    "cup hands-away static samples",
+    "phone hands-away and front/back/screen states",
+    "cup and phone coexistence"
+  ],
+  "remaining_before_three_class_training": [
+    "local bottle positives",
+    "cup and bottle coexistence",
+    "whole-clip local bottle validation"
+  ],
+  "user_confirmed_bottle_not_recorded": true,
+  "validation_scope": "Later same-day clip holdout feasible for cup/phone/negative; no new-date or new-instance acceptance; split not frozen.",
+  "limits": [
+    "Sparse visual sampling, not full frame-by-frame semantic annotation.",
+    "No detection accuracy computed.",
+    "No final-test contents accessed.",
+    "No new training or production changes."
+  ],
+  "integrity_sha256": "d4804d257e4d48bd9cdc4a6447381752b69b03644043fd1c71114fccd71c322c",
+  "inventory_sha256": "26bc6f513cfa35413bfab86dba341e355385d371fc72fdb35bd6c203cc516c00",
+  "additional_empty_clip_review": {
+    "interval_seconds": 2,
+    "sample_count": 20,
+    "business_present_samples": 0,
+    "scope": "Two first clips, additional sparse review, not exhaustive semantic annotation"
+  }
+}
