@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "scope": "fixed-scene train-only behavior prototype",
+  "source_video_count": 3,
+  "annotated_drinking_bouts": 2,
+  "annotated_leave_return_cycles": 2,
+  "source_groups": {
+    "523363024fc8efc310864813833a063e8900618d1cfb74f0a91117355570c4d8": "train",
+    "d2c633bfb18df0e8219db3c1ae53fb0d6cc315d0cb9b85f909465e036321d57f": "train",
+    "1d45be13a4007493e876cb8695cd9b0be7e05a1199145e18bd62554a4ddfeb29": "train"
+  },
+  "data_counts": {
+    "posture/train/seated": 189,
+    "drinking/train/not_drinking": 237,
+    "posture/train/standing": 15,
+    "posture/train/empty": 40,
+    "drinking/train/drinking": 23
+  },
+  "annotation_sha256": "500ba413eb1f71e371241a0ba627facd744f92c2b62a24f9509a812ea057f692",
+  "models": {
+    "posture": {
+      "started_at": "2026-09-09T15:15:44.287835+00:00",
+      "completed_at": "2026-09-09T15:18:26.614854+00:00",
+      "elapsed_seconds": 162.3277959160041,
+      "completed_epochs": 20,
+      "source_weights_sha256": "0dd6f8dbc448870ac98a3cbb7156f923f7ce21fed3755d4019169ffffd279e81",
+      "selected_checkpoint_sha256": "5c2754cba00f0af84c777b3d280f1c0a7d13b5ff5fe464a0b7c0b9f432322f18",
+      "onnx_sha256": "ffc98fe7bcff309d4ac03a86ad1695292374750ec154bd1d62b4ba911f2d52e7",
+      "checkpoint_selection": "last_epoch",
+      "validation": {
+        "independent_validation_performed": false,
+        "metrics_available": false,
+        "metrics_note": "No validation was run; validation-looking placeholders or training CSV fields must not be used for model quality claims.",
+        "mode": "none_train_only"
+      },
+      "preprocessing": {
+        "color": "RGB",
+        "dtype": "float32",
+        "fill_rgb": [
+          114,
+          114,
+          114
+        ],
+        "function": "scripts.behavior_preprocess.preprocess_bgr",
+        "imgsz": 320,
+        "layout": "NCHW",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "resize": "aspect-ratio-preserving letterbox"
+      },
+      "classes": {
+        "0": "empty",
+        "1": "seated",
+        "2": "standing"
+      },
+      "dataset_sha256": "a091649b9b3f1c8e3ba49cad54c996ce7619bd3eaf75f0c239186908bca4bb3d"
+    },
+    "drinking": {
+      "started_at": "2026-09-09T15:19:03.666148+00:00",
+      "completed_at": "2026-09-09T15:21:49.433764+00:00",
+      "elapsed_seconds": 165.76837904192507,
+      "completed_epochs": 20,
+      "source_weights_sha256": "0dd6f8dbc448870ac98a3cbb7156f923f7ce21fed3755d4019169ffffd279e81",
+      "selected_checkpoint_sha256": "b36c82d77b054ae81d3ea020b15109d9e9b6ee722e76cc0e982b839b3ecc410a",
+      "onnx_sha256": "a729e89f6240672a0bab289ad1b6905cd0f1f26c13f3a151333f3ef7dcf4fd6b",
+      "checkpoint_selection": "last_epoch",
+      "validation": {
+        "independent_validation_performed": false,
+        "metrics_available": false,
+        "metrics_note": "No validation was run; validation-looking placeholders or training CSV fields must not be used for model quality claims.",
+        "mode": "none_train_only"
+      },
+      "preprocessing": {
+        "color": "RGB",
+        "dtype": "float32",
+        "fill_rgb": [
+          114,
+          114,
+          114
+        ],
+        "function": "scripts.behavior_preprocess.preprocess_bgr",
+        "imgsz": 320,
+        "layout": "NCHW",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "resize": "aspect-ratio-preserving letterbox"
+      },
+      "classes": {
+        "0": "drinking",
+        "1": "not_drinking"
+      },
+      "dataset_sha256": "a74876074a5d6af2cd3bb3fad5f459f40970fdf4a55bdea7cf818c3424754472"
+    }
+  },
+  "pt_onnx": {
+    "maximum_absolute_difference": 1.1920928955078125e-07,
+    "tolerance": 0.0001
+  },
+  "resubstitution": {
+    "drinking": {
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "drinking": {
+          "drinking": 23,
+          "not_drinking": 0
+        },
+        "not_drinking": {
+          "drinking": 0,
+          "not_drinking": 237
+        }
+      },
+      "correct": 260,
+      "independent_accuracy": false,
+      "interpretation": "train-only resubstitution; not an independent accuracy estimate",
+      "per_class_count": {
+        "drinking": 23,
+        "not_drinking": 237
+      },
+      "total": 260
+    },
+    "posture": {
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "empty": {
+          "empty": 40,
+          "seated": 0,
+          "standing": 0
+        },
+        "seated": {
+          "empty": 0,
+          "seated": 189,
+          "standing": 0
+        },
+        "standing": {
+          "empty": 0,
+          "seated": 0,
+          "standing": 15
+        }
+      },
+      "correct": 244,
+      "independent_accuracy": false,
+      "interpretation": "train-only resubstitution; not an independent accuracy estimate",
+      "per_class_count": {
+        "empty": 40,
+        "seated": 189,
+        "standing": 15
+      },
+      "total": 244
+    }
+  },
+  "replay": {
+    "confidence_threshold": 0.75,
+    "event_count": 7,
+    "events": {
+      "left_seat": 1,
+      "sat_down": 2,
+      "stood_up": 2,
+      "suspected_drink": 2
+    },
+    "evidence_count": 7,
+    "margin_threshold": 0.2,
+    "sample_fps": 2.0,
+    "synthetic_fresh_false_events": 0
+  },
+  "review": {
+    "event_images_reviewed": 7,
+    "observed_inconsistent_emitted_events": 0,
+    "missed_leave_event_count": 1,
+    "missed_leave_reason": "video2 at3.5s unknown 0.7417 resets transition baseline; empty confirmed4.5s but no left_seat event",
+    "independent_quality_acceptance": false
+  },
+  "cpu_benchmark": {
+    "posture": {
+      "preprocess_and_ort_p50_ms": 9.349916479550302,
+      "p95_ms": 9.759041923098266,
+      "iterations": 100,
+      "warmup": 20,
+      "threads": 2,
+      "onnx_sha256": "ffc98fe7bcff309d4ac03a86ad1695292374750ec154bd1d62b4ba911f2d52e7"
+    },
+    "drinking": {
+      "preprocess_and_ort_p50_ms": 9.306666441261768,
+      "p95_ms": 9.627895907033235,
+      "iterations": 100,
+      "warmup": 20,
+      "threads": 2,
+      "onnx_sha256": "a729e89f6240672a0bab289ad1b6905cd0f1f26c13f3a151333f3ef7dcf4fd6b"
+    },
+    "scope": "CPU only; sequential single-frame short benchmark, excludes camera, JPEG, PT and UI; not a sustained platform acceptance."
+  },
+  "tests": {
+    "offline_passed": 206,
+    "live_api_deselected": 3
+  },
+  "production_replaced": false,
+  "cloud_agent_calls": 0,
+  "limitations": [
+    "All frames and replay derive from training videos; no independent accuracy estimate",
+    "Standing only15 labeled frames; drinking23 frames from two bouts in one source",
+    "No real-time behavior/UI/Agent/Windows acceptance; original object models unchanged"
+  ]
+}
