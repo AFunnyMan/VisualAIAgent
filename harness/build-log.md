@@ -370,3 +370,10 @@
 - `.export-venv/bin/python scripts/evaluate_scene_model.py`两轮各评估124个输入（集合之间有重叠），修正PyTorch默认one-to-many与导出one-to-one不一致的评估问题后，三业务输出全部通过IoU≥.999/置信度差≤.001/框差≤.1px对照。r02 CPU单遍中位约49—53ms、p95约52—55ms，非隔离性能基准。MPS非确定性警告、末尾最终验证回调不应多算epoch均已如实记录。
 - r02既有九视频488采样回放完成，逐点与旧官方单遍n基线(t,frame_index)对齐；不是与当前生产两遍配置比较。桶仍在36/37s误杯，部分错误事件减少，但thermo漏杯、child漏杯和rice新增杯候选仍存在；没有完整真值，不计算视频准确率。详细视频结果在本地video-r02/comparison.json。
 - 完整离线回归174 passed/3 deselected，最终定向17 passed，Ruff/格式与diff检查通过；[审查](code_review/scene-finetune.md)记录已修复问题。正式模型/.env/事件契约未替换，摄像头未重新打开，未调用项目云端Agent；新日期/新杯/真实连续事件与Windows模型实机仍待验证。两轮训练已完成，质量问题未宣称解决。
+
+## 2026-09-09T14:55:35+08:00 — 两轮训练后的改进资料分析
+
+- 用户要求查阅改进空间，root查阅Ultralytics微调/数据/增强/测试官方文档、缺标与透明物体论文、scikit-learn分组划分和Frigate静止物体说明；Sol只读审查训练器、数据及评价口径。形成[改进分析](../docs/finetune-improvement-2026-09-09.md)，同步训练日志与路线图入口。
+- 复核现场9train/公共24val、80类头下私人缺标、默认best.pt选择与部署one-to-one评价目标差异及多因素同时改变。影响大小仍待消融，不将合理机制当成已证明退化原因。
+- 读取本机ultralytics 8.4.142的trainer与metrics源码及r02 args/log，确认close_mosaic要到第26轮才触发，而实际第13轮提前停止；冻结BatchNorm已有eval处理，不列为缺陷。未追加训练，未打开摄像头或调用视觉API，正式模型不变。
+- 本轮仅文档与只读分析；使用git diff --check及本地链接核验，不重复软件测试。新的独立会话、物体实例与最终事件验收仍未完成。
