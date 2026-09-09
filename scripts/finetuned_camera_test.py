@@ -180,7 +180,7 @@ class TestState:
         with self.lock:
             return {
                 "experimental_model": True,
-                "preview_model": "finetuned_candidate_r02",
+                "preview_model": "finetuned_candidate",
                 "started_at": self.started_at,
                 "elapsed_seconds": round(time.monotonic() - self.started_mono, 3),
                 "target_seconds": self.duration,
@@ -201,10 +201,10 @@ class TestState:
 
 
 def _page() -> str:
-    return """<!doctype html><meta charset=utf-8><title>r02 实验模型摄像头对照</title>
+    return """<!doctype html><meta charset=utf-8><title>实验模型摄像头对照</title>
 <style>body{font:16px system-ui;max-width:1100px;margin:16px auto;padding:0 16px}img{display:block;max-width:100%;background:#222}#s{background:#f4f4f4;padding:10px;line-height:1.6}.warn{color:#9b3d00;font-weight:bold}pre{white-space:pre-wrap;overflow:auto}</style>
-<h1>r02 实验模型摄像头对照</h1><p class=warn>当前预览框来自实验 r02 模型，不是正式产品模型。</p><div id=s>等待摄像头...</div><img id=p alt="等待最新画面"><p><button onclick="stopRun()">停止测试</button></p><details><summary>完整运行状态 JSON</summary><pre id=j></pre></details>
-<script>const names={'cell phone':'手机',cup:'杯子',bottle:'瓶子'};function ds(row){return(row&&row.detections||[]).map(x=>(names[x.category]||x.category)+' '+Math.round(x.confidence*100)+'%（'+x.region+'）').join('、')||'无'}async function poll(){try{let r=await fetch('/progress.json',{cache:'no-store'}),x=await r.json(),l=x.latest||{},left=Math.max(0,x.target_seconds-x.elapsed_seconds);document.getElementById('s').innerHTML='剩余：<b>'+Math.ceil(left)+' 秒</b>　新鲜帧：'+x.fresh_observations+'　故障：'+x.fault_observations+'<br>r02 候选：'+ds(l.candidate)+'<br>正式基线：'+ds(l.baseline);document.getElementById('j').textContent=JSON.stringify(x,null,2);document.getElementById('p').src='/latest.jpg?t='+Date.now()}catch(e){document.getElementById('s').textContent=e.message}}async function stopRun(){await fetch('/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});poll()}setInterval(poll,1000);poll()</script>"""
+<h1>实验模型摄像头对照</h1><p class=warn>当前预览框来自本次实验模型，不是正式产品模型。</p><div id=s>等待摄像头...</div><img id=p alt="等待最新画面"><p><button onclick="stopRun()">停止测试</button></p><details><summary>完整运行状态 JSON</summary><pre id=j></pre></details>
+<script>const names={'cell phone':'手机',cup:'杯子',bottle:'瓶子'};function ds(row){return(row&&row.detections||[]).map(x=>(names[x.category]||x.category)+' '+Math.round(x.confidence*100)+'%（'+x.region+'）').join('、')||'无'}async function poll(){try{let r=await fetch('/progress.json',{cache:'no-store'}),x=await r.json(),l=x.latest||{},left=Math.max(0,x.target_seconds-x.elapsed_seconds);document.getElementById('s').innerHTML='剩余：<b>'+Math.ceil(left)+' 秒</b>　新鲜帧：'+x.fresh_observations+'　故障：'+x.fault_observations+'<br>实验候选：'+ds(l.candidate)+'<br>正式基线：'+ds(l.baseline);document.getElementById('j').textContent=JSON.stringify(x,null,2);document.getElementById('p').src='/latest.jpg?t='+Date.now()}catch(e){document.getElementById('s').textContent=e.message}}async function stopRun(){await fetch('/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});poll()}setInterval(poll,1000);poll()</script>"""
 
 
 def _handler_for(state: TestState) -> type[BaseHTTPRequestHandler]:
@@ -280,6 +280,7 @@ def run(args: argparse.Namespace) -> int:
         "candidate_path": str(candidate_path),
         "candidate_sha256": candidate_hash,
         "preserve_coco_head": args.preserve_coco_head,
+        "candidate_cup_recheck": args.candidate_cup_recheck,
         "baseline_path": str(BASELINE_PATH),
         "baseline_sha256": baseline_hash,
         "baseline_manifest_sha256": baseline_manifest_hash,
@@ -292,6 +293,8 @@ def run(args: argparse.Namespace) -> int:
         confidence=CONFIDENCE,
         preserve_coco_head=args.preserve_coco_head,
     )
+    if args.candidate_cup_recheck:
+        candidate = CupScaleRecheckDetector(candidate)
     official = YoloOnnxDetector(BASELINE_PATH, confidence=CONFIDENCE)
     paired = PairedDetector(candidate, CupScaleRecheckDetector(official))
     source = CameraSource(args.camera, width=args.width, height=args.height, backend=args.backend)
@@ -457,11 +460,12 @@ def run(args: argparse.Namespace) -> int:
         "candidate_path": str(candidate_path),
         "candidate_sha256": candidate_hash,
         "preserve_coco_head": args.preserve_coco_head,
+        "candidate_cup_recheck": args.candidate_cup_recheck,
         "baseline_path": str(BASELINE_PATH),
         "baseline_sha256": baseline_hash,
         "baseline_manifest_sha256": baseline_manifest_hash,
         "baseline_pipeline": "official YOLO26n + CupScaleRecheckDetector",
-        "execution_order": "candidate single pass, then production baseline (one or two passes)",
+        "execution_order": "candidate first, then production baseline on the same frame",
         "same_source_and_frame": True,
         "cloud_or_agent_calls": 0,
         "retention": {
@@ -498,6 +502,7 @@ def main() -> None:
         action="store_true",
         help="candidate retains the original 80-class COCO head",
     )
+    parser.add_argument("--candidate-cup-recheck", action="store_true")
     parser.add_argument("--output", required=True, type=Path, help="must be a new directory")
     parser.add_argument("--duration", type=float, default=180)
     parser.add_argument("--camera", type=int, default=0)

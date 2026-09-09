@@ -1,0 +1,213 @@
+{
+  "started_at": "2026-09-09T13:03:58.189396+00:00",
+  "finished_at": "2026-09-09T13:07:06.790399+00:00",
+  "fresh_observations": 180,
+  "fault_observations": 0,
+  "reached_deadline": true,
+  "worker_stop_error": null,
+  "actual_size": [
+    1280,
+    720
+  ],
+  "backend": "AVFOUNDATION",
+  "confidence": 0.35,
+  "candidate_sha256": "f71abc2197aeb433fb6ba21f97113b5797c2bdbbaeded3fe37466e5ee1a4d004",
+  "baseline_sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+  "candidate_cup_recheck": true,
+  "cloud_or_agent_calls": 0,
+  "inference_ms": {
+    "candidate": {
+      "p50": 75.592,
+      "p95": 138.356,
+      "max": 167.829
+    },
+    "baseline": {
+      "p50": 105.549,
+      "p95": 148.182,
+      "max": 428.431
+    }
+  },
+  "retention": {
+    "video": false,
+    "latest_jpeg_overwritten": true,
+    "periodic_png_limit": 12,
+    "disagreement_png_limit": 12
+  },
+  "schema_version": 1,
+  "first_fresh_at": "2026-09-09T13:04:06.096433+00:00",
+  "last_fresh_at": "2026-09-09T13:07:05.906193+00:00",
+  "maximum_fresh_interval_seconds": 1.071515,
+  "same_source_and_frame": true,
+  "source_summary_sha256": "b4de541c32af383355973e2b20334ab6348a64ec3e2da967d478913cc49f0267",
+  "detection_samples": {
+    "candidate": {
+      "cup": 154,
+      "cell phone": 159,
+      "bottle": 0
+    },
+    "baseline": {
+      "cup": 33,
+      "cell phone": 0,
+      "bottle": 9
+    }
+  },
+  "windows": {
+    "first50": {
+      "count": 50,
+      "detections": {
+        "candidate": {
+          "cup": 50,
+          "cell phone": 50,
+          "bottle": 0
+        },
+        "baseline": {
+          "cup": 0,
+          "cell phone": 0,
+          "bottle": 0
+        }
+      }
+    },
+    "last50": {
+      "count": 50,
+      "detections": {
+        "candidate": {
+          "cup": 50,
+          "cell phone": 50,
+          "bottle": 0
+        },
+        "baseline": {
+          "cup": 20,
+          "cell phone": 0,
+          "bottle": 0
+        }
+      }
+    }
+  },
+  "event_counts": {
+    "candidate": {
+      "cell phone:appeared": 2,
+      "cup:appeared": 2,
+      "cup:missing": 1,
+      "cell phone:missing": 1
+    },
+    "baseline": {
+      "bottle:appeared": 1,
+      "bottle:missing": 1,
+      "cup:appeared": 3,
+      "cup:missing": 2
+    }
+  },
+  "event_timeline": {
+    "candidate": [
+      {
+        "category": "cell phone",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T13:04:06.096433Z",
+        "confirmed_at": "2026-09-09T13:04:08.114619Z",
+        "last_seen_at": "2026-09-09T13:04:08.114619Z"
+      },
+      {
+        "category": "cup",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T13:04:06.096433Z",
+        "confirmed_at": "2026-09-09T13:04:08.114619Z",
+        "last_seen_at": "2026-09-09T13:04:08.114619Z"
+      },
+      {
+        "category": "cup",
+        "kind": "missing",
+        "observed_at": "2026-09-09T13:05:08.498056Z",
+        "confirmed_at": "2026-09-09T13:05:13.523960Z",
+        "last_seen_at": "2026-09-09T13:05:07.504388Z"
+      },
+      {
+        "category": "cell phone",
+        "kind": "missing",
+        "observed_at": "2026-09-09T13:05:11.523456Z",
+        "confirmed_at": "2026-09-09T13:05:16.530030Z",
+        "last_seen_at": "2026-09-09T13:05:10.513749Z"
+      },
+      {
+        "category": "cell phone",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T13:05:31.571266Z",
+        "confirmed_at": "2026-09-09T13:05:33.586710Z",
+        "last_seen_at": "2026-09-09T13:05:33.586710Z"
+      },
+      {
+        "category": "cup",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T13:05:33.586710Z",
+        "confirmed_at": "2026-09-09T13:05:35.586508Z",
+        "last_seen_at": "2026-09-09T13:05:35.586508Z"
+      }
+    ],
+    "baseline": [
+      {
+        "category": "bottle",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T13:05:43.604251Z",
+        "confirmed_at": "2026-09-09T13:05:45.617481Z",
+        "last_seen_at": "2026-09-09T13:05:45.617481Z"
+      },
+      {
+        "category": "bottle",
+        "kind": "missing",
+        "observed_at": "2026-09-09T13:05:51.632884Z",
+        "confirmed_at": "2026-09-09T13:05:56.659354Z",
+        "last_seen_at": "2026-09-09T13:05:50.627085Z"
+      },
+      {
+        "category": "cup",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T13:05:56.659354Z",
+        "confirmed_at": "2026-09-09T13:05:58.672725Z",
+        "last_seen_at": "2026-09-09T13:05:58.672725Z"
+      },
+      {
+        "category": "cup",
+        "kind": "missing",
+        "observed_at": "2026-09-09T13:05:59.667027Z",
+        "confirmed_at": "2026-09-09T13:06:04.689629Z",
+        "last_seen_at": "2026-09-09T13:05:58.672725Z"
+      },
+      {
+        "category": "cup",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T13:06:07.698449Z",
+        "confirmed_at": "2026-09-09T13:06:09.699287Z",
+        "last_seen_at": "2026-09-09T13:06:09.699287Z"
+      },
+      {
+        "category": "cup",
+        "kind": "missing",
+        "observed_at": "2026-09-09T13:06:51.843265Z",
+        "confirmed_at": "2026-09-09T13:06:56.867846Z",
+        "last_seen_at": "2026-09-09T13:06:50.835471Z"
+      },
+      {
+        "category": "cup",
+        "kind": "appeared",
+        "observed_at": "2026-09-09T13:07:00.882347Z",
+        "confirmed_at": "2026-09-09T13:07:02.882755Z",
+        "last_seen_at": "2026-09-09T13:07:02.882755Z"
+      }
+    ]
+  },
+  "review": {
+    "event_records_checked": 13,
+    "periodic_images_checked": 7,
+    "candidate_inconsistent_event_records_observed": 0,
+    "baseline_false_bottle_appeared": 1,
+    "baseline_false_cup_missing": 2,
+    "user_completion_reply_received_at_recording": false
+  },
+  "candidate_multiple_cup_samples": 13,
+  "limitations": [
+    "One session and one observed removal/return per class, not ten-trial acceptance",
+    "No dense frame GT; output counts are not recall; images retained sparsely",
+    "Overlapping cup boxes can overstate candidates but do not duplicate category-region events",
+    "CPU timings overlap a short offline test run and are not isolated benchmarks",
+    "No production replacement, cloud Agent joint test, or Windows test"
+  ]
+}
