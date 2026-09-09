@@ -1,0 +1,48 @@
+{
+  "checked_at": "2026-09-09T09:48:31.919954+00:00",
+  "status": "supplement_before_training",
+  "training_started": false,
+  "source_video_count": 10,
+  "total_bytes": 38916729,
+  "resolution": [
+    1920,
+    1080
+  ],
+  "nominal_fps": 60,
+  "opencv_decoded_frames": 12461,
+  "opencv_estimated_frames": 12475,
+  "decoded_frames_divided_by_nominal_fps_seconds": 207.68333333333334,
+  "ffmpeg_full_decode_ok_count": 10,
+  "sparse_visual_sample_count": 30,
+  "distinct_sample_sha_count": 30,
+  "sampling_fraction_per_clip": [
+    0.12,
+    0.5,
+    0.88
+  ],
+  "confirmed_bottle_positive_samples": 0,
+  "confirmed_all_business_absent_samples": 0,
+  "visual_coverage": [
+    "transparent blue handled cup",
+    "orange-case phone",
+    "dark-screen/silver-back phone",
+    "cup removal in sparse samples",
+    "phone front/back/edge/handheld",
+    "person laptop mouse context"
+  ],
+  "missing_coverage": [
+    "confirmed local bottle positives",
+    "confirmed all-business-absent negative clips",
+    "separate-session development validation",
+    "more hands-away static scenes"
+  ],
+  "limits": [
+    "Content conclusions are from sparse visual review, not exhaustive frame annotations.",
+    "Same-day same-view clips, correlated objects; no general accuracy estimate.",
+    "No final-test contents accessed.",
+    "White partial container category pending user confirmation.",
+    "Preparation annotations are not a frozen complete dataset."
+  ],
+  "source_audit_sha256": "c2067c9e8ae43033a41f165e926dc805facfee83b620a638fff5a48c05b2c214",
+  "source_ffmpeg_check_sha256": "5486dfae7186608d4008dcd7964f895c3707572cfbe8e9ef8bc860d54e1af77c"
+}
