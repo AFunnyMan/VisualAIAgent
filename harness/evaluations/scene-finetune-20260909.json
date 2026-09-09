@@ -1,0 +1,1159 @@
+{
+  "date": "2026-09-09",
+  "timezone": "Asia/Shanghai",
+  "production_changed": false,
+  "runs": {
+    "r01": {
+      "epochs_completed": 30,
+      "best_epoch_by_internal_map": 26,
+      "parameters": {
+        "amp": false,
+        "batch": 4,
+        "close_mosaic": 5,
+        "copy_paste": 0.0,
+        "deterministic": true,
+        "device": "mps",
+        "epochs": 30,
+        "freeze": 10,
+        "imgsz": 640,
+        "lr0": 0.001,
+        "mixup": 0.0,
+        "mosaic": 0.5,
+        "optimizer": "AdamW",
+        "patience": 10,
+        "seed": 20260909,
+        "warmup_epochs": 1.0,
+        "workers": 0
+      },
+      "source_sha256": "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+      "weights_sha256": "e2c7508a53a92a7313cbd3654bb35d9f8ff7b877c5ec888607c3938bf557cb86",
+      "onnx_sha256": "4e4b5841ec20e194509a5f53c16cc9101cebf5be61aeca967ee5276d8974f1b1",
+      "dataset_sha256": "039174fe3852602af9e052dcd60d13426b6bae424f3bc9448c7f7c201de31665",
+      "export_comparison_passed": true,
+      "export_comparison_inputs": 124,
+      "datasets": {
+        "scene": {
+          "count": 4,
+          "scores": {
+            "official_single": {
+              "bottle": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 0,
+                "ignored": 0,
+                "precision": null,
+                "recall": null
+              },
+              "cup": {
+                "tp": 3,
+                "fp": 0,
+                "fn": 1,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.75
+              },
+              "cell phone": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": null,
+                "recall": 0.0
+              }
+            },
+            "production_two_pass": {
+              "bottle": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 0,
+                "ignored": 0,
+                "precision": null,
+                "recall": null
+              },
+              "cup": {
+                "tp": 3,
+                "fp": 0,
+                "fn": 1,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.75
+              },
+              "cell phone": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": null,
+                "recall": 0.0
+              }
+            },
+            "finetuned_single": {
+              "bottle": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 0,
+                "ignored": 0,
+                "precision": null,
+                "recall": null
+              },
+              "cup": {
+                "tp": 4,
+                "fp": 0,
+                "fn": 0,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 1.0
+              },
+              "cell phone": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": null,
+                "recall": 0.0
+              }
+            }
+          },
+          "cpu_ms": {
+            "official_single": {
+              "median": 50.561187556013465,
+              "p95": 57.03012958401814
+            },
+            "production_two_pass": {
+              "median": 53.815416526049376,
+              "p95": 93.57801051810382
+            },
+            "finetuned_single": {
+              "median": 51.77929159253836,
+              "p95": 54.57911074627191
+            }
+          }
+        },
+        "public60": {
+          "count": 60,
+          "scores": {
+            "official_single": {
+              "bottle": {
+                "tp": 23,
+                "fp": 9,
+                "fn": 57,
+                "ignored": 0,
+                "precision": 0.71875,
+                "recall": 0.2875
+              },
+              "cup": {
+                "tp": 24,
+                "fp": 10,
+                "fn": 24,
+                "ignored": 0,
+                "precision": 0.7058823529411765,
+                "recall": 0.5
+              },
+              "cell phone": {
+                "tp": 9,
+                "fp": 2,
+                "fn": 18,
+                "ignored": 0,
+                "precision": 0.8181818181818182,
+                "recall": 0.3333333333333333
+              }
+            },
+            "production_two_pass": {
+              "bottle": {
+                "tp": 23,
+                "fp": 9,
+                "fn": 57,
+                "ignored": 0,
+                "precision": 0.71875,
+                "recall": 0.2875
+              },
+              "cup": {
+                "tp": 24,
+                "fp": 10,
+                "fn": 24,
+                "ignored": 0,
+                "precision": 0.7058823529411765,
+                "recall": 0.5
+              },
+              "cell phone": {
+                "tp": 9,
+                "fp": 2,
+                "fn": 18,
+                "ignored": 0,
+                "precision": 0.8181818181818182,
+                "recall": 0.3333333333333333
+              }
+            },
+            "finetuned_single": {
+              "bottle": {
+                "tp": 4,
+                "fp": 12,
+                "fn": 76,
+                "ignored": 0,
+                "precision": 0.25,
+                "recall": 0.05
+              },
+              "cup": {
+                "tp": 13,
+                "fp": 9,
+                "fn": 35,
+                "ignored": 0,
+                "precision": 0.5909090909090909,
+                "recall": 0.2708333333333333
+              },
+              "cell phone": {
+                "tp": 6,
+                "fp": 54,
+                "fn": 21,
+                "ignored": 0,
+                "precision": 0.1,
+                "recall": 0.2222222222222222
+              }
+            }
+          },
+          "cpu_ms": {
+            "official_single": {
+              "median": 49.13002101238817,
+              "p95": 52.627893805038184
+            },
+            "production_two_pass": {
+              "median": 97.44795854203403,
+              "p95": 103.56957034673542
+            },
+            "finetuned_single": {
+              "median": 48.46191639080644,
+              "p95": 50.83209142321721
+            }
+          }
+        },
+        "public30": {
+          "count": 30,
+          "scores": {
+            "official_single": {
+              "bottle": {
+                "tp": 8,
+                "fp": 0,
+                "fn": 15,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.34782608695652173
+              },
+              "cup": {
+                "tp": 7,
+                "fp": 4,
+                "fn": 13,
+                "ignored": 0,
+                "precision": 0.6363636363636364,
+                "recall": 0.35
+              },
+              "cell phone": {
+                "tp": 5,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.5555555555555556
+              }
+            },
+            "production_two_pass": {
+              "bottle": {
+                "tp": 8,
+                "fp": 0,
+                "fn": 15,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.34782608695652173
+              },
+              "cup": {
+                "tp": 7,
+                "fp": 4,
+                "fn": 13,
+                "ignored": 0,
+                "precision": 0.6363636363636364,
+                "recall": 0.35
+              },
+              "cell phone": {
+                "tp": 5,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.5555555555555556
+              }
+            },
+            "finetuned_single": {
+              "bottle": {
+                "tp": 6,
+                "fp": 14,
+                "fn": 17,
+                "ignored": 0,
+                "precision": 0.3,
+                "recall": 0.2608695652173913
+              },
+              "cup": {
+                "tp": 4,
+                "fp": 7,
+                "fn": 16,
+                "ignored": 0,
+                "precision": 0.36363636363636365,
+                "recall": 0.2
+              },
+              "cell phone": {
+                "tp": 4,
+                "fp": 34,
+                "fn": 5,
+                "ignored": 0,
+                "precision": 0.10526315789473684,
+                "recall": 0.4444444444444444
+              }
+            }
+          },
+          "cpu_ms": {
+            "official_single": {
+              "median": 49.210436875000596,
+              "p95": 53.57653122628108
+            },
+            "production_two_pass": {
+              "median": 100.59195850044489,
+              "p95": 107.23117128945886
+            },
+            "finetuned_single": {
+              "median": 45.75806204229593,
+              "p95": 49.20968315564096
+            }
+          }
+        },
+        "hard30": {
+          "count": 30,
+          "scores": {
+            "official_single": {
+              "bottle": {
+                "tp": 17,
+                "fp": 9,
+                "fn": 27,
+                "ignored": 0,
+                "precision": 0.6538461538461539,
+                "recall": 0.38636363636363635
+              },
+              "cup": {
+                "tp": 14,
+                "fp": 16,
+                "fn": 12,
+                "ignored": 0,
+                "precision": 0.4666666666666667,
+                "recall": 0.5384615384615384
+              },
+              "cell phone": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.2
+              }
+            },
+            "production_two_pass": {
+              "bottle": {
+                "tp": 17,
+                "fp": 9,
+                "fn": 27,
+                "ignored": 0,
+                "precision": 0.6538461538461539,
+                "recall": 0.38636363636363635
+              },
+              "cup": {
+                "tp": 14,
+                "fp": 16,
+                "fn": 12,
+                "ignored": 0,
+                "precision": 0.4666666666666667,
+                "recall": 0.5384615384615384
+              },
+              "cell phone": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.2
+              }
+            },
+            "finetuned_single": {
+              "bottle": {
+                "tp": 3,
+                "fp": 3,
+                "fn": 41,
+                "ignored": 0,
+                "precision": 0.5,
+                "recall": 0.06818181818181818
+              },
+              "cup": {
+                "tp": 9,
+                "fp": 20,
+                "fn": 17,
+                "ignored": 0,
+                "precision": 0.3103448275862069,
+                "recall": 0.34615384615384615
+              },
+              "cell phone": {
+                "tp": 1,
+                "fp": 30,
+                "fn": 4,
+                "ignored": 0,
+                "precision": 0.03225806451612903,
+                "recall": 0.2
+              }
+            }
+          },
+          "cpu_ms": {
+            "official_single": {
+              "median": 48.822729033418,
+              "p95": 52.12046237429604
+            },
+            "production_two_pass": {
+              "median": 93.15443749073893,
+              "p95": 102.85277054645121
+            },
+            "finetuned_single": {
+              "median": 48.26739546842873,
+              "p95": 49.228087649680674
+            }
+          }
+        }
+      }
+    },
+    "r02": {
+      "epochs_completed": 13,
+      "best_epoch_by_internal_map": 3,
+      "parameters": {
+        "amp": false,
+        "batch": 4,
+        "close_mosaic": 5,
+        "copy_paste": 0.0,
+        "deterministic": true,
+        "device": "mps",
+        "epochs": 30,
+        "freeze": 23,
+        "imgsz": 640,
+        "lr0": 0.0001,
+        "mixup": 0.0,
+        "mosaic": 0.2,
+        "optimizer": "AdamW",
+        "patience": 10,
+        "seed": 20260909,
+        "warmup_epochs": 1.0,
+        "workers": 0
+      },
+      "source_sha256": "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+      "weights_sha256": "c1f17b9472d7498aae971fafcafe1fdb81789142a94efde369d87d4a1ab081db",
+      "onnx_sha256": "ad6a55f338c8c1a0525698ad73f72c5b3e580996ed30d3c2eb7fde62d57061e3",
+      "dataset_sha256": "42b7ce7a565cfc2c2f91c9b5a195e870ac69faefa39562dc3674163257d889df",
+      "export_comparison_passed": true,
+      "export_comparison_inputs": 124,
+      "datasets": {
+        "scene": {
+          "count": 4,
+          "scores": {
+            "official_single": {
+              "bottle": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 0,
+                "ignored": 0,
+                "precision": null,
+                "recall": null
+              },
+              "cup": {
+                "tp": 3,
+                "fp": 0,
+                "fn": 1,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.75
+              },
+              "cell phone": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": null,
+                "recall": 0.0
+              }
+            },
+            "production_two_pass": {
+              "bottle": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 0,
+                "ignored": 0,
+                "precision": null,
+                "recall": null
+              },
+              "cup": {
+                "tp": 3,
+                "fp": 0,
+                "fn": 1,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.75
+              },
+              "cell phone": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": null,
+                "recall": 0.0
+              }
+            },
+            "finetuned_single": {
+              "bottle": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 0,
+                "ignored": 0,
+                "precision": null,
+                "recall": null
+              },
+              "cup": {
+                "tp": 4,
+                "fp": 0,
+                "fn": 0,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 1.0
+              },
+              "cell phone": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": null,
+                "recall": 0.0
+              }
+            }
+          },
+          "cpu_ms": {
+            "official_single": {
+              "median": 49.960583448410034,
+              "p95": 54.36670812778175
+            },
+            "production_two_pass": {
+              "median": 52.47758352197707,
+              "p95": 91.4531080634333
+            },
+            "finetuned_single": {
+              "median": 53.33035415969789,
+              "p95": 54.542097251396626
+            }
+          }
+        },
+        "public60": {
+          "count": 60,
+          "scores": {
+            "official_single": {
+              "bottle": {
+                "tp": 23,
+                "fp": 9,
+                "fn": 57,
+                "ignored": 0,
+                "precision": 0.71875,
+                "recall": 0.2875
+              },
+              "cup": {
+                "tp": 24,
+                "fp": 10,
+                "fn": 24,
+                "ignored": 0,
+                "precision": 0.7058823529411765,
+                "recall": 0.5
+              },
+              "cell phone": {
+                "tp": 9,
+                "fp": 2,
+                "fn": 18,
+                "ignored": 0,
+                "precision": 0.8181818181818182,
+                "recall": 0.3333333333333333
+              }
+            },
+            "production_two_pass": {
+              "bottle": {
+                "tp": 23,
+                "fp": 9,
+                "fn": 57,
+                "ignored": 0,
+                "precision": 0.71875,
+                "recall": 0.2875
+              },
+              "cup": {
+                "tp": 24,
+                "fp": 10,
+                "fn": 24,
+                "ignored": 0,
+                "precision": 0.7058823529411765,
+                "recall": 0.5
+              },
+              "cell phone": {
+                "tp": 9,
+                "fp": 2,
+                "fn": 18,
+                "ignored": 0,
+                "precision": 0.8181818181818182,
+                "recall": 0.3333333333333333
+              }
+            },
+            "finetuned_single": {
+              "bottle": {
+                "tp": 19,
+                "fp": 4,
+                "fn": 61,
+                "ignored": 0,
+                "precision": 0.8260869565217391,
+                "recall": 0.2375
+              },
+              "cup": {
+                "tp": 26,
+                "fp": 10,
+                "fn": 22,
+                "ignored": 0,
+                "precision": 0.7222222222222222,
+                "recall": 0.5416666666666666
+              },
+              "cell phone": {
+                "tp": 13,
+                "fp": 4,
+                "fn": 14,
+                "ignored": 0,
+                "precision": 0.7647058823529411,
+                "recall": 0.48148148148148145
+              }
+            }
+          },
+          "cpu_ms": {
+            "official_single": {
+              "median": 46.96729138959199,
+              "p95": 52.154400828294456
+            },
+            "production_two_pass": {
+              "median": 94.98541650827974,
+              "p95": 102.0272005815059
+            },
+            "finetuned_single": {
+              "median": 49.00150001049042,
+              "p95": 52.21464236965403
+            }
+          }
+        },
+        "public30": {
+          "count": 30,
+          "scores": {
+            "official_single": {
+              "bottle": {
+                "tp": 8,
+                "fp": 0,
+                "fn": 15,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.34782608695652173
+              },
+              "cup": {
+                "tp": 7,
+                "fp": 4,
+                "fn": 13,
+                "ignored": 0,
+                "precision": 0.6363636363636364,
+                "recall": 0.35
+              },
+              "cell phone": {
+                "tp": 5,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.5555555555555556
+              }
+            },
+            "production_two_pass": {
+              "bottle": {
+                "tp": 8,
+                "fp": 0,
+                "fn": 15,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.34782608695652173
+              },
+              "cup": {
+                "tp": 7,
+                "fp": 4,
+                "fn": 13,
+                "ignored": 0,
+                "precision": 0.6363636363636364,
+                "recall": 0.35
+              },
+              "cell phone": {
+                "tp": 5,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.5555555555555556
+              }
+            },
+            "finetuned_single": {
+              "bottle": {
+                "tp": 8,
+                "fp": 0,
+                "fn": 15,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.34782608695652173
+              },
+              "cup": {
+                "tp": 7,
+                "fp": 3,
+                "fn": 13,
+                "ignored": 0,
+                "precision": 0.7,
+                "recall": 0.35
+              },
+              "cell phone": {
+                "tp": 4,
+                "fp": 0,
+                "fn": 5,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.4444444444444444
+              }
+            }
+          },
+          "cpu_ms": {
+            "official_single": {
+              "median": 49.43960451055318,
+              "p95": 52.45204180246219
+            },
+            "production_two_pass": {
+              "median": 97.57627092767507,
+              "p95": 104.78855018736795
+            },
+            "finetuned_single": {
+              "median": 49.67933357693255,
+              "p95": 52.94003385351971
+            }
+          }
+        },
+        "hard30": {
+          "count": 30,
+          "scores": {
+            "official_single": {
+              "bottle": {
+                "tp": 17,
+                "fp": 9,
+                "fn": 27,
+                "ignored": 0,
+                "precision": 0.6538461538461539,
+                "recall": 0.38636363636363635
+              },
+              "cup": {
+                "tp": 14,
+                "fp": 16,
+                "fn": 12,
+                "ignored": 0,
+                "precision": 0.4666666666666667,
+                "recall": 0.5384615384615384
+              },
+              "cell phone": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.2
+              }
+            },
+            "production_two_pass": {
+              "bottle": {
+                "tp": 17,
+                "fp": 9,
+                "fn": 27,
+                "ignored": 0,
+                "precision": 0.6538461538461539,
+                "recall": 0.38636363636363635
+              },
+              "cup": {
+                "tp": 14,
+                "fp": 16,
+                "fn": 12,
+                "ignored": 0,
+                "precision": 0.4666666666666667,
+                "recall": 0.5384615384615384
+              },
+              "cell phone": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 4,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.2
+              }
+            },
+            "finetuned_single": {
+              "bottle": {
+                "tp": 13,
+                "fp": 4,
+                "fn": 31,
+                "ignored": 0,
+                "precision": 0.7647058823529411,
+                "recall": 0.29545454545454547
+              },
+              "cup": {
+                "tp": 14,
+                "fp": 13,
+                "fn": 12,
+                "ignored": 0,
+                "precision": 0.5185185185185185,
+                "recall": 0.5384615384615384
+              },
+              "cell phone": {
+                "tp": 3,
+                "fp": 0,
+                "fn": 2,
+                "ignored": 0,
+                "precision": 1.0,
+                "recall": 0.6
+              }
+            }
+          },
+          "cpu_ms": {
+            "official_single": {
+              "median": 49.418687471188605,
+              "p95": 53.40797150274739
+            },
+            "production_two_pass": {
+              "median": 92.2683960525319,
+              "p95": 102.71036275662482
+            },
+            "finetuned_single": {
+              "median": 50.03697902429849,
+              "p95": 53.522260347381234
+            }
+          }
+        }
+      }
+    }
+  },
+  "limits": [
+    "Same private cup instance; test images highly related, not independent instance acceptance",
+    "Prior selected public sets overlap; do not pool counts",
+    "No real-camera lifecycle or Windows fine-tuned-model acceptance"
+  ],
+  "video_r02": {
+    "baseline_type": "official_single_pass_n_e2e",
+    "sample_count": 488,
+    "videos": [
+      {
+        "id": "beer-bottling",
+        "sample_count": 189,
+        "baseline_detected_frames": {
+          "cell phone": 0,
+          "cup": 22,
+          "bottle": 51
+        },
+        "r02_detected_frames": {
+          "cell phone": 0,
+          "cup": 16,
+          "bottle": 44
+        },
+        "baseline_events": [
+          {
+            "t": 14.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "t": 27.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "t": 31.0,
+            "category": "bottle",
+            "kind": "appeared"
+          },
+          {
+            "t": 38.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "t": 39.0,
+            "category": "bottle",
+            "kind": "missing"
+          },
+          {
+            "t": 46.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "t": 115.0,
+            "category": "bottle",
+            "kind": "appeared"
+          },
+          {
+            "t": 147.0,
+            "category": "bottle",
+            "kind": "missing"
+          },
+          {
+            "t": 159.0,
+            "category": "bottle",
+            "kind": "appeared"
+          },
+          {
+            "t": 183.0,
+            "category": "bottle",
+            "kind": "missing"
+          }
+        ],
+        "r02_events": [
+          {
+            "t": 15.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "t": 27.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "t": 115.0,
+            "category": "bottle",
+            "kind": "appeared"
+          },
+          {
+            "t": 146.0,
+            "category": "bottle",
+            "kind": "missing"
+          },
+          {
+            "t": 168.0,
+            "category": "bottle",
+            "kind": "appeared"
+          },
+          {
+            "t": 183.0,
+            "category": "bottle",
+            "kind": "missing"
+          }
+        ]
+      },
+      {
+        "id": "sabrage",
+        "sample_count": 8,
+        "baseline_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 1
+        },
+        "r02_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 0
+        },
+        "baseline_events": [],
+        "r02_events": []
+      },
+      {
+        "id": "pedestrian-negative",
+        "sample_count": 30,
+        "baseline_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 0
+        },
+        "r02_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 0
+        },
+        "baseline_events": [],
+        "r02_events": []
+      },
+      {
+        "id": "thermochromic-mug",
+        "sample_count": 35,
+        "baseline_detected_frames": {
+          "cell phone": 0,
+          "cup": 4,
+          "bottle": 0
+        },
+        "r02_detected_frames": {
+          "cell phone": 0,
+          "cup": 1,
+          "bottle": 0
+        },
+        "baseline_events": [],
+        "r02_events": []
+      },
+      {
+        "id": "glass-tea-cup-setup",
+        "sample_count": 13,
+        "baseline_detected_frames": {
+          "cell phone": 0,
+          "cup": 6,
+          "bottle": 0
+        },
+        "r02_detected_frames": {
+          "cell phone": 0,
+          "cup": 6,
+          "bottle": 0
+        },
+        "baseline_events": [
+          {
+            "t": 11.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ],
+        "r02_events": [
+          {
+            "t": 11.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ]
+      },
+      {
+        "id": "child-drinks-from-cup",
+        "sample_count": 5,
+        "baseline_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 0
+        },
+        "r02_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 0
+        },
+        "baseline_events": [],
+        "r02_events": []
+      },
+      {
+        "id": "gigaset-quality",
+        "sample_count": 30,
+        "baseline_detected_frames": {
+          "cell phone": 0,
+          "cup": 0,
+          "bottle": 0
+        },
+        "r02_detected_frames": {
+          "cell phone": 2,
+          "cup": 0,
+          "bottle": 0
+        },
+        "baseline_events": [],
+        "r02_events": []
+      },
+      {
+        "id": "smartphone-emf",
+        "sample_count": 54,
+        "baseline_detected_frames": {
+          "cell phone": 12,
+          "cup": 0,
+          "bottle": 0
+        },
+        "r02_detected_frames": {
+          "cell phone": 10,
+          "cup": 0,
+          "bottle": 0
+        },
+        "baseline_events": [
+          {
+            "t": 37.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "t": 51.0,
+            "category": "cell phone",
+            "kind": "missing"
+          }
+        ],
+        "r02_events": [
+          {
+            "t": 42.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "t": 51.0,
+            "category": "cell phone",
+            "kind": "missing"
+          }
+        ]
+      },
+      {
+        "id": "rice-phone",
+        "sample_count": 124,
+        "baseline_detected_frames": {
+          "cell phone": 13,
+          "cup": 2,
+          "bottle": 0
+        },
+        "r02_detected_frames": {
+          "cell phone": 15,
+          "cup": 6,
+          "bottle": 0
+        },
+        "baseline_events": [
+          {
+            "t": 9.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "t": 15.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "t": 49.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "t": 64.0,
+            "category": "cell phone",
+            "kind": "missing"
+          }
+        ],
+        "r02_events": [
+          {
+            "t": 9.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "t": 15.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "t": 48.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "t": 64.0,
+            "category": "cell phone",
+            "kind": "missing"
+          }
+        ]
+      }
+    ],
+    "limits": "Aligned archival single-pass baseline, not production two-pass; incomplete instance ground truth, no accuracy claim"
+  }
+}

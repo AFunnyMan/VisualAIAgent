@@ -4,6 +4,8 @@
 
 **源码功能、离线回归及千问真实工具调用已通过；公开视频已贯通本地视觉与 Agent 提醒。USB 摄像头场景和 Windows 11 实机验收仍待用户辅助。** 具体证据与状态以 [build-log](harness/build-log.md) 为准，不把公开图片或假模型测试视为实机通过。
 
+2026-09-09已按用户授权完成两轮本地场景微调试验，过程、数据划分、参数调整和未通过的结果单独记录于[训练日志](训练日志.md)。实验模型尚未替换正式模型；本地识别质量仍需改进。
+
 ## 启动
 
 需要 Git 和 [uv](https://docs.astral.sh/uv/getting-started/installation/)。使用原生 Apple 芯片 Mac 或 Windows 11 x64；uv 自动准备 Python 3.11。8GB 无独显是验收基线，尚未证明为最低配置。
