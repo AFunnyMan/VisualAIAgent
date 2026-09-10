@@ -1,0 +1,213 @@
+{
+  "started_at": "2026-09-10T09:50:35.004405+00:00",
+  "finished_at": "2026-09-10T09:53:37.496500+00:00",
+  "fresh_samples": 1624,
+  "fault_samples": 6,
+  "startup_samples": 73,
+  "association": "seat",
+  "seat_roi": [
+    0.2,
+    0.2,
+    0.95,
+    1.0
+  ],
+  "association_parameters": {
+    "strong_confidence": 0.5,
+    "weak_confidence": 0.25,
+    "weak_seconds": 0.4,
+    "min_iou": 0.3,
+    "max_center_distance": 0.15,
+    "max_gap": 0.25
+  },
+  "parameters": {
+    "fps": 10.0,
+    "posture_confirm_seconds": 0.3,
+    "drinking_confirm_seconds": 0.5,
+    "drinking_end_seconds": 0.3,
+    "max_gap_seconds": 0.25,
+    "unknown_bridge_seconds": 1.0
+  },
+  "code_sha256": {
+    "behavior_camera_test.py": "73fd673adaf461021194224b4dd0e28ddde1452fda1d16399eb6f0adfa3894d3",
+    "behavior_seat_gate.py": "8e2fab660d4e28ee56c79c00021bf96115702dc8052a408fbf8ee732f28afa3c",
+    "behavior_timeline_v2.py": "44e4bd9230f8ca4cbc2ede4fe6403607fa6e8b31d5eb961478e918d8c384ed38",
+    "behavior_diagnostics.py": "cb6d5b819de978270ebfda7af7a6e4925e995d92891fe56ae674d8174a9dbe6d"
+  },
+  "events": [
+    {
+      "kind": "sat_down",
+      "timestamp": 1409310.65796425,
+      "recorded_at": "2026-09-10T09:52:18.998985+00:00",
+      "frame_sequence": 902,
+      "image": {
+        "path": "events/001-sat_down.png",
+        "sha256": "37c27ba265ca935e9ae0a355ed9b3cc13d589d3d243b21a72f6a0c9a73174f3b",
+        "bytes": 1859293
+      }
+    },
+    {
+      "kind": "stood_up",
+      "timestamp": 1409321.922171208,
+      "recorded_at": "2026-09-10T09:52:30.268212+00:00",
+      "frame_sequence": 992,
+      "image": {
+        "path": "events/002-stood_up.png",
+        "sha256": "6ce3fef3156793a48c93b412b346a5c1b12293241b1c924e6949e97d68a2f732",
+        "bytes": 1790590
+      }
+    },
+    {
+      "kind": "sat_down",
+      "timestamp": 1409326.787174958,
+      "recorded_at": "2026-09-10T09:52:35.126406+00:00",
+      "frame_sequence": 1039,
+      "image": {
+        "path": "events/003-sat_down.png",
+        "sha256": "78daa9194a34ef250339bd1c477331b9475185af528cd19acbd927e2598f1309",
+        "bytes": 1923006
+      }
+    },
+    {
+      "kind": "stood_up",
+      "timestamp": 1409335.025669625,
+      "recorded_at": "2026-09-10T09:52:43.376546+00:00",
+      "frame_sequence": 1118,
+      "image": {
+        "path": "events/004-stood_up.png",
+        "sha256": "68da19d8be0690bde48502682bc96af9778ed932d4f30da2037055b32100a5e3",
+        "bytes": 1876546
+      }
+    },
+    {
+      "kind": "stood_up",
+      "timestamp": 1409344.386003083,
+      "recorded_at": "2026-09-10T09:52:52.725698+00:00",
+      "frame_sequence": 1205,
+      "image": {
+        "path": "events/005-stood_up.png",
+        "sha256": "dbcd6e4f616c537d0e115235440b82bfaf4fabbc426858d98da409ecb5674d59",
+        "bytes": 1820807
+      }
+    },
+    {
+      "kind": "left_seat",
+      "timestamp": 1409347.203407583,
+      "recorded_at": "2026-09-10T09:52:55.537851+00:00",
+      "frame_sequence": 1232,
+      "image": {
+        "path": "events/006-left_seat.png",
+        "sha256": "343881ef21420b710cf9022d42a416266fa879c28cb449c05ca2b8bf7212c8a4",
+        "bytes": 1831177
+      }
+    },
+    {
+      "kind": "sat_down",
+      "timestamp": 1409353.842312791,
+      "recorded_at": "2026-09-10T09:53:02.179680+00:00",
+      "frame_sequence": 1296,
+      "image": {
+        "path": "events/007-sat_down.png",
+        "sha256": "22f0ff826ca91619b1fe346116f04e866f3ca338a872b8e8fda9e28617b51a23",
+        "bytes": 1908002
+      }
+    }
+  ],
+  "baseline_events": [
+    {
+      "kind": "sat_down",
+      "timestamp": 1409310.65796425
+    },
+    {
+      "kind": "stood_up",
+      "timestamp": 1409321.922171208
+    },
+    {
+      "kind": "sat_down",
+      "timestamp": 1409326.787174958
+    },
+    {
+      "kind": "stood_up",
+      "timestamp": 1409335.025669625
+    },
+    {
+      "kind": "stood_up",
+      "timestamp": 1409344.386003083
+    },
+    {
+      "kind": "left_seat",
+      "timestamp": 1409347.203407583
+    },
+    {
+      "kind": "sat_down",
+      "timestamp": 1409353.842312791
+    }
+  ],
+  "models": {
+    "posture": {
+      "manifest": "harness/artifacts/behavior-20260910-r02/posture-run/training-manifest.json",
+      "manifest_sha256": "51cb2f2054b2631571af5bd08d93163db4c84175962b0e17757060906fc24f90",
+      "onnx": "harness/artifacts/behavior-20260910-r02/posture-run/weights/last.onnx",
+      "onnx_sha256": "fef224cc6009030f66b0cf3ebc11e9e5116e3ce3df04b57dff15055596d5d31f"
+    },
+    "drinking": {
+      "manifest": "harness/artifacts/behavior-20260910-r02/drinking-run/training-manifest.json",
+      "manifest_sha256": "3588217ee6887dc66434434e402527d9a29c5221ff21e39e3ff3fc3dcba1d359",
+      "onnx": "harness/artifacts/behavior-20260910-r02/drinking-run/weights/last.onnx",
+      "onnx_sha256": "269c06a00e2b31b230251cd9271ebf3ba61e8c3cf25457732cf86f41d6e90a97"
+    },
+    "person_weak_auxiliary": {
+      "model": "models/yolo26n-e2e.onnx",
+      "sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+      "manifest": "model_manifests/yolo26n-e2e.onnx.json",
+      "manifest_sha256": "63b437026924ea14754ee6360c5857eca8ea8d284d2d8a5083a579e6e7100f09"
+    }
+  },
+  "latency_ms": {
+    "total_inference_ms": {
+      "p50": 73.782,
+      "p95": 88.638,
+      "max": 211.895
+    },
+    "person_inference_ms": {
+      "p50": 53.05,
+      "p95": 63.957,
+      "max": 159.065
+    }
+  },
+  "worker_stop_error": null,
+  "reached_deadline": false,
+  "stop_requested": true,
+  "backend": "AVFOUNDATION",
+  "actual_size": [
+    1920,
+    1080
+  ],
+  "cloud_or_agent_calls": 0,
+  "user_confirmed_actions_complete": true,
+  "quality_passed": false,
+  "cycle_sat_down": {
+    "observed": 1,
+    "expected": 2
+  },
+  "return_sat_down": {
+    "observed": 1,
+    "expected": 1
+  },
+  "baseline_same_events": true,
+  "missed_transition": {
+    "frame_sequence_seated_confirmed": 1167,
+    "preceding_stale_capture": "2026-09-10T09:52:47.473042+00:00",
+    "fresh_gap_seconds": 0.640537,
+    "postfault_standing_seconds": 0.20769,
+    "ambiguous_candidate_frame": 1162
+  },
+  "observed_fps": 9.339547279651187,
+  "process_exit_code": 0,
+  "independent_accuracy_estimate": null,
+  "limitations": [
+    "One user-confirmed short action sequence only",
+    "No occlusion, bending or drinking negative actions",
+    "No complete independent frame-by-frame annotation",
+    "Latency summaries exclude stale failures; internal cause of delayed inference not established"
+  ]
+}
