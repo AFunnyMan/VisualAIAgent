@@ -1,0 +1,433 @@
+{
+  "schema_version": 1,
+  "scope": "fixed-scene offline behavior experiment; not production acceptance",
+  "report": "docs/behavior-training-r02-20260910.md",
+  "raw_artifact_root": "harness/artifacts/behavior-20260910-r02",
+  "training_source_count": 5,
+  "test_source_count": 2,
+  "test_duration_seconds": 68.101,
+  "models": {
+    "posture": {
+      "status": "completed",
+      "started_at": "2026-09-10T03:30:49.323381+00:00",
+      "completed_at": "2026-09-10T03:35:44.101871+00:00",
+      "elapsed_seconds": 294.7760687500704,
+      "onnx_sha256": "fef224cc6009030f66b0cf3ebc11e9e5116e3ce3df04b57dff15055596d5d31f",
+      "selected_checkpoint_sha256": "288c148b711d50a9b9d28d176875fdfe2226f8c142af9110aded4670ba17926f",
+      "validation": {
+        "independent_validation_performed": false,
+        "metrics_available": false,
+        "metrics_note": "No validation was run; validation-looking placeholders or training CSV fields must not be used for model quality claims.",
+        "mode": "none_train_only"
+      },
+      "preprocessing": {
+        "color": "RGB",
+        "dtype": "float32",
+        "fill_rgb": [
+          114,
+          114,
+          114
+        ],
+        "function": "scripts.behavior_preprocess.preprocess_bgr",
+        "imgsz": 320,
+        "layout": "NCHW",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "resize": "aspect-ratio-preserving letterbox"
+      },
+      "counts": {
+        "train": {
+          "empty": 81,
+          "seated": 392,
+          "standing": 23
+        }
+      }
+    },
+    "drinking": {
+      "status": "completed",
+      "started_at": "2026-09-10T03:36:10.989863+00:00",
+      "completed_at": "2026-09-10T03:41:15.915035+00:00",
+      "elapsed_seconds": 304.9226440000348,
+      "onnx_sha256": "269c06a00e2b31b230251cd9271ebf3ba61e8c3cf25457732cf86f41d6e90a97",
+      "selected_checkpoint_sha256": "7e7ddd7939fa6415b35cfdf2c96ae16b445871fa79c05c86b156f988361b4c8b",
+      "validation": {
+        "independent_validation_performed": false,
+        "metrics_available": false,
+        "metrics_note": "No validation was run; validation-looking placeholders or training CSV fields must not be used for model quality claims.",
+        "mode": "none_train_only"
+      },
+      "preprocessing": {
+        "color": "RGB",
+        "dtype": "float32",
+        "fill_rgb": [
+          114,
+          114,
+          114
+        ],
+        "function": "scripts.behavior_preprocess.preprocess_bgr",
+        "imgsz": 320,
+        "layout": "NCHW",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "resize": "aspect-ratio-preserving letterbox"
+      },
+      "counts": {
+        "train": {
+          "drinking": 55,
+          "not_drinking": 453
+        }
+      }
+    }
+  },
+  "baseline_development_validation": {
+    "sample_evaluation": {
+      "drinking": {
+        "accuracy": 0.9233870967741935,
+        "confusion_matrix": {
+          "drinking": {
+            "drinking": 13,
+            "not_drinking": 19
+          },
+          "not_drinking": {
+            "drinking": 0,
+            "not_drinking": 216
+          }
+        },
+        "correct": 229,
+        "fixed_gate_by_class": {
+          "drinking": {
+            "accepted_correct": 13,
+            "accepted_wrong": 17,
+            "total": 32,
+            "unknown": 2
+          },
+          "not_drinking": {
+            "accepted_correct": 216,
+            "accepted_wrong": 0,
+            "total": 216,
+            "unknown": 0
+          }
+        },
+        "independent_accuracy": false,
+        "interpretation": "held out from training and model selection",
+        "per_class_count": {
+          "drinking": 32,
+          "not_drinking": 216
+        },
+        "total": 248
+      },
+      "posture": {
+        "accuracy": 0.996031746031746,
+        "confusion_matrix": {
+          "empty": {
+            "empty": 40,
+            "seated": 0,
+            "standing": 1
+          },
+          "seated": {
+            "empty": 0,
+            "seated": 203,
+            "standing": 0
+          },
+          "standing": {
+            "empty": 0,
+            "seated": 0,
+            "standing": 8
+          }
+        },
+        "correct": 251,
+        "fixed_gate_by_class": {
+          "empty": {
+            "accepted_correct": 40,
+            "accepted_wrong": 1,
+            "total": 41,
+            "unknown": 0
+          },
+          "seated": {
+            "accepted_correct": 203,
+            "accepted_wrong": 0,
+            "total": 203,
+            "unknown": 0
+          },
+          "standing": {
+            "accepted_correct": 8,
+            "accepted_wrong": 0,
+            "total": 8,
+            "unknown": 0
+          }
+        },
+        "independent_accuracy": false,
+        "interpretation": "held out from training and model selection",
+        "per_class_count": {
+          "empty": 41,
+          "seated": 203,
+          "standing": 8
+        },
+        "total": 252
+      }
+    },
+    "video_replay": {
+      "confidence_threshold": 0.75,
+      "event_count": 4,
+      "events": {
+        "sat_down": 1,
+        "stood_up": 1,
+        "suspected_drink": 2
+      },
+      "evidence_count": 4,
+      "margin_threshold": 0.2,
+      "sample_fps": 2.0,
+      "sources": [
+        {
+          "event_count": 2,
+          "event_scoring": {
+            "annotated": true,
+            "fn": 1,
+            "fp": 0,
+            "per_kind": {
+              "left_seat": {
+                "fn": 1,
+                "fp": 0,
+                "tp": 0
+              },
+              "sat_down": {
+                "fn": 0,
+                "fp": 0,
+                "tp": 1
+              },
+              "stood_up": {
+                "fn": 0,
+                "fp": 0,
+                "tp": 1
+              }
+            },
+            "tolerance_seconds": 0.5,
+            "tp": 2
+          },
+          "events": {
+            "sat_down": 1,
+            "stood_up": 1
+          },
+          "source_sha256": "2825093165aa01464cce97db939852639392df040aa0a5fe65a6e640c63a3dc1"
+        },
+        {
+          "event_count": 2,
+          "event_scoring": {
+            "annotated": true,
+            "fn": 2,
+            "fp": 0,
+            "per_kind": {
+              "suspected_drink": {
+                "fn": 2,
+                "fp": 0,
+                "tp": 2
+              }
+            },
+            "tolerance_seconds": 0.5,
+            "tp": 2
+          },
+          "events": {
+            "suspected_drink": 2
+          },
+          "source_sha256": "add9c2a92fe72f2466a3b33191b73a8b83a5dadb78ffe67f90caa02f523601db"
+        }
+      ],
+      "synthetic_fresh_false_events": 0
+    },
+    "note": "Development pair was later consumed for r02 training; original schema wording preserved, not final accuracy"
+  },
+  "final_test": {
+    "completed_at": "2026-09-10T03:42:01.570703+00:00",
+    "evaluation_split": "test",
+    "data_manifest_sha256": "263bef61467dea42d0574cc0d66b5aed434125640aee9c1a6914f903a95176e3",
+    "annotations_sha256": "579d4c867b0949ae5457874a4412957295f81f581d23df79ebce278e60349728",
+    "temporal_code_sha256": "fff414d8696cb71d0d7b415848a94ac9ba3cfdd5cf4d81df6dd2d184dfdb32ad",
+    "evaluator_code_sha256": "dc5a50ba3e04ad54a6f04a23dbe964c4f39ab2527765da8fa922260db6ec9587",
+    "held_out_from_training": true,
+    "used_for_model_selection": false,
+    "pt_onnx": {
+      "maximum_absolute_difference": 3.635883331298828e-06,
+      "tolerance": 0.0001
+    },
+    "sample_evaluation": {
+      "drinking": {
+        "accuracy": 0.978021978021978,
+        "confusion_matrix": {
+          "drinking": {
+            "drinking": 6,
+            "not_drinking": 5
+          },
+          "not_drinking": {
+            "drinking": 1,
+            "not_drinking": 261
+          }
+        },
+        "correct": 267,
+        "fixed_gate_by_class": {
+          "drinking": {
+            "accepted_correct": 6,
+            "accepted_wrong": 5,
+            "total": 11,
+            "unknown": 0
+          },
+          "not_drinking": {
+            "accepted_correct": 260,
+            "accepted_wrong": 1,
+            "total": 262,
+            "unknown": 1
+          }
+        },
+        "independent_accuracy": true,
+        "interpretation": "held out from training and model selection",
+        "per_class_count": {
+          "drinking": 11,
+          "not_drinking": 262
+        },
+        "total": 273
+      },
+      "posture": {
+        "accuracy": 0.995850622406639,
+        "confusion_matrix": {
+          "empty": {
+            "empty": 24,
+            "seated": 0,
+            "standing": 0
+          },
+          "seated": {
+            "empty": 0,
+            "seated": 181,
+            "standing": 1
+          },
+          "standing": {
+            "empty": 0,
+            "seated": 0,
+            "standing": 35
+          }
+        },
+        "correct": 240,
+        "fixed_gate_by_class": {
+          "empty": {
+            "accepted_correct": 24,
+            "accepted_wrong": 0,
+            "total": 24,
+            "unknown": 0
+          },
+          "seated": {
+            "accepted_correct": 179,
+            "accepted_wrong": 0,
+            "total": 182,
+            "unknown": 3
+          },
+          "standing": {
+            "accepted_correct": 35,
+            "accepted_wrong": 0,
+            "total": 35,
+            "unknown": 0
+          }
+        },
+        "independent_accuracy": true,
+        "interpretation": "held out from training and model selection",
+        "per_class_count": {
+          "empty": 24,
+          "seated": 182,
+          "standing": 35
+        },
+        "total": 241
+      }
+    },
+    "video_replay": {
+      "confidence_threshold": 0.75,
+      "event_count": 7,
+      "events": {
+        "left_seat": 2,
+        "sat_down": 2,
+        "stood_up": 2,
+        "suspected_drink": 1
+      },
+      "evidence_count": 7,
+      "margin_threshold": 0.2,
+      "sample_fps": 2.0,
+      "sources": [
+        {
+          "event_count": 6,
+          "event_scoring": {
+            "annotated": true,
+            "fn": 2,
+            "fp": 0,
+            "per_kind": {
+              "left_seat": {
+                "fn": 0,
+                "fp": 0,
+                "tp": 2
+              },
+              "sat_down": {
+                "fn": 1,
+                "fp": 0,
+                "tp": 2
+              },
+              "stood_up": {
+                "fn": 1,
+                "fp": 0,
+                "tp": 2
+              }
+            },
+            "tolerance_seconds": 1.0,
+            "tp": 6
+          },
+          "events": {
+            "left_seat": 2,
+            "sat_down": 2,
+            "stood_up": 2
+          },
+          "source_sha256": "43c1a0f953481db1096b723c7a309e0261ec45b73652e791af9f7bdd379cca2a"
+        },
+        {
+          "event_count": 1,
+          "event_scoring": {
+            "annotated": true,
+            "fn": 2,
+            "fp": 0,
+            "per_kind": {
+              "suspected_drink": {
+                "fn": 2,
+                "fp": 0,
+                "tp": 1
+              }
+            },
+            "tolerance_seconds": 1.0,
+            "tp": 1
+          },
+          "events": {
+            "suspected_drink": 1
+          },
+          "source_sha256": "d13ef33fcd986c5e6ad09f20c65c80873ebc9cff0448744151b0308a35ef5cc8"
+        }
+      ],
+      "synthetic_fresh_false_events": 0
+    }
+  },
+  "cpu_benchmark": {
+    "posture": {
+      "p50_ms": 9.312708396464586,
+      "p95_ms": 9.684152237605304,
+      "iterations": 100,
+      "warmup": 20
+    },
+    "drinking": {
+      "p50_ms": 9.25402098800987,
+      "p95_ms": 9.897970187012106,
+      "iterations": 100,
+      "warmup": 20
+    },
+    "scope": "isolated CPU preprocess+ONNX, repeated fixed development image; not full camera/app sustained benchmark"
+  },
+  "quality_accepted": false,
+  "production_replaced": false,
+  "live_behavior_camera_tested": false,
+  "cloud_api_calls": 0,
+  "windows_behavior_tested": false
+}
