@@ -1,4 +1,4 @@
-"""Shared full-frame preprocessing for experimental behavior classifiers."""
+"""Shared full-frame/ROI preprocessing for experimental behavior classifiers."""
 
 from __future__ import annotations
 
@@ -8,6 +8,43 @@ import cv2
 import numpy as np
 
 FILL_RGB = (114, 114, 114)
+NormalizedROI = tuple[float, float, float, float]
+
+
+def validate_roi(roi: NormalizedROI | None) -> NormalizedROI | None:
+    """Validate and normalize an optional ``(x1, y1, x2, y2)`` ROI."""
+    if roi is None:
+        return None
+    if len(roi) != 4:
+        raise ValueError("ROI must contain x1 y1 x2 y2")
+    normalized = tuple(float(value) for value in roi)
+    if not all(np.isfinite(value) and 0.0 <= value <= 1.0 for value in normalized):
+        raise ValueError("ROI coordinates must be finite and within [0, 1]")
+    x1, y1, x2, y2 = normalized
+    if x1 >= x2 or y1 >= y2:
+        raise ValueError("ROI must have positive width and height")
+    return normalized
+
+
+def crop_rgb(image_rgb: np.ndarray, roi: NormalizedROI | None = None) -> np.ndarray:
+    """Crop an RGB image using the shared normalized-coordinate rounding rule."""
+    if image_rgb.ndim != 3 or image_rgb.shape[2] != 3:
+        raise ValueError("Expected an HxWx3 RGB image")
+    normalized = validate_roi(roi)
+    if normalized is None:
+        return image_rgb
+    height, width = image_rgb.shape[:2]
+    x1, y1, x2, y2 = normalized
+    # Nearest-pixel edges keep training and inference deterministic and identical.
+    left, top, right, bottom = (
+        round(x1 * width),
+        round(y1 * height),
+        round(x2 * width),
+        round(y2 * height),
+    )
+    if left >= right or top >= bottom:
+        raise ValueError(f"ROI is empty after pixel rounding for source frame {width}x{height}")
+    return image_rgb[top:bottom, left:right]
 
 
 def letterbox_rgb(image_rgb: np.ndarray, size: int) -> np.ndarray:
@@ -32,10 +69,12 @@ def letterbox_rgb(image_rgb: np.ndarray, size: int) -> np.ndarray:
     return canvas
 
 
-def preprocess_bgr(image_bgr: np.ndarray, size: int = 320) -> np.ndarray:
+def preprocess_bgr(
+    image_bgr: np.ndarray, size: int = 320, roi: NormalizedROI | None = None
+) -> np.ndarray:
     """Return the FP32 NCHW input used for validation and exported ONNX inference."""
     rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-    image = letterbox_rgb(rgb, size)
+    image = letterbox_rgb(crop_rgb(rgb, roi), size)
     return np.ascontiguousarray(image.transpose(2, 0, 1)[None], dtype=np.float32) / 255.0
 
 
@@ -46,13 +85,17 @@ class FullFrameTransform:
     size: int
     training: bool = False
     jitter: float = 0.08
+    roi: NormalizedROI | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "roi", validate_roi(self.roi))
 
     def __call__(self, image):
         import torch
         from torchvision.transforms import functional as functional
 
         rgb = np.asarray(image.convert("RGB"), dtype=np.uint8)
-        framed = letterbox_rgb(rgb, self.size)
+        framed = letterbox_rgb(crop_rgb(rgb, self.roi), self.size)
         chw = np.ascontiguousarray(framed.transpose(2, 0, 1))
         tensor = torch.from_numpy(chw).float().div_(255.0)
         if self.training and self.jitter:

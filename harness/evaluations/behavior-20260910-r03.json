@@ -1,0 +1,2050 @@
+{
+  "recorded_at": "2026-09-10T13:56:53.138350+08:00",
+  "independent_accuracy": false,
+  "production_enabled": false,
+  "purpose": "development comparison after explicit annotation correction",
+  "annotation_revision": {
+    "old_drinking_events_in_former_test": 3,
+    "corrected_drinking_events_in_former_test": 2,
+    "old_baseline_matched": 1,
+    "corrected_baseline_matched": 1,
+    "reason": "First cup-holding interval was independently visually reviewed as not drinking. Other interval boundaries unchanged.",
+    "review_sha256": "2b15e5b0d9dfc2863520c49600ec938a44033edebdd5f78ae9d256ce70014fe2"
+  },
+  "experiments": {
+    "baseline": {
+      "scoring_sha256": "6c692c44d67032b15fd2a401d356ea5a2165449f5bcc23b4fba8852c0853f003",
+      "cache_manifest_sha256": "2cd8a21db29dd869d91f34625dcffe33ba39c16b02ebe6f106532d7f3ec97e6e",
+      "frames": 1332,
+      "pt_onnx_max_abs": 6.22868537902832e-06,
+      "models": {
+        "posture": {
+          "onnx_sha256": "fef224cc6009030f66b0cf3ebc11e9e5116e3ce3df04b57dff15055596d5d31f",
+          "preprocessing": {
+            "color": "RGB",
+            "dtype": "float32",
+            "fill_rgb": [
+              114,
+              114,
+              114
+            ],
+            "function": "scripts.behavior_preprocess.preprocess_bgr",
+            "imgsz": 320,
+            "layout": "NCHW",
+            "range": [
+              0.0,
+              1.0
+            ],
+            "resize": "aspect-ratio-preserving letterbox"
+          }
+        },
+        "drinking": {
+          "onnx_sha256": "269c06a00e2b31b230251cd9271ebf3ba61e8c3cf25457732cf86f41d6e90a97",
+          "preprocessing": {
+            "color": "RGB",
+            "dtype": "float32",
+            "fill_rgb": [
+              114,
+              114,
+              114
+            ],
+            "function": "scripts.behavior_preprocess.preprocess_bgr",
+            "imgsz": 320,
+            "layout": "NCHW",
+            "range": [
+              0.0,
+              1.0
+            ],
+            "resize": "aspect-ratio-preserving letterbox"
+          }
+        }
+      },
+      "original_annotations_sha256": "8fbe47cdc599e7d8c7da4a156f8fc298231a8652cae801f8648a9c975f971fc4",
+      "scored_annotations_sha256": "fb471e57c47a38fc8bff66aee4cc627f4a38dc5146d76fa0649e92cdc4753aaf",
+      "profiles": {
+        "v1-2fps": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          },
+          "per_source": [
+            {
+              "source_sha256": "2825093165aa01464cce97db939852639392df040aa0a5fe65a6e640c63a3dc1",
+              "trained_on": {
+                "posture": true,
+                "drinking": true
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "sat_down": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "stood_up": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 3,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 0,
+                    "fp": 1,
+                    "fn": 1
+                  },
+                  "sat_down": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "stood_up": {
+                    "tp": 0,
+                    "fp": 1,
+                    "fn": 1
+                  }
+                },
+                "tp": 1,
+                "fp": 2,
+                "fn": 2
+              },
+              "events": [
+                {
+                  "kind": "stood_up",
+                  "timestamp": 4.0
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 5.5
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 17.0
+                }
+              ]
+            },
+            {
+              "source_sha256": "add9c2a92fe72f2466a3b33191b73a8b83a5dadb78ffe67f90caa02f523601db",
+              "trained_on": {
+                "posture": true,
+                "drinking": true
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 4,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 4,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 4,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 4,
+                "fp": 0,
+                "fn": 0
+              },
+              "events": [
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 5.0
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 11.5
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 22.0
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 30.0
+                }
+              ]
+            },
+            {
+              "source_sha256": "43c1a0f953481db1096b723c7a309e0261ec45b73652e791af9f7bdd379cca2a",
+              "trained_on": {
+                "posture": false,
+                "drinking": false
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "sat_down": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 1
+                  },
+                  "stood_up": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 1
+                  }
+                },
+                "tp": 6,
+                "fp": 0,
+                "fn": 2
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 0,
+                    "fp": 2,
+                    "fn": 2
+                  },
+                  "sat_down": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 1
+                  },
+                  "stood_up": {
+                    "tp": 0,
+                    "fp": 2,
+                    "fn": 3
+                  }
+                },
+                "tp": 2,
+                "fp": 4,
+                "fn": 6
+              },
+              "events": [
+                {
+                  "kind": "stood_up",
+                  "timestamp": 3.0
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 7.0
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 14.0
+                },
+                {
+                  "kind": "stood_up",
+                  "timestamp": 26.0
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 28.0
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 31.5
+                }
+              ]
+            },
+            {
+              "source_sha256": "d13ef33fcd986c5e6ad09f20c65c80873ebc9cff0448744151b0308a35ef5cc8",
+              "trained_on": {
+                "posture": false,
+                "drinking": false
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 1
+                  }
+                },
+                "tp": 1,
+                "fp": 0,
+                "fn": 1
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 1
+                  }
+                },
+                "tp": 1,
+                "fp": 0,
+                "fn": 1
+              },
+              "events": [
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 10.5
+                }
+              ]
+            }
+          ]
+        },
+        "v1-10fps": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "stood_up": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          }
+        },
+        "v2-2fps-conservative": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          }
+        },
+        "v2-5fps-conservative": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 2
+            },
+            "stood_up": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "suspected_drink": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 3
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 2,
+              "fp": 4,
+              "fn": 4
+            }
+          }
+        },
+        "v2-10fps-conservative": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "stood_up": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 1,
+              "fp": 4,
+              "fn": 5
+            }
+          }
+        },
+        "v2-5fps-person-proxy": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "stood_up": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "suspected_drink": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 2,
+              "fp": 4,
+              "fn": 4
+            }
+          }
+        },
+        "v2-10fps-person-proxy": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "stood_up": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "suspected_drink": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 2,
+              "fp": 4,
+              "fn": 4
+            }
+          }
+        },
+        "v2-10fps-person-proxy-posture03": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "stood_up": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "suspected_drink": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 2,
+              "fp": 1,
+              "fn": 1
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 4,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 2,
+              "fp": 4,
+              "fn": 4
+            }
+          }
+        },
+        "v2-10fps-person-proxy-posture03-drink05": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "stood_up": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "suspected_drink": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 2,
+              "fp": 1,
+              "fn": 1
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 4,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 1,
+              "fn": 1
+            }
+          },
+          "per_source": [
+            {
+              "source_sha256": "2825093165aa01464cce97db939852639392df040aa0a5fe65a6e640c63a3dc1",
+              "trained_on": {
+                "posture": true,
+                "drinking": true
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "sat_down": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "stood_up": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 3,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "sat_down": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "stood_up": {
+                    "tp": 0,
+                    "fp": 1,
+                    "fn": 1
+                  }
+                },
+                "tp": 2,
+                "fp": 1,
+                "fn": 1
+              },
+              "events": [
+                {
+                  "kind": "stood_up",
+                  "timestamp": 3.6
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 5.2
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 16.8
+                }
+              ]
+            },
+            {
+              "source_sha256": "add9c2a92fe72f2466a3b33191b73a8b83a5dadb78ffe67f90caa02f523601db",
+              "trained_on": {
+                "posture": true,
+                "drinking": true
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 4,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 4,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 4,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 4,
+                "fp": 0,
+                "fn": 0
+              },
+              "events": [
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 4.6
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 11.3
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 21.7
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 29.9
+                }
+              ]
+            },
+            {
+              "source_sha256": "43c1a0f953481db1096b723c7a309e0261ec45b73652e791af9f7bdd379cca2a",
+              "trained_on": {
+                "posture": false,
+                "drinking": false
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "sat_down": {
+                    "tp": 3,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "stood_up": {
+                    "tp": 3,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 8,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 1,
+                    "fp": 1,
+                    "fn": 1
+                  },
+                  "sat_down": {
+                    "tp": 2,
+                    "fp": 1,
+                    "fn": 1
+                  },
+                  "stood_up": {
+                    "tp": 0,
+                    "fp": 3,
+                    "fn": 3
+                  }
+                },
+                "tp": 3,
+                "fp": 5,
+                "fn": 5
+              },
+              "events": [
+                {
+                  "kind": "stood_up",
+                  "timestamp": 2.7
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 6.8
+                },
+                {
+                  "kind": "stood_up",
+                  "timestamp": 10.9
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 13.8
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 19.9
+                },
+                {
+                  "kind": "stood_up",
+                  "timestamp": 25.7
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 27.4
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 31.0
+                }
+              ]
+            },
+            {
+              "source_sha256": "d13ef33fcd986c5e6ad09f20c65c80873ebc9cff0448744151b0308a35ef5cc8",
+              "trained_on": {
+                "posture": false,
+                "drinking": false
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 2,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 1,
+                    "fp": 1,
+                    "fn": 1
+                  }
+                },
+                "tp": 1,
+                "fp": 1,
+                "fn": 1
+              },
+              "events": [
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 10.3
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 28.3
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "roi": {
+      "scoring_sha256": "fa65816fa8a538375e8981b1c5bda837a8c65d10f0c69555ce5c412fdb08fc5a",
+      "cache_manifest_sha256": "953c36c06fad987a6cd7da0b5f9e7ae31e39d03f80798578ef99d389865ced95",
+      "frames": 1332,
+      "pt_onnx_max_abs": 5.751848220825195e-06,
+      "models": {
+        "posture": {
+          "onnx_sha256": "fef224cc6009030f66b0cf3ebc11e9e5116e3ce3df04b57dff15055596d5d31f",
+          "preprocessing": {
+            "color": "RGB",
+            "dtype": "float32",
+            "fill_rgb": [
+              114,
+              114,
+              114
+            ],
+            "function": "scripts.behavior_preprocess.preprocess_bgr",
+            "imgsz": 320,
+            "layout": "NCHW",
+            "range": [
+              0.0,
+              1.0
+            ],
+            "resize": "aspect-ratio-preserving letterbox"
+          }
+        },
+        "drinking": {
+          "onnx_sha256": "9875209077af14527ae44cd807112633dbd2af9485608ce94c55eac714b8bba1",
+          "preprocessing": {
+            "color": "RGB",
+            "dtype": "float32",
+            "expected_source_frame_size": [
+              1920,
+              1080
+            ],
+            "fill_rgb": [
+              114,
+              114,
+              114
+            ],
+            "function": "scripts.behavior_preprocess.preprocess_bgr",
+            "imgsz": 320,
+            "layout": "NCHW",
+            "range": [
+              0.0,
+              1.0
+            ],
+            "resize": "aspect-ratio-preserving letterbox",
+            "roi": [
+              0.25,
+              0.0,
+              0.75,
+              0.85
+            ]
+          }
+        }
+      },
+      "original_annotations_sha256": "8fbe47cdc599e7d8c7da4a156f8fc298231a8652cae801f8648a9c975f971fc4",
+      "scored_annotations_sha256": "fb471e57c47a38fc8bff66aee4cc627f4a38dc5146d76fa0649e92cdc4753aaf",
+      "profiles": {
+        "v1-2fps": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          },
+          "per_source": [
+            {
+              "source_sha256": "2825093165aa01464cce97db939852639392df040aa0a5fe65a6e640c63a3dc1",
+              "trained_on": {
+                "posture": true,
+                "drinking": true
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "sat_down": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "stood_up": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 3,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 0,
+                    "fp": 1,
+                    "fn": 1
+                  },
+                  "sat_down": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "stood_up": {
+                    "tp": 0,
+                    "fp": 1,
+                    "fn": 1
+                  }
+                },
+                "tp": 1,
+                "fp": 2,
+                "fn": 2
+              },
+              "events": [
+                {
+                  "kind": "stood_up",
+                  "timestamp": 4.0
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 5.5
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 17.0
+                }
+              ]
+            },
+            {
+              "source_sha256": "add9c2a92fe72f2466a3b33191b73a8b83a5dadb78ffe67f90caa02f523601db",
+              "trained_on": {
+                "posture": true,
+                "drinking": true
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 4,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 4,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 4,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 4,
+                "fp": 0,
+                "fn": 0
+              },
+              "events": [
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 5.0
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 11.5
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 22.0
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 30.0
+                }
+              ]
+            },
+            {
+              "source_sha256": "43c1a0f953481db1096b723c7a309e0261ec45b73652e791af9f7bdd379cca2a",
+              "trained_on": {
+                "posture": false,
+                "drinking": false
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "sat_down": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 1
+                  },
+                  "stood_up": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 1
+                  }
+                },
+                "tp": 6,
+                "fp": 0,
+                "fn": 2
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 0,
+                    "fp": 2,
+                    "fn": 2
+                  },
+                  "sat_down": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 1
+                  },
+                  "stood_up": {
+                    "tp": 0,
+                    "fp": 2,
+                    "fn": 3
+                  }
+                },
+                "tp": 2,
+                "fp": 4,
+                "fn": 6
+              },
+              "events": [
+                {
+                  "kind": "stood_up",
+                  "timestamp": 3.0
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 7.0
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 14.0
+                },
+                {
+                  "kind": "stood_up",
+                  "timestamp": 26.0
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 28.0
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 31.5
+                }
+              ]
+            },
+            {
+              "source_sha256": "d13ef33fcd986c5e6ad09f20c65c80873ebc9cff0448744151b0308a35ef5cc8",
+              "trained_on": {
+                "posture": false,
+                "drinking": false
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 1
+                  }
+                },
+                "tp": 1,
+                "fp": 0,
+                "fn": 1
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 1
+                  }
+                },
+                "tp": 1,
+                "fp": 0,
+                "fn": 1
+              },
+              "events": [
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 10.5
+                }
+              ]
+            }
+          ]
+        },
+        "v1-10fps": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "stood_up": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "suspected_drink": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 4
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 4
+            }
+          }
+        },
+        "v2-2fps-conservative": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          }
+        },
+        "v2-5fps-conservative": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 2
+            },
+            "stood_up": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "suspected_drink": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 2
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 3
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 3
+            }
+          }
+        },
+        "v2-10fps-conservative": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "stood_up": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "suspected_drink": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 4
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 3
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 0,
+              "fp": 2,
+              "fn": 6
+            }
+          }
+        },
+        "v2-5fps-person-proxy": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "stood_up": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "suspected_drink": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 4,
+              "fp": 2,
+              "fn": 2
+            }
+          }
+        },
+        "v2-10fps-person-proxy": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "stood_up": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 1
+            },
+            "suspected_drink": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 3
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 3,
+              "fp": 3,
+              "fn": 3
+            }
+          }
+        },
+        "v2-10fps-person-proxy-posture03": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "stood_up": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "suspected_drink": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 2,
+              "fp": 1,
+              "fn": 1
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 4,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 3,
+              "fp": 3,
+              "fn": 3
+            }
+          }
+        },
+        "v2-10fps-person-proxy-posture03-drink05": {
+          "per_kind": {
+            "left_seat": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0
+            },
+            "sat_down": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "stood_up": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          },
+          "zero_tolerance_per_kind": {
+            "left_seat": {
+              "tp": 2,
+              "fp": 1,
+              "fn": 1
+            },
+            "sat_down": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 1
+            },
+            "stood_up": {
+              "tp": 0,
+              "fp": 4,
+              "fn": 4
+            },
+            "suspected_drink": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1
+            }
+          },
+          "per_source": [
+            {
+              "source_sha256": "2825093165aa01464cce97db939852639392df040aa0a5fe65a6e640c63a3dc1",
+              "trained_on": {
+                "posture": true,
+                "drinking": true
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "sat_down": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "stood_up": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 3,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "sat_down": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "stood_up": {
+                    "tp": 0,
+                    "fp": 1,
+                    "fn": 1
+                  }
+                },
+                "tp": 2,
+                "fp": 1,
+                "fn": 1
+              },
+              "events": [
+                {
+                  "kind": "stood_up",
+                  "timestamp": 3.6
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 5.2
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 16.8
+                }
+              ]
+            },
+            {
+              "source_sha256": "add9c2a92fe72f2466a3b33191b73a8b83a5dadb78ffe67f90caa02f523601db",
+              "trained_on": {
+                "posture": true,
+                "drinking": true
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 4,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 4,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 4,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 4,
+                "fp": 0,
+                "fn": 0
+              },
+              "events": [
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 4.9
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 11.3
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 21.8
+                },
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 30.0
+                }
+              ]
+            },
+            {
+              "source_sha256": "43c1a0f953481db1096b723c7a309e0261ec45b73652e791af9f7bdd379cca2a",
+              "trained_on": {
+                "posture": false,
+                "drinking": false
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 2,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "sat_down": {
+                    "tp": 3,
+                    "fp": 0,
+                    "fn": 0
+                  },
+                  "stood_up": {
+                    "tp": 3,
+                    "fp": 0,
+                    "fn": 0
+                  }
+                },
+                "tp": 8,
+                "fp": 0,
+                "fn": 0
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "left_seat": {
+                    "tp": 1,
+                    "fp": 1,
+                    "fn": 1
+                  },
+                  "sat_down": {
+                    "tp": 2,
+                    "fp": 1,
+                    "fn": 1
+                  },
+                  "stood_up": {
+                    "tp": 0,
+                    "fp": 3,
+                    "fn": 3
+                  }
+                },
+                "tp": 3,
+                "fp": 5,
+                "fn": 5
+              },
+              "events": [
+                {
+                  "kind": "stood_up",
+                  "timestamp": 2.7
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 6.8
+                },
+                {
+                  "kind": "stood_up",
+                  "timestamp": 10.9
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 13.8
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 19.9
+                },
+                {
+                  "kind": "stood_up",
+                  "timestamp": 25.7
+                },
+                {
+                  "kind": "left_seat",
+                  "timestamp": 27.4
+                },
+                {
+                  "kind": "sat_down",
+                  "timestamp": 31.0
+                }
+              ]
+            },
+            {
+              "source_sha256": "d13ef33fcd986c5e6ad09f20c65c80873ebc9cff0448744151b0308a35ef5cc8",
+              "trained_on": {
+                "posture": false,
+                "drinking": false
+              },
+              "scoring": {
+                "annotated": true,
+                "tolerance_seconds": 1.0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 1
+                  }
+                },
+                "tp": 1,
+                "fp": 0,
+                "fn": 1
+              },
+              "scoring_zero_tolerance": {
+                "annotated": true,
+                "tolerance_seconds": 0,
+                "per_kind": {
+                  "suspected_drink": {
+                    "tp": 1,
+                    "fp": 0,
+                    "fn": 1
+                  }
+                },
+                "tp": 1,
+                "fp": 0,
+                "fn": 1
+              },
+              "events": [
+                {
+                  "kind": "suspected_drink",
+                  "timestamp": 10.5
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "candidate": {
+    "models": "unchanged r02 posture and drinking classifiers",
+    "profile": "v2-10fps-person-proxy-posture03-drink05",
+    "fps": 10,
+    "posture_confirm_seconds": 0.3,
+    "drinking_confirm_seconds": 0.5,
+    "drinking_min_samples": 2,
+    "drinking_end_seconds": 0.3,
+    "unknown_bridge_seconds": 1,
+    "max_gap_seconds": 0.25,
+    "person_confidence": 0.5,
+    "person_iou": 0.5,
+    "event_matching_tolerance_seconds": 1,
+    "total_expected_events": 17,
+    "total_matched_events": 17,
+    "unmatched_predictions": 0,
+    "limitations": [
+      "Four short development videos, partly training sources; no independent acceptance",
+      "Person detection does not prove unoccluded action or identity continuity",
+      "Drinking means visually suspected cup-to-mouth action, not physical consumption. One reviewed onset remains around 0.1s before clear contact. Historical narrow labels are not exact motion timestamps.",
+      "No live behavior camera, long-term false-alarm, Windows or production integration acceptance"
+    ]
+  },
+  "roi_training": {
+    "completed_at": "2026-09-10T05:38:24.511875+00:00",
+    "completed_epochs": 20,
+    "elapsed_seconds": 303.10362237505615,
+    "onnx_sha256": "9875209077af14527ae44cd807112633dbd2af9485608ce94c55eac714b8bba1",
+    "preprocessing": {
+      "color": "RGB",
+      "dtype": "float32",
+      "expected_source_frame_size": [
+        1920,
+        1080
+      ],
+      "fill_rgb": [
+        114,
+        114,
+        114
+      ],
+      "function": "scripts.behavior_preprocess.preprocess_bgr",
+      "imgsz": 320,
+      "layout": "NCHW",
+      "range": [
+        0.0,
+        1.0
+      ],
+      "resize": "aspect-ratio-preserving letterbox",
+      "roi": [
+        0.25,
+        0.0,
+        0.75,
+        0.85
+      ]
+    },
+    "selected_checkpoint_sha256": "a387f6f1cca22ceba7b46c065407fc01e6c33e9f61fdaa4418c6c8edee81e78e",
+    "started_at": "2026-09-10T05:33:21.405263+00:00",
+    "validation": {
+      "independent_validation_performed": false,
+      "metrics_available": false,
+      "metrics_note": "No validation was run; validation-looking placeholders or training CSV fields must not be used for model quality claims.",
+      "mode": "none_train_only"
+    },
+    "versions": {
+      "python": "3.11.16",
+      "torch": "2.14.0",
+      "ultralytics": "8.4.142"
+    }
+  },
+  "software_validation": {
+    "offline_passed": 246,
+    "skipped": 1,
+    "deselected": 3,
+    "export_environment_preprocessing_passed": 15,
+    "ruff": "passed"
+  },
+  "person_cache_sha256": "5089f97babd1f0cf42394a716453a04f4092fd073800fcb97a9618baf9c2c93f",
+  "code_sha256": {
+    "scripts/behavior_experiment.py": "ddfcbbcec80363fdd519356ed60eab43e109e46135d11418f8d5f0232e4ec1c0",
+    "scripts/behavior_timeline_v2.py": "44e4bd9230f8ca4cbc2ede4fe6403607fa6e8b31d5eb961478e918d8c384ed38",
+    "scripts/behavior_visibility.py": "88f7b1a0989fe92515c4fbd5b96cf374bfe6a729d1865b6306e1809e1bbc294d",
+    "scripts/behavior_preprocess.py": "70a3ef984d6feb5ce87d79830e49d59c71bbd6e642ec60a5ffaf7c53a597fb85"
+  },
+  "visual_review": {
+    "expanded_onsets_review_sha256": "4c8e1b008fcfd16bf73a0c264bc4e887c7aac07a8dc1b3d1fb665c316c9ef704",
+    "earlier_sparse_sheet_judgments_corrected": true,
+    "finding": "4.2s source action exists and is near mouth; 29.5s is early onset, not a wholly nonexistent bout. At 0.5s confirmation events shift to 4.6 and 29.9s; latter around 0.1s before clear contact."
+  }
+}

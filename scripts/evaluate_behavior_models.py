@@ -22,7 +22,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from scripts.behavior_events import BehaviorTimeline  # noqa: E402
-from scripts.behavior_preprocess import preprocess_bgr  # noqa: E402
+from scripts.behavior_preprocess import preprocess_bgr, validate_roi  # noqa: E402
 from scripts.train_behavior_model import IMAGE_SUFFIXES, inspect_dataset  # noqa: E402
 
 os.environ.setdefault(
@@ -230,6 +230,16 @@ def load_manifest(path: Path, expected_task: str) -> dict[str, Any]:
         or preprocessing.get("fill_rgb") != [114, 114, 114]
     ):
         raise ValueError(f"{expected_task} manifest has incompatible preprocessing")
+    roi = validate_roi(preprocessing.get("roi"))
+    source_size = preprocessing.get("expected_source_frame_size")
+    if roi is not None and (
+        not isinstance(source_size, list)
+        or len(source_size) != 2
+        or any(isinstance(v, bool) or not isinstance(v, int) or v <= 0 for v in source_size)
+    ):
+        raise ValueError("ROI manifest requires a positive integer source frame size")
+    if roi is None and source_size is not None:
+        raise ValueError("Source frame size requires a calibrated ROI")
     names = record.get("dataset", {}).get("classes")
     if not isinstance(names, dict):
         raise ValueError(f"{expected_task} manifest has no class mapping")
@@ -260,6 +270,8 @@ class ModelPair:
         self.torch = torch
         self.names = record["_names"]
         self.size = int(record["preprocessing"]["imgsz"])
+        self.roi = validate_roi(record["preprocessing"].get("roi"))
+        self.expected_source_size = record["preprocessing"].get("expected_source_frame_size")
         self.pt = YOLO(str(record["_checkpoint"])).model.float().cpu().eval()
         options = ort.SessionOptions()
         options.intra_op_num_threads = 2
@@ -299,7 +311,11 @@ class ModelPair:
         self.input_name = input_meta[0].name
 
     def predict(self, frame: np.ndarray) -> tuple[np.ndarray, float]:
-        tensor = preprocess_bgr(frame, self.size)
+        if self.expected_source_size is not None and list(frame.shape[1::-1]) != list(
+            self.expected_source_size
+        ):
+            raise ValueError("Source frame size changed; ROI recalibration required")
+        tensor = preprocess_bgr(frame, self.size, self.roi)
         with self.torch.inference_mode():
             raw = self.pt(self.torch.from_numpy(tensor))
         pt = raw[0] if isinstance(raw, tuple) else raw

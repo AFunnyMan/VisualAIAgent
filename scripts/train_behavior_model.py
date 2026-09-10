@@ -15,10 +15,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import cv2
+
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPOSITORY_ROOT))
 
-from scripts.behavior_preprocess import FullFrameTransform, preprocess_bgr  # noqa: E402,F401
+from scripts.behavior_preprocess import (  # noqa: E402,F401
+    FullFrameTransform,
+    preprocess_bgr,
+    validate_roi,
+)
 
 IMAGE_SUFFIXES = {".bmp", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
 
@@ -137,6 +143,32 @@ def validate_paths(
     return dataset, weights, output
 
 
+def validate_source_sizes(
+    data: Path,
+    expected_size: tuple[int, int],
+    *,
+    train_only: bool = False,
+) -> None:
+    """Reject cached/resized inputs when an ROI is calibrated to a source frame size."""
+    expected_width, expected_height = expected_size
+    if expected_width <= 0 or expected_height <= 0:
+        raise ValueError("source-size width and height must be positive")
+    splits = ("train",) if train_only else ("train", "val")
+    for split in splits:
+        for path in sorted((data.resolve() / split).rglob("*")):
+            if not path.is_file() or path.suffix.lower() not in IMAGE_SUFFIXES:
+                continue
+            image = cv2.imread(str(path), cv2.IMREAD_COLOR)
+            if image is None:
+                raise ValueError(f"Cannot decode training image: {path}")
+            height, width = image.shape[:2]
+            if (width, height) != expected_size:
+                raise ValueError(
+                    f"Source frame size mismatch for {path}: expected "
+                    f"{expected_width}x{expected_height}, got {width}x{height}"
+                )
+
+
 def write_json(path: Path, value: dict[str, Any]) -> None:
     temporary = path.with_suffix(".tmp")
     temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
@@ -154,6 +186,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch", type=int, default=8)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--freeze", type=int, default=5)
+    parser.add_argument("--roi", type=float, nargs=4, metavar=("X1", "Y1", "X2", "Y2"))
+    parser.add_argument("--source-size", type=int, nargs=2, metavar=("WIDTH", "HEIGHT"))
     parser.add_argument(
         "--train-only",
         action="store_true",
@@ -169,6 +203,14 @@ def main() -> None:
     dataset, weights, output = validate_paths(
         args.data, args.weights, args.output, train_only=args.train_only
     )
+    roi = validate_roi(tuple(args.roi) if args.roi is not None else None)
+    source_size = tuple(args.source_size) if args.source_size is not None else None
+    if roi is not None and source_size is None:
+        raise ValueError("--source-size WIDTH HEIGHT is required when --roi is used")
+    if source_size is not None:
+        if roi is None:
+            raise ValueError("--source-size is only valid together with --roi")
+        validate_source_sizes(args.data, source_size, train_only=args.train_only)
 
     import torch
     from ultralytics import YOLO
@@ -178,7 +220,9 @@ def main() -> None:
     class BehaviorClassificationDataset(ClassificationDataset):
         def __init__(self, root: str, trainer_args, augment: bool = False, prefix: str = ""):
             super().__init__(root, trainer_args, augment=augment, prefix=prefix)
-            self.torch_transforms = FullFrameTransform(trainer_args.imgsz, training=augment)
+            self.torch_transforms = FullFrameTransform(
+                trainer_args.imgsz, training=augment, roi=roi
+            )
 
     class BehaviorClassificationTrainer(ClassificationTrainer):
         def get_dataset(self):
@@ -268,6 +312,8 @@ def main() -> None:
             "resize": "aspect-ratio-preserving letterbox",
             "fill_rgb": [114, 114, 114],
             "imgsz": args.imgsz,
+            "roi": list(roi) if roi is not None else None,
+            "expected_source_frame_size": list(source_size) if source_size is not None else None,
         },
         "validation": {
             "mode": "none_train_only" if args.train_only else "independent_val_split",

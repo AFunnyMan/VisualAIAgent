@@ -1,13 +1,19 @@
 import hashlib
 import json
+import pickle
 from pathlib import Path
 
 import cv2
 import numpy as np
 import pytest
 
-from scripts.behavior_preprocess import letterbox_rgb, preprocess_bgr
-from scripts.train_behavior_model import inspect_dataset, validate_paths
+from scripts.behavior_preprocess import (
+    FullFrameTransform,
+    crop_rgb,
+    letterbox_rgb,
+    preprocess_bgr,
+)
+from scripts.train_behavior_model import inspect_dataset, validate_paths, validate_source_sizes
 
 
 def make_dataset(root: Path) -> Path:
@@ -96,3 +102,55 @@ def test_letterbox_preserves_full_geometry_and_matches_bgr_preprocess() -> None:
     assert np.array_equal(tensor[0], framed.transpose(2, 0, 1).astype(np.float32) / 255.0)
     assert tensor.dtype == np.float32
     assert 0.0 <= float(tensor.min()) <= float(tensor.max()) <= 1.0
+
+
+def test_roi_preprocessing_matches_training_transform() -> None:
+    torch = pytest.importorskip("torch")
+    pil_image = pytest.importorskip("PIL.Image")
+    bgr = np.zeros((10, 20, 3), dtype=np.uint8)
+    bgr[:, :10] = (0, 0, 255)
+    bgr[:, 10:] = (0, 255, 0)
+    roi = (0.25, 0.2, 0.75, 0.8)
+    inference = preprocess_bgr(bgr, 16, roi=roi)[0]
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    training = FullFrameTransform(16, roi=roi)(pil_image.fromarray(rgb))
+    assert isinstance(training, torch.Tensor)
+    assert np.array_equal(training.numpy(), inference)
+
+
+@pytest.mark.parametrize(
+    "roi, message",
+    [
+        ((-0.1, 0.0, 1.0, 1.0), r"within \[0, 1\]"),
+        ((0.0, 0.0, 1.1, 1.0), r"within \[0, 1\]"),
+        ((0.5, 0.0, 0.5, 1.0), "positive width"),
+        ((0.0, 0.8, 1.0, 0.2), "positive width and height"),
+    ],
+)
+def test_invalid_roi_is_rejected(roi, message) -> None:
+    with pytest.raises(ValueError, match=message):
+        preprocess_bgr(np.zeros((8, 12, 3), dtype=np.uint8), roi=roi)
+
+
+def test_roi_that_rounds_to_empty_is_rejected() -> None:
+    with pytest.raises(ValueError, match="empty after pixel rounding"):
+        crop_rgb(np.zeros((2, 2, 3), dtype=np.uint8), (0.0, 0.0, 0.1, 1.0))
+
+
+def test_legacy_default_remains_full_frame() -> None:
+    bgr = np.arange(8 * 12 * 3, dtype=np.uint8).reshape(8, 12, 3)
+    assert np.array_equal(preprocess_bgr(bgr, 20), preprocess_bgr(bgr, 20, roi=None))
+
+
+def test_roi_transform_is_pickle_safe() -> None:
+    transform = FullFrameTransform(384, training=True, roi=(0.1, 0.2, 0.9, 0.8))
+    assert pickle.loads(pickle.dumps(transform)) == transform
+
+
+def test_roi_source_size_rejects_resized_training_cache(tmp_path: Path) -> None:
+    data = make_dataset(tmp_path / "data")
+    validate_source_sizes(data, (12, 8))
+    changed = data / "train/away/sample.jpg"
+    cv2.imwrite(str(changed), np.zeros((4, 6, 3), dtype=np.uint8))
+    with pytest.raises(ValueError, match="Source frame size mismatch"):
+        validate_source_sizes(data, (12, 8))
