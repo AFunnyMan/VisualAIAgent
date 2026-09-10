@@ -110,3 +110,5 @@ uv run --locked python scripts/camera_acceptance.py --camera 0 --duration 1800 -
 ## 实验行为摄像头入口
 
 `scripts/behavior_camera_test.py`为隔离手动测试，真实执行命令、用户流程、结果及失败见[2026-09-10实测](behavior-live-test-20260910.md)。仅ONNX CPU，端口8765，需新输出目录；不加载.env或写正式业务库。正常停止后服务关闭，页面不再刷新。行为模型仍未获正式启用验收；不能把界面显示某状态视为事件已正确生成。
+
+新增座位关联对照使用`--person-association seat --seat-roi 0.2 0.2 0.95 1.0`，默认仍为旧严格关联。具体参数、同帧旧逻辑比较、有限图片证据及测试结果见[座位关联改进](behavior-seat-improvement-20260910.md)。离线`v2-10fps-seat-association`固定采用上述默认ROI；改变实机ROI后不能直接声称与该离线配置一致。故障帧不保存为动作证据；诊断图片有限，不能替代完整连续动作的独立人工标注。

@@ -37,6 +37,7 @@ import onnxruntime as ort
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from scripts.behavior_diagnostics import TransitionEvidence  # noqa: E402
 from scripts.behavior_preprocess import preprocess_bgr, validate_roi  # noqa: E402
 from scripts.behavior_timeline_v2 import BehaviorTimelineV2  # noqa: E402
 from scripts.behavior_visibility import PersonTrackGate, _person_candidates  # noqa: E402
@@ -235,7 +236,7 @@ class TestState:
 
 
 def _page() -> str:
-    return """<!doctype html><meta charset=utf-8><title>r03 行为摄像头测试</title><style>body{font:16px system-ui;max-width:1100px;margin:16px auto;padding:0 16px}img{max-width:100%;background:#222}#s{background:#f4f4f4;padding:12px;line-height:1.7}.warn{color:#9b3d00;font-weight:bold}pre{white-space:pre-wrap}</style><h1>r03 行为摄像头测试</h1><p class=warn>人员跟踪只是弱辅助，不能证明无遮挡或完整动作可见。</p><div id=s>等待新鲜画面…</div><img id=p><p><button onclick=stopRun()>停止测试</button></p><pre id=e></pre><script>async function poll(){try{let x=await(await fetch('/progress.json',{cache:'no-store'})).json(),l=x.latest||{},left=Math.max(0,x.target_seconds-x.elapsed_seconds);document.querySelector('#s').textContent=`剩余 ${Math.ceil(left)} 秒｜新鲜 ${x.fresh_samples}｜故障 ${x.fault_samples}\n姿态 ${l.confirmed_posture||'unknown'}｜饮水 ${l.confirmed_drinking||'unknown'}｜${l.status||'等待'}`;document.querySelector('#e').textContent=JSON.stringify(x.events,null,2);document.querySelector('#p').src='/latest.jpg?t='+Date.now()}catch(e){document.querySelector('#s').textContent=e.message}}async function stopRun(){await fetch('/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});poll()}setInterval(poll,500);poll()</script>"""
+    return """<!doctype html><meta charset=utf-8><title>行为摄像头测试</title><style>body{font:16px system-ui;max-width:1100px;margin:16px auto;padding:0 16px}img{max-width:100%;background:#222}#s{background:#f4f4f4;padding:12px;line-height:1.7}.warn{color:#9b3d00;font-weight:bold}pre{white-space:pre-wrap}</style><h1>行为摄像头测试</h1><p class=warn>人员跟踪只是弱辅助，不能证明无遮挡或完整动作可见。</p><div id=s>等待新鲜画面…</div><img id=p><p><button onclick=stopRun()>停止测试</button></p><pre id=e></pre><script>async function poll(){try{let x=await(await fetch('/progress.json',{cache:'no-store'})).json(),l=x.latest||{},left=Math.max(0,x.target_seconds-x.elapsed_seconds);document.querySelector('#s').textContent=`剩余 ${Math.ceil(left)} 秒｜新鲜 ${x.fresh_samples}｜故障 ${x.fault_samples}\n姿态 ${({seated:'在座',standing:'站立',empty:'空座',unknown:'不确定'})[l.confirmed_posture]||'不确定'}｜饮水 ${({drinking:'疑似饮水',not_drinking:'未饮水',unknown:'不确定'})[l.confirmed_drinking]||'不确定'}｜${l.status||'等待'}`;document.querySelector('#e').textContent=JSON.stringify(x.events,null,2);document.querySelector('#p').src='/latest.jpg?t='+Date.now()}catch(e){document.querySelector('#s').textContent=e.message}}async function stopRun(){await fetch('/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});poll()}setInterval(poll,500);poll()</script>"""
 
 
 def _handler_for(state: TestState) -> type[BaseHTTPRequestHandler]:
@@ -349,6 +350,20 @@ def run(args: argparse.Namespace) -> int:
     detector = BehaviorDetector(
         OnnxClassifier(posture_record), OnnxClassifier(drinking_record), person_model
     )
+    if args.person_association == "seat":
+        from scripts.behavior_seat_gate import SeatPersonGate
+
+        detector.gate = SeatPersonGate(roi=tuple(args.seat_roi))
+    baseline_gate = PersonTrackGate(max_gap=STALE_AFTER)
+    baseline_timeline = BehaviorTimelineV2(
+        posture_confirm_seconds=POSTURE_CONFIRM,
+        drinking_confirm_seconds=DRINK_CONFIRM,
+        drinking_end_seconds=DRINK_END,
+        unknown_bridge_seconds=UNKNOWN_BRIDGE,
+        max_gap=STALE_AFTER,
+    )
+    diagnostics = TransitionEvidence(output)
+    baseline_events = []
     timeline = BehaviorTimelineV2(
         posture_confirm_seconds=POSTURE_CONFIRM,
         drinking_confirm_seconds=DRINK_CONFIRM,
@@ -360,9 +375,11 @@ def run(args: argparse.Namespace) -> int:
     process = psutil.Process()
     process.cpu_percent()
     seen_sequence = 0
+    previous_raw_posture = "unknown"
+    previous_continuous = False
 
     def observe(observation: Any, jpeg: bytes | None) -> None:
-        nonlocal seen_sequence
+        nonlocal seen_sequence, previous_raw_posture, previous_continuous
         pair = (
             detector.snapshot() if observation.status == "running" and observation.fresh else None
         )
@@ -377,10 +394,17 @@ def run(args: argparse.Namespace) -> int:
                 (observation.width, observation.height),
             )
             continuous = pair["person_gate"]["person_track_supported"] is True
+            baseline_support = baseline_gate.observe(
+                observation.monotonic_at,
+                pair["person_candidates"],
+                (observation.width, observation.height),
+            )["person_track_supported"]
         else:
             raw_posture = raw_drinking = "unknown"
             continuous = False
             detector.reset_gate()
+            baseline_gate.reset()
+            baseline_support = False
         result = timeline.observe(
             observation.monotonic_at,
             raw_posture,
@@ -388,7 +412,22 @@ def run(args: argparse.Namespace) -> int:
             fresh=fresh,
             continuous_visible=continuous,
         )
+        baseline = baseline_timeline.observe(
+            observation.monotonic_at,
+            raw_posture,
+            raw_drinking,
+            fresh=fresh,
+            continuous_visible=baseline_support,
+        )
+        baseline_events.extend(baseline["events"])
         row = {
+            "baseline_result": baseline,
+            "person_candidates": [
+                {"confidence": c.confidence, "bbox": list(c.bbox)}
+                for c in pair["person_candidates"]
+            ]
+            if fresh
+            else [],
             "recorded_at": _utcnow(),
             "observed_at": observation.observed_at.isoformat(),
             "monotonic_at": observation.monotonic_at,
@@ -411,6 +450,13 @@ def run(args: argparse.Namespace) -> int:
             "cpu_percent_one_core_100": process.cpu_percent(),
             "rss_mib": round(process.memory_info().rss / 1024**2, 3),
         }
+        trigger = (
+            (raw_posture == "unknown" and previous_raw_posture != "unknown")
+            or (previous_continuous and not continuous)
+            or bool(result["events"])
+        )
+        diagnostics.observe(row, jpeg, trigger)
+        previous_raw_posture, previous_continuous = raw_posture, continuous
         with state.lock:
             state.fresh_count += int(fresh)
             if not fresh and not state.first_fresh.is_set():
@@ -472,6 +518,30 @@ def run(args: argparse.Namespace) -> int:
         server_thread.join(5)
     fresh_rows = [row for row in state.samples if row["fresh"]]
     summary = state.public() | {
+        "association": args.person_association,
+        "seat_roi": args.seat_roi,
+        "association_parameters": {
+            key: getattr(detector.gate, key, None)
+            for key in (
+                "strong_confidence",
+                "weak_confidence",
+                "weak_seconds",
+                "min_iou",
+                "max_center_distance",
+                "max_gap",
+            )
+        },
+        "code_sha256": {
+            name: sha256(ROOT / "scripts" / name)
+            for name in (
+                "behavior_camera_test.py",
+                "behavior_seat_gate.py",
+                "behavior_timeline_v2.py",
+                "behavior_diagnostics.py",
+            )
+        },
+        "baseline_events": baseline_events,
+        "diagnostic_groups": diagnostics.groups,
         "finished_at": _utcnow(),
         "reached_deadline": reached_deadline,
         "stop_requested": state.stop_requested,
@@ -523,6 +593,8 @@ def main() -> None:
     parser.add_argument("--camera", type=int, default=0)
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
+    parser.add_argument("--person-association", choices=("strict", "seat"), default="strict")
+    parser.add_argument("--seat-roi", type=float, nargs=4, default=(0.2, 0.2, 0.95, 1.0))
     parser.add_argument("--backend", type=int)
     parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()

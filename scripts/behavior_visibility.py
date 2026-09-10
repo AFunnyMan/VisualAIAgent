@@ -23,6 +23,7 @@ os.environ.setdefault(
 )
 os.environ.setdefault("YOLO_AUTOINSTALL", "false")
 os.environ.setdefault("YOLO_OFFLINE", "true")
+os.environ.setdefault("ORT_DISABLE_TELEMETRY", "1")
 
 import cv2  # noqa: E402
 import numpy as np  # noqa: E402

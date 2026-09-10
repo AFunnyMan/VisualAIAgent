@@ -179,6 +179,7 @@ def score(args) -> None:
         profiles.update({f"v2-{fps}fps-person-proxy": (fps, "proxy") for fps in (5, 10)})
         profiles["v2-10fps-person-proxy-posture03"] = (10, "proxy-fast")
         profiles["v2-10fps-person-proxy-posture03-drink05"] = (10, "proxy-drink05")
+        profiles["v2-10fps-seat-association"] = (10, "seat")
     results = {}
     for name, (fps, version) in profiles.items():
         sources = []
@@ -192,16 +193,31 @@ def score(args) -> None:
                 else BehaviorTimelineV2(
                     posture_confirm_seconds=0.3, drinking_confirm_seconds=0.5, max_gap=0.25
                 )
-                if version == "proxy-drink05"
+                if version in {"proxy-drink05", "seat"}
                 else BehaviorTimelineV2(posture_confirm_seconds=0.3, max_gap=0.25)
                 if version == "proxy-fast"
                 else BehaviorTimelineV2()
             )
             events = []
+            if version == "seat":
+                from scripts.behavior_seat_gate import SeatPersonGate
+                from scripts.behavior_visibility import PersonCandidate
+
+                seat_gate = SeatPersonGate()
             classifications = {"posture": Counter(), "drinking": Counter()}
             unknown_count = Counter()
             for row in selected:
                 extra = {}
+                if version == "seat":
+                    evidence = person_rows[(row["source_sha256"], row["frame_index"])]
+                    candidates = [
+                        PersonCandidate(c["confidence"], tuple(c["bbox"]))
+                        for c in evidence["person_candidates"]
+                    ]
+                    support = seat_gate.observe(
+                        row["timestamp"], candidates, tuple(evidence["frame_size"])
+                    )
+                    extra["continuous_visible"] = support["person_track_supported"]
                 if version in {"proxy", "proxy-fast", "proxy-drink05"}:
                     evidence = person_rows[(row["source_sha256"], row["frame_index"])]
                     extra["continuous_visible"] = evidence["person_track_supported"] is True
@@ -241,6 +257,9 @@ def score(args) -> None:
         "independent_accuracy": False,
         "cache_manifest_sha256": sha256(args.cache / "manifest.json"),
         "v2_code_sha256": sha256(Path(__file__).with_name("behavior_timeline_v2.py")),
+        "seat_association_code_sha256": sha256(Path(__file__).with_name("behavior_seat_gate.py"))
+        if person_rows is not None
+        else None,
         "original_annotations_sha256": meta["annotations_sha256"],
         "scored_annotations_sha256": sha256(args.annotations or annotations),
         "annotation_revision_note": args.annotation_revision_note,

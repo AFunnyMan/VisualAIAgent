@@ -1,0 +1,107 @@
+{
+  "started_at": "2026-09-10T08:57:25.962047+00:00",
+  "finished_at": "2026-09-10T09:02:35.323423+00:00",
+  "fresh_samples": 2809,
+  "fault_samples": 4,
+  "startup_samples": 80,
+  "association": "seat",
+  "seat_roi": [
+    0.2,
+    0.2,
+    0.95,
+    1.0
+  ],
+  "association_parameters": {
+    "strong_confidence": 0.5,
+    "weak_confidence": 0.25,
+    "weak_seconds": 0.4,
+    "min_iou": 0.3,
+    "max_center_distance": 0.15,
+    "max_gap": 0.25
+  },
+  "code_sha256": {
+    "behavior_camera_test.py": "73fd673adaf461021194224b4dd0e28ddde1452fda1d16399eb6f0adfa3894d3",
+    "behavior_seat_gate.py": "8e2fab660d4e28ee56c79c00021bf96115702dc8052a408fbf8ee732f28afa3c",
+    "behavior_timeline_v2.py": "44e4bd9230f8ca4cbc2ede4fe6403607fa6e8b31d5eb961478e918d8c384ed38",
+    "behavior_diagnostics.py": "cb6d5b819de978270ebfda7af7a6e4925e995d92891fe56ae674d8174a9dbe6d"
+  },
+  "models": {
+    "posture": {
+      "manifest": "harness/artifacts/behavior-20260910-r02/posture-run/training-manifest.json",
+      "manifest_sha256": "51cb2f2054b2631571af5bd08d93163db4c84175962b0e17757060906fc24f90",
+      "onnx": "harness/artifacts/behavior-20260910-r02/posture-run/weights/last.onnx",
+      "onnx_sha256": "fef224cc6009030f66b0cf3ebc11e9e5116e3ce3df04b57dff15055596d5d31f"
+    },
+    "drinking": {
+      "manifest": "harness/artifacts/behavior-20260910-r02/drinking-run/training-manifest.json",
+      "manifest_sha256": "3588217ee6887dc66434434e402527d9a29c5221ff21e39e3ff3fc3dcba1d359",
+      "onnx": "harness/artifacts/behavior-20260910-r02/drinking-run/weights/last.onnx",
+      "onnx_sha256": "269c06a00e2b31b230251cd9271ebf3ba61e8c3cf25457732cf86f41d6e90a97"
+    },
+    "person_weak_auxiliary": {
+      "model": "models/yolo26n-e2e.onnx",
+      "sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+      "manifest": "model_manifests/yolo26n-e2e.onnx.json",
+      "manifest_sha256": "63b437026924ea14754ee6360c5857eca8ea8d284d2d8a5083a579e6e7100f09"
+    }
+  },
+  "events": [],
+  "baseline_events": [],
+  "reached_deadline": true,
+  "worker_stop_error": null,
+  "platform": "macOS-26.6.1-arm64-arm-64bit",
+  "actual_size": [
+    1920,
+    1080
+  ],
+  "backend": "AVFOUNDATION",
+  "parameters": {
+    "fps": 10.0,
+    "posture_confirm_seconds": 0.3,
+    "drinking_confirm_seconds": 0.5,
+    "drinking_end_seconds": 0.3,
+    "max_gap_seconds": 0.25,
+    "unknown_bridge_seconds": 1.0
+  },
+  "latency_ms": {
+    "total_inference_ms": {
+      "p50": 73.81,
+      "p95": 76.497,
+      "max": 164.703
+    },
+    "person_inference_ms": {
+      "p50": 53.059,
+      "p95": 55.298,
+      "max": 135.928
+    }
+  },
+  "cloud_or_agent_calls": 0,
+  "independent_action_accuracy": null,
+  "action_test_completed": false,
+  "fresh_first": "2026-09-10T08:57:34.680920+00:00",
+  "fresh_last": "2026-09-10T09:02:34.634294+00:00",
+  "observed_fps": 9.36152711861148,
+  "confirmed_posture_counts": {
+    "empty": 2794,
+    "unknown": 15
+  },
+  "process_exit_code": 0,
+  "offline_development_comparison": {
+    "old": {
+      "matched": 17,
+      "unmatched_predictions": 0
+    },
+    "seat": {
+      "matched": 17,
+      "unmatched_predictions": 0
+    },
+    "tolerance_seconds": 1,
+    "independent": false
+  },
+  "limitations": [
+    "No user-confirmed action sequence in this session; sat_down fix remains unverified on a new real action.",
+    "Sparse manual preview checks showed an empty seat, not continuous independent ground truth.",
+    "No occlusion/negative-action, USB reconnect, long-duration or Windows acceptance.",
+    "Person association is geometric auxiliary evidence, not proof of an unobstructed action."
+  ]
+}
