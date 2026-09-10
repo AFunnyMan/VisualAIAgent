@@ -1,0 +1,276 @@
+{
+  "started_at": "2026-09-10T10:46:36.975181+00:00",
+  "finished_at": "2026-09-10T10:48:16.494575+00:00",
+  "fresh_samples": 881,
+  "fault_samples": 3,
+  "startup_samples": 61,
+  "events": [
+    {
+      "kind": "stood_up",
+      "timestamp": 1412612.041046333,
+      "recorded_at": "2026-09-10T10:47:20.273688+00:00",
+      "frame_sequence": 348,
+      "image": {
+        "path": "events/001-stood_up.png",
+        "sha256": "2d732c779a56924c4a912d2c804d9ca834c14d585f8c0cc12e1e28289ba2552a",
+        "bytes": 1812521
+      }
+    },
+    {
+      "kind": "sat_down",
+      "timestamp": 1412617.415659583,
+      "recorded_at": "2026-09-10T10:47:25.647920+00:00",
+      "frame_sequence": 400,
+      "image": {
+        "path": "events/002-sat_down.png",
+        "sha256": "594124536d96fffc4d857d6837a9bdf83e0f54237304ffeebbf98c72315f28b0",
+        "bytes": 1767914
+      }
+    },
+    {
+      "kind": "stood_up",
+      "timestamp": 1412624.007955083,
+      "recorded_at": "2026-09-10T10:47:32.238759+00:00",
+      "frame_sequence": 464,
+      "image": {
+        "path": "events/003-stood_up.png",
+        "sha256": "50aa58e48f30568d11dbd31535d00b5ade2d26c19a88038f6f174c2d4fc078b2",
+        "bytes": 1935388
+      }
+    },
+    {
+      "kind": "left_seat",
+      "timestamp": 1412625.769067291,
+      "recorded_at": "2026-09-10T10:47:33.996100+00:00",
+      "frame_sequence": 481,
+      "image": {
+        "path": "events/004-left_seat.png",
+        "sha256": "5b5ff6cf877bd2df8349406e4aa2de9afde3fc95c20a4f4ce0ed867a3a58d02e",
+        "bytes": 1779110
+      }
+    },
+    {
+      "kind": "sat_down",
+      "timestamp": 1412632.840365541,
+      "recorded_at": "2026-09-10T10:47:41.074938+00:00",
+      "frame_sequence": 550,
+      "image": {
+        "path": "events/005-sat_down.png",
+        "sha256": "4fa5f63dfe1dea248eb0c7be33e7fb6b7fae1f564728d943259bc0d4e6d25eb9",
+        "bytes": 1878293
+      }
+    }
+  ],
+  "baseline_events": [
+    {
+      "kind": "stood_up",
+      "timestamp": 1412612.041046333
+    },
+    {
+      "kind": "sat_down",
+      "timestamp": 1412617.415659583
+    },
+    {
+      "kind": "stood_up",
+      "timestamp": 1412624.007955083
+    },
+    {
+      "kind": "left_seat",
+      "timestamp": 1412625.769067291
+    },
+    {
+      "kind": "sat_down",
+      "timestamp": 1412632.840365541
+    }
+  ],
+  "code_sha256": {
+    "scripts/behavior_camera_test.py": "d1530219d05543fececc68674ecac598469d48a2f3b74b17e54e482bb43ff9f6",
+    "scripts/behavior_seat_gate.py": "8e2fab660d4e28ee56c79c00021bf96115702dc8052a408fbf8ee732f28afa3c",
+    "scripts/behavior_timeline_v2.py": "44e4bd9230f8ca4cbc2ede4fe6403607fa6e8b31d5eb961478e918d8c384ed38",
+    "scripts/behavior_diagnostics.py": "cb6d5b819de978270ebfda7af7a6e4925e995d92891fe56ae674d8174a9dbe6d",
+    "scripts/behavior_auxiliary.py": "aec42f0fa2e73fe639f263c5a41ff7e908d29099086929db3328230e7c581b1f",
+    "visual_ai_agent/vision.py": "1a72a9b5980ed551122d78264b6396ff6c1c36a92b1e581eb03d2827742283a7",
+    "visual_ai_agent/models.py": "7d5d4d2cdbe5cc1de185edc0ad4e344fdfc1b5d73f816c528b200ae97653c58e"
+  },
+  "parameters": {
+    "person_threads": 4,
+    "auxiliary_mode": "bounded",
+    "person_wait_ms": 120.0,
+    "person_spinning": false,
+    "opencv_threads": 10,
+    "opencv_requested_threads": 1,
+    "fps": 10.0,
+    "posture_confirm_seconds": 0.3,
+    "drinking_confirm_seconds": 0.5,
+    "drinking_end_seconds": 0.3,
+    "max_gap_seconds": 0.25,
+    "unknown_bridge_seconds": 1.0
+  },
+  "association_parameters": {
+    "strong_confidence": 0.5,
+    "weak_confidence": 0.25,
+    "weak_seconds": 0.4,
+    "min_iou": 0.3,
+    "max_center_distance": 0.15,
+    "max_gap": 0.25
+  },
+  "worker_stop_error": null,
+  "reached_deadline": false,
+  "stop_requested": true,
+  "attempt_latency_ms_including_failures": {
+    "worker_detect": {
+      "p50": 42.942,
+      "p95": 61.283,
+      "max": 404.493
+    },
+    "detector_stages": {
+      "drinking_onnx": {
+        "p50": 11.37,
+        "p95": 16.671,
+        "max": 106.211
+      },
+      "drinking_preprocess": {
+        "p50": 3.11,
+        "p95": 4.554,
+        "max": 43.138
+      },
+      "frame_copy_hash": {
+        "p50": 2.703,
+        "p95": 3.165,
+        "max": 163.388
+      },
+      "person_onnx": {
+        "p50": 38.768,
+        "p95": 48.522,
+        "max": 118.583
+      },
+      "person_parse": {
+        "p50": 0.121,
+        "p95": 0.175,
+        "max": 3.896
+      },
+      "person_preprocess": {
+        "p50": 1.101,
+        "p95": 1.72,
+        "max": 5.464
+      },
+      "posture_onnx": {
+        "p50": 11.366,
+        "p95": 17.433,
+        "max": 228.736
+      },
+      "posture_preprocess": {
+        "p50": 3.143,
+        "p95": 4.834,
+        "max": 99.666
+      }
+    }
+  },
+  "source_directory": "data/acceptance/behavior-bounded-actions-20260910-184555",
+  "process_exit_code": 0,
+  "user_reported_actions_complete": true,
+  "expected_action_sequence_confirmed": true,
+  "quality_accepted": false,
+  "recall": null,
+  "person_status_counts": {
+    "not_attempted": 62,
+    "timeout": 11,
+    "ready": 864,
+    "busy": 9
+  },
+  "drinking_status_counts": {
+    "not_attempted": 62,
+    "ready": 881,
+    "timeout": 3
+  },
+  "stale_rows": [
+    {
+      "observed_at": "2026-09-10T10:47:09.031060+00:00",
+      "processing_stage": "jpeg",
+      "processing_timings_ms": {
+        "capture_read": 15.786584001034498,
+        "age_at_publish": 391.21591695584357,
+        "detect": 142.23462482914329,
+        "age_before_detect": 13.221167027950287,
+        "annotate": 0.15208404511213303,
+        "jpeg": 233.63241623155773
+      },
+      "inference_attempt": {
+        "sequence": 245,
+        "frame_sha256": "361c07a62459c2246e1a0314a385264f34014d1721b4b0aea24069e3382308fe",
+        "completed_monotonic": 1412601.011880125,
+        "stage_times_ms": {
+          "posture_preprocess": 5.737874889746308,
+          "posture_onnx": 21.074250107631087,
+          "drinking_preprocess": 8.907833136618137,
+          "drinking_onnx": 14.289290877059102,
+          "frame_copy_hash": 17.19387504272163
+        },
+        "total_inference_ms": 142.2165420372039
+      },
+      "auxiliary_status": "timeout",
+      "drinking_auxiliary_status": "ready"
+    },
+    {
+      "observed_at": "2026-09-10T10:47:09.198373+00:00",
+      "processing_stage": "detect",
+      "processing_timings_ms": {
+        "capture_read": 3.238665871322155,
+        "age_at_publish": 382.1747920010239,
+        "detect": 148.97979190573096,
+        "age_before_detect": 225.46229208819568,
+        "jpeg": 7.711292011663318
+      },
+      "inference_attempt": {
+        "sequence": 246,
+        "frame_sha256": "14e7cf46ad50bf66d25736729c2965996935f7ee783ca0eeaff866dd329e90ef",
+        "completed_monotonic": 1412601.398080916,
+        "stage_times_ms": {
+          "posture_preprocess": 3.5352909471839666,
+          "posture_onnx": 141.0582500975579,
+          "drinking_preprocess": 33.02166610956192,
+          "drinking_onnx": 95.21825006231666,
+          "frame_copy_hash": 4.284458002075553
+        },
+        "total_inference_ms": 148.9712919574231
+      },
+      "auxiliary_status": "timeout",
+      "drinking_auxiliary_status": "ready"
+    },
+    {
+      "observed_at": "2026-09-10T10:47:47.707683+00:00",
+      "processing_stage": "detect",
+      "processing_timings_ms": {
+        "capture_read": 12.101625092327595,
+        "age_at_publish": 425.47570797614753,
+        "detect": 404.4932920951396,
+        "age_before_detect": 5.910791922360659,
+        "jpeg": 15.040500089526176
+      },
+      "inference_attempt": {
+        "sequence": 613,
+        "frame_sha256": "ee9538026e48a55534356db055c2a386e5bf06a0fcbbe6e9862bd485a4cfa633",
+        "completed_monotonic": 1412639.943455041,
+        "stage_times_ms": {
+          "posture_preprocess": 10.98512508906424,
+          "posture_onnx": 228.73595799319446,
+          "frame_copy_hash": 163.3880001027137
+        },
+        "total_inference_ms": 404.4593330472708
+      },
+      "auxiliary_status": "busy",
+      "drinking_auxiliary_status": "timeout"
+    }
+  ],
+  "cloud_calls": 0,
+  "limitations": [
+    "Only one confirmed short flow; 5/5 is not a population accuracy estimate or full behavior acceptance.",
+    "Only event stills and bounded diagnostic images reviewed, not continuous independent ground truth.",
+    "Three stale observations outside recorded event interval; overall long-tail issue not eliminated."
+  ],
+  "user_confirmed_sequence": "One sit-stand-sit cycle, then leave for 5 seconds and return seated.",
+  "short_flow_passed": true,
+  "expected_event_count": 5,
+  "matched_event_count": 5,
+  "unmatched_observed_event_count": 0
+}
