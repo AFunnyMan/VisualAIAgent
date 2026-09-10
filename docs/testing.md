@@ -105,3 +105,8 @@ uv run --locked python scripts/camera_acceptance.py --camera 0 --duration 1800 -
 ## 第二轮识别实验复算
 
 [第二轮报告](recognition-v2-results-2026-09-07.md)提供60图14配置的归档预测复算命令；归档已按各类阈值接受的框需使用`--confidence 0.05`，避免再次套用统一0.35丢掉合法候选。`scripts/recognition_input_trial.py`提供calibrate/images/review/videos入口，使用显式模型profiles与SHA，不读应用凭据；需要本地实验权重和素材。旧30图现在属于校准集，新60图只验证。完整命令与已运行范围见build-log，review分支本轮未运行。
+
+
+## 实验行为摄像头入口
+
+`scripts/behavior_camera_test.py`为隔离手动测试，真实执行命令、用户流程、结果及失败见[2026-09-10实测](behavior-live-test-20260910.md)。仅ONNX CPU，端口8765，需新输出目录；不加载.env或写正式业务库。正常停止后服务关闭，页面不再刷新。行为模型仍未获正式启用验收；不能把界面显示某状态视为事件已正确生成。

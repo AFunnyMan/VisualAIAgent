@@ -513,3 +513,12 @@ r01开发验证：起身/坐下各1/1、离座0/1、饮水2/4。新增开发视�
 - 原2fps时序匹配14/17；新增10fps人体代理＋姿态.3s/饮水.5s匹配17/17、未匹配额外0（旧窗口±1s），零容差10/17。未知/故障单测通过，但人体框不证明动作无遮挡，不能当正式质量验收。ROI在最终配置下只匹配饮水5/6、原模型6/6，不采用。
 - root及Sol目检17事件图，追加原尺寸饮水序列复核，区分提前提示与不存在动作；.1→.5s确认在现有片中不丢6饮水并减少提前，仍有约.1s边界，不证明吞咽。类别加权等未继续试训，优先保留独立验证机会。
 - 实际命令、来源SHA、全部消融和限制见[报告](../docs/behavior-improvement-r03-20260910.md)、[脱敏汇总](evaluations/behavior-20260910-r03.json)和训练日志。`.venv/bin/pytest -q`246 passed/1 skipped/3 deselected（10.67s）；`.export-venv/bin/python -m pytest tests/test_train_behavior_model.py -q`15 passed（1.75s）；评分后26相关复验通过。Ruff/156文件格式/diff检查通过。真实行为摄像头、长时误报、Windows及正式集成未执行。
+
+
+## 2026-09-10T16:14:32+08:00 — r03真实行为测试入口与一次用户配合验收
+
+- 用户要求测试，Sol实现独立behavior_camera_test入口，root修正画面年龄符号、统一采集时钟、重复/未来/过期拒绝、启动计数及正常stop返回。复用VisionWorker安全释放；正式数据、模型、.env不改，云端调用0。初版临时probe位置参数错误未开相机，具名参数重试后8秒probe正常。
+- 实际16:08:19启动，16:08:25.154—16:11:47.652新鲜区间，16:11:48.122同源POST停止、进程退出0。1920×1080/AVFOUNDATION，1942 fresh、4 stale、56 startup，9.59fps；成功新鲜推理p50/p95 73.23/78.60ms。不是完成300秒上限，也不是重插恢复验证。
+- 浏览器页面实测运行；用户先误回复完成后纠正，再确认完成离座及饮水流程。root目检3事件截图：起身/离座/疑似杯口到嘴各1次；返回恢复seated，但sat_down漏1次，过渡unknown加person not_one_strong_person清除了standing。没有为补事件取消故障/遮挡保护。拿杯负例无额外事件但缺精确动作图，不计独立负例通过。
+- 保存3事件PNG、24定时JPG（近似时间关联）、JSONL/summary/日志于忽略目录data/acceptance/behavior-r03-live-20260910-session1；饮水定时采样启动偏晚，未覆盖完整动作，局限保留。[实测报告](../docs/behavior-live-test-20260910.md)与[脱敏汇总](evaluations/behavior-live-20260910.json)保留时间、SHA、故障与失败。
+- 新入口10项定向通过；摄像头结束后`.venv/bin/pytest -q`256 passed/1 skipped/3 deselected（10.76s）。Sol最终只读复审无实测入口阻断。用户所需这轮测试已完成，行为质量未通过，下一步按失败证据改善；不将开发17/17当真实成绩。

@@ -1,0 +1,135 @@
+{
+  "started_at": "2026-09-10T08:08:19.152517+00:00",
+  "finished_at": "2026-09-10T08:11:48.121617+00:00",
+  "elapsed_seconds": 202.967,
+  "fresh_samples": 1942,
+  "fault_samples": 4,
+  "startup_samples": 56,
+  "worker_stop_error": null,
+  "stop_requested": true,
+  "reached_deadline": false,
+  "actual_size": [
+    1920,
+    1080
+  ],
+  "requested_size": [
+    1920,
+    1080
+  ],
+  "backend": "AVFOUNDATION",
+  "parameters": {
+    "fps": 10.0,
+    "posture_confirm_seconds": 0.3,
+    "drinking_confirm_seconds": 0.5,
+    "drinking_end_seconds": 0.3,
+    "max_gap_seconds": 0.25,
+    "unknown_bridge_seconds": 1.0
+  },
+  "latency_ms": {
+    "total_inference_ms": {
+      "p50": 73.232,
+      "p95": 78.598,
+      "max": 223.979
+    },
+    "person_inference_ms": {
+      "p50": 52.772,
+      "p95": 56.778,
+      "max": 197.514
+    }
+  },
+  "cloud_or_agent_calls": 0,
+  "test_type": "real USB camera, user-assisted, one workflow; not full quality acceptance",
+  "exit_code": 0,
+  "first_fresh_at": "2026-09-10T08:08:25.153583+00:00",
+  "last_fresh_at": "2026-09-10T08:11:47.651763+00:00",
+  "effective_fps": 9.58530149276547,
+  "max_fresh_gap_seconds": 0.4410211250651628,
+  "gaps_over_025_seconds": 4,
+  "frame_age_p95_seconds": 0.0997319,
+  "events": [
+    {
+      "kind": "stood_up",
+      "recorded_at": "2026-09-10T08:09:34.603862+00:00",
+      "image_sha256": "5e9c912a525c73a620919a2d497376ea9d45acddf088b642e0014d697e06f1cb"
+    },
+    {
+      "kind": "left_seat",
+      "recorded_at": "2026-09-10T08:09:36.485731+00:00",
+      "image_sha256": "74cb5b5ee2d78fec45db4844df025f6ad6d373d027dbdb98aeb267ae0003a8ea"
+    },
+    {
+      "kind": "suspected_drink",
+      "recorded_at": "2026-09-10T08:10:24.237254+00:00",
+      "image_sha256": "29bdbeeed7bc8d2082b4f171520cab19b11c1ad2126d36d20954a75b68ae68f5"
+    }
+  ],
+  "outcome": {
+    "stood_up": "one recorded, event image consistent",
+    "left_seat": "one recorded, empty chair image consistent",
+    "return_seated": "state recovered, sat_down event missing",
+    "suspected_drink": "one event at cup approaching mouth; not proof of physical consumption",
+    "hold_cup_negative": "user reported completed; no additional event, exact negative action frames not retained, not independently scored"
+  },
+  "miss_diagnosis": {
+    "at": "2026-09-10T08:09:47.012389+00:00",
+    "classifier": "unknown",
+    "person_gate": "not_one_strong_person",
+    "result": "standing context cleared; seated reconfirmed without sat_down event",
+    "limitation": "gate omits all raw candidates, cannot distinguish zero versus multiple strong detections from retained record"
+  },
+  "faults": [
+    {
+      "observed_at": "2026-09-10T08:08:27.621744+00:00",
+      "status": "stale",
+      "error": "Frame expired before inference results were published"
+    },
+    {
+      "observed_at": "2026-09-10T08:08:53.396546+00:00",
+      "status": "stale",
+      "error": "Frame expired before inference results were published"
+    },
+    {
+      "observed_at": "2026-09-10T08:09:14.852606+00:00",
+      "status": "stale",
+      "error": "Inference completed after the frame expired"
+    },
+    {
+      "observed_at": "2026-09-10T08:10:43.909717+00:00",
+      "status": "stale",
+      "error": "Inference completed after the frame expired"
+    }
+  ],
+  "models": {
+    "posture": {
+      "manifest_sha256": "51cb2f2054b2631571af5bd08d93163db4c84175962b0e17757060906fc24f90",
+      "onnx_sha256": "fef224cc6009030f66b0cf3ebc11e9e5116e3ce3df04b57dff15055596d5d31f"
+    },
+    "drinking": {
+      "manifest_sha256": "3588217ee6887dc66434434e402527d9a29c5221ff21e39e3ff3fc3dcba1d359",
+      "onnx_sha256": "269c06a00e2b31b230251cd9271ebf3ba61e8c3cf25457732cf86f41d6e90a97"
+    },
+    "person_weak_auxiliary": {
+      "sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+      "manifest_sha256": "63b437026924ea14754ee6360c5857eca8ea8d284d2d8a5083a579e6e7100f09"
+    }
+  },
+  "artifact_sha256": {
+    "summary.json": "329ea0e0e6664361975f5b7ec5a791db2aec903fe7116445682604f7888e2593",
+    "samples.jsonl": "ae71afe964382b11e963b6ff5c30cc787fc831e241dfb2ce2e5a5fa58abcd63e",
+    "events.jsonl": "7709c66334088cfb7d9a6347f310baab849717eb9cde061bb0de7247c277a3e5"
+  },
+  "runtime_script_sha256": "3b4e4970707da1a0b22246a4504eb83d96baa88e4a77dd5d9530bf99b0308f78",
+  "retained_images": {
+    "event_png": 3,
+    "review_jpg": 24,
+    "latest_jpg_overwritten": true,
+    "complete_video": false
+  },
+  "validation": {
+    "full_pytest_passed": 256,
+    "skipped": 1,
+    "deselected": 3,
+    "targeted_passed": 10
+  },
+  "production_changed": false
+}
