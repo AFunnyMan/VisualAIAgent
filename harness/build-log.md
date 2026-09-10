@@ -553,3 +553,5 @@ r01开发验证：起身/坐下各1/1、离座0/1、饮水2/4。新增开发视�
 - [修复报告](../docs/behavior-latency-fix-20260910.md)及[脱敏快照](evaluations/behavior-latency-fix-20260910.json)保留版本区别、实际命令和局限。第二轮坐下漏报、反例、长时及Windows仍待实测验收，未改历史失败结论。
 
 18:21完成补记：最终300秒2838 fresh、0 stale，人体7timeout/7busy均主帧fresh，detect中位43.36ms/p95 48.91ms，正常退出0、停止错误为空。未收到用户动作完成，因此只通过本段故障隔离运行检查。核对OpenCV实际GCD构建发现请求1/10均报告10（请求0才报告1），此前请求1的试验不能当实际单线程结果；报告已修正，CLI汇总分开请求和实际线程数，不把这项当改善归因。主要修复证据为同帧并行结果一致及实机辅助超时隔离。
+
+修复b4ef5ab推送后，重新启动独立`data/acceptance/behavior-latency-20260910-bounded-actions`动作会话，参数同最终bounded会话、300秒上限；浏览器已打开，新鲜59次/故障0时确认页面running。此会话尚待用户动作回复，不能沿用上一空座会话结论，后续应读取本目录samples/events/summary。启动本身不代表坐下质量通过。
