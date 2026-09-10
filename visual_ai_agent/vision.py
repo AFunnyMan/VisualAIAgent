@@ -566,6 +566,7 @@ class _LatestFrame:
     frame: Frame
     captured_at: datetime
     monotonic_at: float
+    capture_read_ms: float = 0.0
 
 
 ObservationCallback = Callable[[SceneObservation, bytes | None], None]
@@ -596,6 +597,7 @@ class VisionWorker:
         self.stale_after = stale_after
         self.jpeg_quality = jpeg_quality
         self.last_callback_error: str | None = None
+        self.last_callback_ms: float | None = None
         self._stop = threading.Event()
         self._condition = threading.Condition()
         self._latest: _LatestFrame | None = None
@@ -678,7 +680,9 @@ class VisionWorker:
             return
         try:
             while not self._stop.is_set():
+                read_started = time.perf_counter()
                 frame = self.source.read()
+                capture_read_ms = (time.perf_counter() - read_started) * 1000
                 if frame is None:
                     with self._condition:
                         self._condition.notify_all()
@@ -694,6 +698,7 @@ class VisionWorker:
                         frame=frame,
                         captured_at=datetime.now(UTC),
                         monotonic_at=now_monotonic,
+                        capture_read_ms=capture_read_ms,
                     )
                     self._condition.notify_all()
         finally:
@@ -726,75 +731,122 @@ class VisionWorker:
                 self._publish(self._status_observation_from_source(), None)
                 continue
             if self.source.status in ("disconnected", "error", "paused"):
+                jpeg, jpeg_ms = self._encode_jpeg_timed(latest.frame)
                 self._publish(
                     self._frame_status_observation(
-                        latest, self.source.status, self.source.last_error
+                        latest,
+                        self.source.status,
+                        self.source.last_error,
+                        jpeg_ms=jpeg_ms,
+                        processing_stage="precheck",
                     ),
-                    self._encode_jpeg(latest.frame),
+                    jpeg,
                 )
                 continue
             age = now - latest.monotonic_at
             if age > self.stale_after:
-                jpeg = self._encode_jpeg(latest.frame)
+                jpeg, jpeg_ms = self._encode_jpeg_timed(latest.frame)
                 self._publish(
-                    self._frame_status_observation(latest, "stale", "Latest frame is stale"),
+                    self._frame_status_observation(
+                        latest,
+                        "stale",
+                        "Latest frame is stale",
+                        jpeg_ms=jpeg_ms,
+                        processing_stage="precheck",
+                    ),
                     jpeg,
                 )
                 continue
             if latest.sequence == last_sequence:
                 # A camera/replay that stopped producing frames is unknown, not an empty scene.
                 self._publish(
-                    self._frame_status_observation(latest, "stale", "No new frame available"),
+                    self._frame_status_observation(
+                        latest,
+                        "stale",
+                        "No new frame available",
+                        processing_stage="precheck",
+                    ),
                     None,
                 )
                 continue
             last_sequence = latest.sequence
+            age_before_detect_ms = max(0.0, (time.monotonic() - latest.monotonic_at) * 1000)
             started = time.perf_counter()
+            processing_stage = "detect"
+            inference_ms: float | None = None
             try:
                 detections = self.detector.detect(latest.frame)
                 inference_ms = (time.perf_counter() - started) * 1000
                 if self._stop.is_set():
                     return
                 if self.source.status in ("disconnected", "error", "paused"):
+                    jpeg, jpeg_ms = self._encode_jpeg_timed(latest.frame)
                     self._publish(
                         self._frame_status_observation(
-                            latest, self.source.status, self.source.last_error, inference_ms
+                            latest,
+                            self.source.status,
+                            self.source.last_error,
+                            inference_ms,
+                            age_before_detect_ms=age_before_detect_ms,
+                            jpeg_ms=jpeg_ms,
+                            processing_stage="detect",
                         ),
-                        self._encode_jpeg(latest.frame),
+                        jpeg,
                     )
                     continue
                 if time.monotonic() - latest.monotonic_at > self.stale_after:
+                    jpeg, jpeg_ms = self._encode_jpeg_timed(latest.frame)
                     self._publish(
                         self._frame_status_observation(
                             latest,
                             "stale",
                             "Inference completed after the frame expired",
                             inference_ms,
+                            age_before_detect_ms=age_before_detect_ms,
+                            jpeg_ms=jpeg_ms,
+                            processing_stage="detect",
                         ),
-                        self._encode_jpeg(latest.frame),
+                        jpeg,
                     )
                     continue
+                processing_stage = "annotate"
+                annotate_started = time.perf_counter()
                 rendered = annotate_frame(latest.frame, detections)
-                jpeg = self._encode_jpeg(rendered)
+                annotate_ms = (time.perf_counter() - annotate_started) * 1000
+                processing_stage = "jpeg"
+                jpeg, jpeg_ms = self._encode_jpeg_timed(rendered)
                 if self._stop.is_set():
                     return
                 if self.source.status in ("disconnected", "error", "paused"):
+                    raw_jpeg, raw_jpeg_ms = self._encode_jpeg_timed(latest.frame)
                     self._publish(
                         self._frame_status_observation(
-                            latest, self.source.status, self.source.last_error, inference_ms
+                            latest,
+                            self.source.status,
+                            self.source.last_error,
+                            inference_ms,
+                            age_before_detect_ms=age_before_detect_ms,
+                            annotate_ms=annotate_ms,
+                            jpeg_ms=jpeg_ms + raw_jpeg_ms,
+                            processing_stage="jpeg",
                         ),
-                        self._encode_jpeg(latest.frame),
+                        raw_jpeg,
                     )
                     continue
                 if time.monotonic() - latest.monotonic_at > self.stale_after:
+                    raw_jpeg, raw_jpeg_ms = self._encode_jpeg_timed(latest.frame)
                     self._publish(
                         self._frame_status_observation(
                             latest,
                             "stale",
                             "Frame expired before inference results were published",
                             inference_ms,
+                            age_before_detect_ms=age_before_detect_ms,
+                            annotate_ms=annotate_ms,
+                            jpeg_ms=jpeg_ms + raw_jpeg_ms,
+                            processing_stage="jpeg",
                         ),
-                        self._encode_jpeg(latest.frame),
+                        raw_jpeg,
                     )
                     continue
                 observation = SceneObservation(
@@ -804,14 +856,33 @@ class VisionWorker:
                     fresh=True,
                     detections=detections,
                     inference_ms=inference_ms,
+                    processing_timings_ms=self._frame_timings(
+                        latest,
+                        age_before_detect_ms=age_before_detect_ms,
+                        inference_ms=inference_ms,
+                        annotate_ms=annotate_ms,
+                        jpeg_ms=jpeg_ms,
+                    ),
+                    processing_stage="publish",
                     width=latest.frame.shape[1],
                     height=latest.frame.shape[0],
                     source=self.source.source_name,
                 )
                 self._publish(observation, jpeg)
             except Exception as exc:
-                observation = self._status_observation("error", f"Inference failed: {exc}")
-                self._publish(observation, self._encode_jpeg(latest.frame))
+                if inference_ms is None:
+                    inference_ms = (time.perf_counter() - started) * 1000
+                jpeg, jpeg_ms = self._encode_jpeg_timed(latest.frame)
+                observation = self._frame_status_observation(
+                    latest,
+                    "error",
+                    f"Inference failed: {exc}",
+                    inference_ms,
+                    age_before_detect_ms=age_before_detect_ms,
+                    jpeg_ms=jpeg_ms,
+                    processing_stage=processing_stage,
+                )
+                self._publish(observation, jpeg)
 
     def _status_observation_from_source(self) -> SceneObservation:
         status = self.source.status
@@ -825,6 +896,11 @@ class VisionWorker:
         status: CameraStatus,
         error: str | None,
         inference_ms: float | None = None,
+        *,
+        age_before_detect_ms: float | None = None,
+        annotate_ms: float | None = None,
+        jpeg_ms: float | None = None,
+        processing_stage: str | None = None,
     ) -> SceneObservation:
         return SceneObservation(
             observed_at=latest.captured_at,
@@ -834,6 +910,14 @@ class VisionWorker:
             detections=[],
             error=error,
             inference_ms=inference_ms,
+            processing_timings_ms=self._frame_timings(
+                latest,
+                age_before_detect_ms=age_before_detect_ms,
+                inference_ms=inference_ms,
+                annotate_ms=annotate_ms,
+                jpeg_ms=jpeg_ms,
+            ),
+            processing_stage=processing_stage,
             width=latest.frame.shape[1],
             height=latest.frame.shape[0],
             source=self.source.source_name,
@@ -861,12 +945,43 @@ class VisionWorker:
         ok, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, self.jpeg_quality])
         return encoded.tobytes() if ok else None
 
+    def _encode_jpeg_timed(self, frame: Frame) -> tuple[bytes | None, float]:
+        started = time.perf_counter()
+        jpeg = self._encode_jpeg(frame)
+        return jpeg, (time.perf_counter() - started) * 1000
+
+    @staticmethod
+    def _frame_timings(
+        latest: _LatestFrame,
+        *,
+        age_before_detect_ms: float | None = None,
+        inference_ms: float | None = None,
+        annotate_ms: float | None = None,
+        jpeg_ms: float | None = None,
+    ) -> dict[str, float]:
+        timings = {
+            "capture_read": latest.capture_read_ms,
+            "age_at_publish": max(0.0, (time.monotonic() - latest.monotonic_at) * 1000),
+        }
+        if inference_ms is not None:
+            timings["detect"] = inference_ms
+        if age_before_detect_ms is not None:
+            timings["age_before_detect"] = age_before_detect_ms
+        if annotate_ms is not None:
+            timings["annotate"] = annotate_ms
+        if jpeg_ms is not None:
+            timings["jpeg"] = jpeg_ms
+        return timings
+
     def _publish(self, observation: SceneObservation, jpeg: bytes | None) -> None:
         with self._condition:
             self._snapshot = (observation, jpeg)
+        started = time.perf_counter()
         try:
             self.on_observation(observation, jpeg)
             self.last_callback_error = None
         except Exception as exc:
             # UI/storage callback failures must not stop capture or inference.
             self.last_callback_error = str(exc)
+        finally:
+            self.last_callback_ms = (time.perf_counter() - started) * 1000

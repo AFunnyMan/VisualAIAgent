@@ -1,0 +1,175 @@
+{
+  "recorded_at": "2026-09-10T10:21:03.907425+00:00",
+  "runtime_state": "completed",
+  "source_directory": "data/acceptance/behavior-latency-20260910-bounded",
+  "started_at": "2026-09-10T10:15:55.612196+00:00",
+  "sample_count": 2838,
+  "fault_count": 0,
+  "first_fresh": "2026-09-10T10:16:03.715505+00:00",
+  "last_fresh": "2026-09-10T10:21:03.668667+00:00",
+  "span_seconds": 299.95101995789446,
+  "events": [],
+  "person_status_counts": {
+    "not_attempted": 75,
+    "ready": 2824,
+    "timeout": 7,
+    "busy": 7
+  },
+  "drinking_status_counts": {
+    "not_attempted": 75,
+    "ready": 2838
+  },
+  "worker_detect_ms": {
+    "p50": 43.363,
+    "p95": 48.909,
+    "max": 203.28
+  },
+  "auxiliary_timeout_rows": [
+    {
+      "at": "2026-09-10T10:16:10.484482+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "timeout",
+      "drinking_status": "ready",
+      "worker_detect_ms": 136.76229189150035
+    },
+    {
+      "at": "2026-09-10T10:16:10.634677+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "busy",
+      "drinking_status": "ready",
+      "worker_detect_ms": 63.467083033174276
+    },
+    {
+      "at": "2026-09-10T10:16:54.279590+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "timeout",
+      "drinking_status": "ready",
+      "worker_detect_ms": 160.9332498628646
+    },
+    {
+      "at": "2026-09-10T10:16:54.482101+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "busy",
+      "drinking_status": "ready",
+      "worker_detect_ms": 61.06033409014344
+    },
+    {
+      "at": "2026-09-10T10:17:47.460365+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "timeout",
+      "drinking_status": "ready",
+      "worker_detect_ms": 203.2799581065774
+    },
+    {
+      "at": "2026-09-10T10:17:47.705227+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "busy",
+      "drinking_status": "ready",
+      "worker_detect_ms": 57.742583099752665
+    },
+    {
+      "at": "2026-09-10T10:17:47.812478+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "busy",
+      "drinking_status": "ready",
+      "worker_detect_ms": 19.12224991247058
+    },
+    {
+      "at": "2026-09-10T10:17:50.772616+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "timeout",
+      "drinking_status": "ready",
+      "worker_detect_ms": 136.6062918677926
+    },
+    {
+      "at": "2026-09-10T10:18:40.324227+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "timeout",
+      "drinking_status": "ready",
+      "worker_detect_ms": 130.33358310349286
+    },
+    {
+      "at": "2026-09-10T10:18:40.478514+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "busy",
+      "drinking_status": "ready",
+      "worker_detect_ms": 38.1655830424279
+    },
+    {
+      "at": "2026-09-10T10:19:30.355993+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "timeout",
+      "drinking_status": "ready",
+      "worker_detect_ms": 138.39487498626113
+    },
+    {
+      "at": "2026-09-10T10:19:30.518582+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "busy",
+      "drinking_status": "ready",
+      "worker_detect_ms": 75.68258396349847
+    },
+    {
+      "at": "2026-09-10T10:20:18.389170+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "timeout",
+      "drinking_status": "ready",
+      "worker_detect_ms": 146.09679207205772
+    },
+    {
+      "at": "2026-09-10T10:20:18.538848+00:00",
+      "fresh": true,
+      "posture": "empty",
+      "person_status": "busy",
+      "drinking_status": "ready",
+      "worker_detect_ms": 41.53599985875189
+    }
+  ],
+  "quality_accepted": false,
+  "user_action_completion_received": false,
+  "unit_tests": {
+    "passed": 279,
+    "skipped": 1,
+    "deselected": 3,
+    "elapsed_seconds": 11.04
+  },
+  "cloud_calls": 0,
+  "finished_at": "2026-09-10T10:21:03.907425+00:00",
+  "process_exit_code": 0,
+  "worker_stop_error": null,
+  "parameters": {
+    "person_threads": 4,
+    "auxiliary_mode": "bounded",
+    "person_wait_ms": 120.0,
+    "person_spinning": false,
+    "opencv_threads": 10,
+    "fps": 10.0,
+    "posture_confirm_seconds": 0.3,
+    "drinking_confirm_seconds": 0.5,
+    "drinking_end_seconds": 0.3,
+    "max_gap_seconds": 0.25,
+    "unknown_bridge_seconds": 1.0
+  },
+  "code_sha256": {
+    "scripts/behavior_camera_test.py": "b4e7fa063481a12e8ab90cc102fcb3acfe39d0f3b98d19e61813bab90d042ea1",
+    "scripts/behavior_seat_gate.py": "8e2fab660d4e28ee56c79c00021bf96115702dc8052a408fbf8ee732f28afa3c",
+    "scripts/behavior_timeline_v2.py": "44e4bd9230f8ca4cbc2ede4fe6403607fa6e8b31d5eb961478e918d8c384ed38",
+    "scripts/behavior_diagnostics.py": "cb6d5b819de978270ebfda7af7a6e4925e995d92891fe56ae674d8174a9dbe6d",
+    "scripts/behavior_auxiliary.py": "aec42f0fa2e73fe639f263c5a41ff7e908d29099086929db3328230e7c581b1f",
+    "visual_ai_agent/vision.py": "1a72a9b5980ed551122d78264b6396ff6c1c36a92b1e581eb03d2827742283a7",
+    "visual_ai_agent/models.py": "7d5d4d2cdbe5cc1de185edc0ad4e344fdfc1b5d73f816c528b200ae97653c58e"
+  }
+}

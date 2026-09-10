@@ -120,7 +120,9 @@ class OnnxClassifier:
             self.expected_source_size
         ):
             raise ValueError("Source frame size changed; ROI recalibration required")
+        preprocess_started = time.perf_counter()
         tensor = preprocess_bgr(frame, self.size, self.roi)
+        preprocess_ms = 1000 * (time.perf_counter() - preprocess_started)
         started = time.perf_counter()
         raw = self.session.run([self.output_name], {self.input_name: tensor})[0]
         latency = 1000 * (time.perf_counter() - started)
@@ -132,6 +134,7 @@ class OnnxClassifier:
             "margin": margin,
             "probabilities": {self.names[i]: float(value) for i, value in enumerate(values)},
             "inference_ms": latency,
+            "preprocess_ms": preprocess_ms,
         }
 
 
@@ -139,12 +142,26 @@ class BehaviorDetector:
     """Adapt paired behavior inference to VisionWorker's detector protocol."""
 
     def __init__(
-        self, posture: OnnxClassifier, drinking: OnnxClassifier, person_model: Path
+        self,
+        posture: OnnxClassifier,
+        drinking: OnnxClassifier,
+        person_model: Path,
+        *,
+        person_threads: int = 2,
+        person_spinning: bool = True,
+        auxiliary_mode: str = "bounded",
+        person_wait_ms: float = 120.0,
     ) -> None:
         self.posture, self.drinking = posture, drinking
         options = ort.SessionOptions()
-        options.intra_op_num_threads = 2
+        options.intra_op_num_threads = person_threads
         options.inter_op_num_threads = 1
+        options.add_session_config_entry(
+            "session.intra_op.allow_spinning", str(int(person_spinning))
+        )
+        options.add_session_config_entry(
+            "session.inter_op.allow_spinning", str(int(person_spinning))
+        )
         self.person_session = ort.InferenceSession(
             str(person_model), sess_options=options, providers=["CPUExecutionProvider"]
         )
@@ -154,36 +171,127 @@ class BehaviorDetector:
         self.lock = threading.Lock()
         self.sequence = 0
         self.latest: dict[str, Any] | None = None
+        if auxiliary_mode not in {"serial", "bounded"} or not 0 < person_wait_ms <= 150:
+            raise ValueError("Invalid auxiliary mode/wait budget")
+        self.auxiliary_mode, self.person_wait_ms = auxiliary_mode, person_wait_ms
+        from scripts.behavior_auxiliary import BoundedAuxiliaryRunner
+
+        self.auxiliary = (
+            BoundedAuxiliaryRunner(self._predict_person) if auxiliary_mode == "bounded" else None
+        )
+        self.drinking_auxiliary = (
+            BoundedAuxiliaryRunner(self.drinking.predict) if auxiliary_mode == "bounded" else None
+        )
+
+    def _predict_person(self, frame: np.ndarray) -> dict:
+        person_started = time.perf_counter()
+        tensor, transform = letterbox(frame, 640)
+        person_preprocessed = time.perf_counter()
+        raw = self.person_session.run([self.person_output], {self.person_input: tensor})[0]
+        person_inferred = time.perf_counter()
+        candidates = _person_candidates(raw, transform)
+        person_parsed = time.perf_counter()
+        return {
+            "candidates": candidates,
+            "elapsed_ms": 1000 * (person_parsed - person_started),
+            "timings": {
+                "person_preprocess": 1000 * (person_preprocessed - person_started),
+                "person_onnx": 1000 * (person_inferred - person_preprocessed),
+                "person_parse": 1000 * (person_parsed - person_inferred),
+            },
+        }
 
     def detect(self, frame: np.ndarray) -> list[Any]:
         started = time.perf_counter()
+        job = self.auxiliary.submit(frame) if self.auxiliary else None
+        drinking_job = self.drinking_auxiliary.submit(frame) if self.drinking_auxiliary else None
         posture = self.posture.predict(frame)
-        drinking = self.drinking.predict(frame)
-        person_started = time.perf_counter()
-        tensor, transform = letterbox(frame, 640)
-        raw = self.person_session.run([self.person_output], {self.person_input: tensor})[0]
-        candidates = _person_candidates(raw, transform)
+        drinking_status, drinking_error = "ready", None
+        if self.drinking_auxiliary is None:
+            drinking = self.drinking.predict(frame)
+        else:
+            drinking_outcome = (
+                self.drinking_auxiliary.get(
+                    drinking_job,
+                    max(0.0, self.person_wait_ms / 1000 - (time.perf_counter() - started)),
+                )
+                if drinking_job
+                else {"status": "busy", "result": None, "error": None}
+            )
+            drinking_status, drinking_error = drinking_outcome["status"], drinking_outcome["error"]
+            drinking = (
+                drinking_outcome["result"]
+                if drinking_status == "ready"
+                else {
+                    "label": "unknown",
+                    "preprocess_ms": None,
+                    "inference_ms": None,
+                    "reason": "drinking_" + drinking_status,
+                }
+            )
+        if self.auxiliary is None:
+            outcome = {"status": "ready", "result": self._predict_person(frame), "error": None}
+        elif job is None:
+            outcome = {"status": "busy", "result": None, "error": None}
+        else:
+            outcome = self.auxiliary.get(
+                job, max(0.0, self.person_wait_ms / 1000 - (time.perf_counter() - started))
+            )
+        person = outcome["result"] if outcome["status"] == "ready" else None
+        copied_started = time.perf_counter()
+        frame_copy = frame.copy()
+        frame_hash = hashlib.sha256(memoryview(frame)).hexdigest()
         now = time.monotonic()
         with self.lock:
             self.sequence += 1
             self.latest = {
                 "sequence": self.sequence,
-                "frame": frame.copy(),
-                "frame_sha256": hashlib.sha256(memoryview(frame)).hexdigest(),
+                "frame": frame_copy,
+                "frame_sha256": frame_hash,
                 "completed_monotonic": now,
                 "posture": posture,
                 "drinking": drinking,
-                "person_candidates": candidates,
-                "person_inference_ms": 1000 * (time.perf_counter() - person_started),
+                "person_candidates": person["candidates"] if person else [],
+                "person_inference_ms": person["elapsed_ms"] if person else None,
+                "auxiliary_status": outcome["status"],
+                "auxiliary_error": outcome["error"],
+                "drinking_auxiliary_status": drinking_status,
+                "drinking_auxiliary_error": drinking_error,
                 "total_inference_ms": 1000 * (time.perf_counter() - started),
+                "stage_times_ms": {
+                    "posture_preprocess": posture["preprocess_ms"],
+                    "posture_onnx": posture["inference_ms"],
+                    **(
+                        {
+                            "drinking_preprocess": drinking["preprocess_ms"],
+                            "drinking_onnx": drinking["inference_ms"],
+                        }
+                        if drinking_status == "ready"
+                        else {}
+                    ),
+                    **(person["timings"] if person else {}),
+                    "frame_copy_hash": 1000 * (time.perf_counter() - copied_started),
+                },
             }
         return []
 
-    def snapshot(self) -> dict[str, Any] | None:
+    def close(self, timeout: float = 5.0) -> bool:
+        deadline = time.monotonic() + timeout
+        results = [
+            runner.close(max(0.0, deadline - time.monotonic()))
+            for runner in (self.auxiliary, self.drinking_auxiliary)
+            if runner
+        ]
+        return all(results)
+
+    def snapshot(self, *, include_frame: bool = True) -> dict[str, Any] | None:
         with self.lock:
             if self.latest is None:
                 return None
-            return {**self.latest, "frame": self.latest["frame"].copy()}
+            result = {key: value for key, value in self.latest.items() if key != "frame"}
+            if include_frame:
+                result["frame"] = self.latest["frame"].copy()
+            return result
 
     def reset_gate(self) -> None:
         self.gate.reset()
@@ -319,7 +427,41 @@ def fresh_pair(observation: Any, pair: dict | None, seen_sequence: int, frame_ag
     )
 
 
+def inference_attempt(observation: Any, pair: dict | None, last_sequence: int) -> dict | None:
+    """Expose timings for this completed attempt, including stale failures, never old work."""
+    if (
+        pair is None
+        or observation.inference_ms is None
+        or pair["sequence"] <= last_sequence
+        or not math.isfinite(pair["completed_monotonic"])
+        or pair["completed_monotonic"] < observation.monotonic_at
+    ):
+        return None
+    return {
+        key: pair[key]
+        for key in (
+            "sequence",
+            "frame_sha256",
+            "completed_monotonic",
+            "stage_times_ms",
+            "total_inference_ms",
+        )
+    }
+
+
 def run(args: argparse.Namespace) -> int:
+    code_hashes = {
+        name: sha256(ROOT / name)
+        for name in (
+            "scripts/behavior_camera_test.py",
+            "scripts/behavior_seat_gate.py",
+            "scripts/behavior_timeline_v2.py",
+            "scripts/behavior_diagnostics.py",
+            "scripts/behavior_auxiliary.py",
+            "visual_ai_agent/vision.py",
+            "visual_ai_agent/models.py",
+        )
+    }
     output = args.output.resolve()
     if output.exists():
         raise SystemExit(f"Refusing to overwrite output directory: {output}")
@@ -331,6 +473,7 @@ def run(args: argparse.Namespace) -> int:
     if person_hash != person_manifest.get("sha256"):
         raise ValueError("Person model manifest checksum mismatch")
     output.mkdir(parents=True)
+    cv2.setNumThreads(args.opencv_threads)
     state = TestState(output, args.duration)
     state.model_info = {
         task: {
@@ -348,7 +491,13 @@ def run(args: argparse.Namespace) -> int:
         "manifest_sha256": sha256(args.person_manifest.resolve()),
     }
     detector = BehaviorDetector(
-        OnnxClassifier(posture_record), OnnxClassifier(drinking_record), person_model
+        OnnxClassifier(posture_record),
+        OnnxClassifier(drinking_record),
+        person_model,
+        person_threads=args.person_threads,
+        person_spinning=args.person_spinning,
+        auxiliary_mode=args.auxiliary_mode,
+        person_wait_ms=args.person_wait_ms,
     )
     if args.person_association == "seat":
         from scripts.behavior_seat_gate import SeatPersonGate
@@ -375,14 +524,20 @@ def run(args: argparse.Namespace) -> int:
     process = psutil.Process()
     process.cpu_percent()
     seen_sequence = 0
+    last_attempt_sequence = 0
     previous_raw_posture = "unknown"
     previous_continuous = False
 
     def observe(observation: Any, jpeg: bytes | None) -> None:
-        nonlocal seen_sequence, previous_raw_posture, previous_continuous
+        nonlocal seen_sequence, last_attempt_sequence, previous_raw_posture, previous_continuous
         pair = (
-            detector.snapshot() if observation.status == "running" and observation.fresh else None
+            detector.snapshot(include_frame=observation.fresh)
+            if observation.inference_ms is not None
+            else None
         )
+        attempt = inference_attempt(observation, pair, last_attempt_sequence)
+        if attempt:
+            last_attempt_sequence = attempt["sequence"]
         frame_age = time.monotonic() - observation.monotonic_at
         fresh = fresh_pair(observation, pair, seen_sequence, frame_age)
         if fresh:
@@ -393,6 +548,8 @@ def run(args: argparse.Namespace) -> int:
                 pair["person_candidates"],
                 (observation.width, observation.height),
             )
+            if pair["auxiliary_status"] != "ready":
+                pair["person_gate"]["reason"] = "auxiliary_" + pair["auxiliary_status"]
             continuous = pair["person_gate"]["person_track_supported"] is True
             baseline_support = baseline_gate.observe(
                 observation.monotonic_at,
@@ -422,6 +579,18 @@ def run(args: argparse.Namespace) -> int:
         baseline_events.extend(baseline["events"])
         row = {
             "baseline_result": baseline,
+            # Attempt diagnostics never enter the classifier/state logic on a rejected frame.
+            "inference_attempt": attempt,
+            "processing_timings_ms": observation.processing_timings_ms,
+            "processing_stage": observation.processing_stage,
+            "worker_inference_ms": observation.inference_ms,
+            "auxiliary_status": pair["auxiliary_status"] if attempt else "not_attempted",
+            "auxiliary_error": pair["auxiliary_error"] if attempt else None,
+            "drinking_auxiliary_status": pair["drinking_auxiliary_status"]
+            if attempt
+            else "not_attempted",
+            "drinking_auxiliary_error": pair["drinking_auxiliary_error"] if attempt else None,
+            "previous_callback_ms": worker.last_callback_ms,
             "person_candidates": [
                 {"confidence": c.confidence, "bbox": list(c.bbox)}
                 for c in pair["person_candidates"]
@@ -444,7 +613,7 @@ def run(args: argparse.Namespace) -> int:
             "confirmed_posture": result["posture"],
             "confirmed_drinking": result["drinking"],
             "events": result["events"],
-            "frame_age_seconds": round(frame_age, 6) if fresh else None,
+            "frame_age_seconds": round(frame_age, 6),
             "total_inference_ms": pair["total_inference_ms"] if fresh else None,
             "person_inference_ms": pair["person_inference_ms"] if fresh else None,
             "cpu_percent_one_core_100": process.cpu_percent(),
@@ -513,6 +682,8 @@ def run(args: argparse.Namespace) -> int:
         worker.stop()
         if worker.running or worker.last_callback_error:
             stop_error = worker.last_callback_error or "worker did not stop"
+        if not detector.close():
+            stop_error = (stop_error + "; " if stop_error else "") + "auxiliary worker did not stop"
         server.shutdown()
         server.server_close()
         server_thread.join(5)
@@ -531,15 +702,7 @@ def run(args: argparse.Namespace) -> int:
                 "max_gap",
             )
         },
-        "code_sha256": {
-            name: sha256(ROOT / "scripts" / name)
-            for name in (
-                "behavior_camera_test.py",
-                "behavior_seat_gate.py",
-                "behavior_timeline_v2.py",
-                "behavior_diagnostics.py",
-            )
-        },
+        "code_sha256": code_hashes,
         "baseline_events": baseline_events,
         "diagnostic_groups": diagnostics.groups,
         "finished_at": _utcnow(),
@@ -552,6 +715,12 @@ def run(args: argparse.Namespace) -> int:
         "actual_size": [source.actual_width, source.actual_height],
         "backend": source.backend_name,
         "parameters": {
+            "person_threads": args.person_threads,
+            "auxiliary_mode": args.auxiliary_mode,
+            "person_wait_ms": args.person_wait_ms,
+            "person_spinning": args.person_spinning,
+            "opencv_threads": cv2.getNumThreads(),
+            "opencv_requested_threads": args.opencv_threads,
             "fps": FPS,
             "posture_confirm_seconds": POSTURE_CONFIRM,
             "drinking_confirm_seconds": DRINK_CONFIRM,
@@ -562,6 +731,33 @@ def run(args: argparse.Namespace) -> int:
         "latency_ms": {
             name: _metrics([float(row[name]) for row in fresh_rows if row[name] is not None])
             for name in ("total_inference_ms", "person_inference_ms")
+        },
+        "attempt_latency_ms_including_failures": {
+            "worker_detect": _metrics(
+                [
+                    row["worker_inference_ms"]
+                    for row in state.samples
+                    if row["worker_inference_ms"] is not None
+                ]
+            ),
+            "detector_stages": {
+                stage: _metrics(
+                    [
+                        row["inference_attempt"]["stage_times_ms"][stage]
+                        for row in state.samples
+                        if row["inference_attempt"]
+                        and stage in row["inference_attempt"]["stage_times_ms"]
+                    ]
+                )
+                for stage in sorted(
+                    {
+                        key
+                        for row in state.samples
+                        if row["inference_attempt"]
+                        for key in row["inference_attempt"]["stage_times_ms"]
+                    }
+                )
+            },
         },
         "retention": {
             "video": False,
@@ -594,6 +790,18 @@ def main() -> None:
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
     parser.add_argument("--person-association", choices=("strict", "seat"), default="strict")
+    parser.add_argument(
+        "--person-threads",
+        type=int,
+        choices=(1, 2, 4),
+        default=4 if (os.cpu_count() or 1) >= 8 else 2,
+    )
+    parser.add_argument("--person-spinning", action="store_true")
+    parser.add_argument("--auxiliary-mode", choices=("serial", "bounded"), default="bounded")
+    parser.add_argument(
+        "--person-wait-ms", type=float, choices=(80.0, 100.0, 120.0, 150.0), default=120.0
+    )
+    parser.add_argument("--opencv-threads", type=int, choices=(1, 2, 4, 10), default=1)
     parser.add_argument("--seat-roi", type=float, nargs=4, default=(0.2, 0.2, 0.95, 1.0))
     parser.add_argument("--backend", type=int)
     parser.add_argument("--port", type=int, default=8765)

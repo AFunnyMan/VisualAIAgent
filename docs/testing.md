@@ -112,3 +112,5 @@ uv run --locked python scripts/camera_acceptance.py --camera 0 --duration 1800 -
 `scripts/behavior_camera_test.py`为隔离手动测试，真实执行命令、用户流程、结果及失败见[2026-09-10实测](behavior-live-test-20260910.md)。仅ONNX CPU，端口8765，需新输出目录；不加载.env或写正式业务库。正常停止后服务关闭，页面不再刷新。行为模型仍未获正式启用验收；不能把界面显示某状态视为事件已正确生成。
 
 新增座位关联对照使用`--person-association seat --seat-roi 0.2 0.2 0.95 1.0`，默认仍为旧严格关联。具体参数、同帧旧逻辑比较、有限图片证据及测试结果见[座位关联改进](behavior-seat-improvement-20260910.md)。离线`v2-10fps-seat-association`固定采用上述默认ROI；改变实机ROI后不能直接声称与该离线配置一致。故障帧不保存为动作证据；诊断图片有限，不能替代完整连续动作的独立人工标注。
+
+实时入口现默认有界并行人体/饮水推理，复现原串行需`--auxiliary-mode serial`。线程设置、等待预算、完整命令和失败耗时口径见[延迟修复](behavior-latency-fix-20260910.md)。辅助timeout/busy表示对应信息不可用，不等于相机画面过期；最终fresh与事件的安全边界保持。旧配置的“新旧同帧比较”仍只比较人体关联规则，不是两套模型运行性能对照。

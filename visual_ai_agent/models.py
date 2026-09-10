@@ -44,6 +44,8 @@ class SceneObservation(Record):
     evidence_id: str | None = None
     error: str | None = None
     inference_ms: float | None = None
+    processing_timings_ms: dict[str, float] = Field(default_factory=dict)
+    processing_stage: str | None = None
     width: int = 0
     height: int = 0
     source: Literal["camera", "replay", "test"] = "camera"

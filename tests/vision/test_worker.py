@@ -5,6 +5,7 @@ import time
 
 import numpy as np
 
+import visual_ai_agent.vision as vision_module
 from visual_ai_agent.models import Detection, SceneObservation
 from visual_ai_agent.vision import VisionWorker
 
@@ -135,7 +136,118 @@ def test_slow_inference_cannot_publish_an_expired_frame_as_fresh() -> None:
     assert expired.fresh is False
     assert expired.detections == []
     assert expired.inference_ms is not None and expired.inference_ms >= 70
+    assert expired.processing_stage == "detect"
+    assert expired.processing_timings_ms["detect"] >= 70
+    assert expired.processing_timings_ms["jpeg"] >= 0
+    assert expired.processing_timings_ms["age_before_detect"] >= 0
+    assert expired.processing_timings_ms["age_at_publish"] >= 80
+    assert expired.observed_at == next(
+        observation.observed_at
+        for observation in observations
+        if observation.processing_stage == "detect"
+    )
     assert not any(observation.fresh for observation in observations)
+
+
+def test_fresh_observation_reports_per_frame_processing_timings() -> None:
+    source = ContinuousSource()
+    observations: list[SceneObservation] = []
+    got_fresh = threading.Event()
+
+    def callback(observation: SceneObservation, _jpeg: bytes | None) -> None:
+        observations.append(observation)
+        if observation.fresh:
+            got_fresh.set()
+
+    worker = VisionWorker(
+        DetectingDetector(), source, callback, inference_interval=0.01, stale_after=0.5
+    )
+    worker.start()
+    assert got_fresh.wait(1)
+    worker.stop()
+
+    fresh = next(observation for observation in observations if observation.fresh)
+    assert fresh.processing_stage == "publish"
+    assert set(fresh.processing_timings_ms) == {
+        "capture_read",
+        "age_before_detect",
+        "detect",
+        "annotate",
+        "jpeg",
+        "age_at_publish",
+    }
+    assert all(value >= 0 for value in fresh.processing_timings_ms.values())
+    assert fresh.inference_ms == fresh.processing_timings_ms["detect"]
+    assert worker.last_callback_ms is not None and worker.last_callback_ms >= 0
+
+
+def test_jpeg_delay_that_expires_frame_reports_jpeg_stage(monkeypatch) -> None:
+    source = ContinuousSource()
+    observations: list[SceneObservation] = []
+    got_expired = threading.Event()
+
+    def callback(observation: SceneObservation, _jpeg: bytes | None) -> None:
+        observations.append(observation)
+        if observation.error == "Frame expired before inference results were published":
+            got_expired.set()
+
+    worker = VisionWorker(
+        DetectingDetector(), source, callback, inference_interval=0.01, stale_after=0.03
+    )
+    original_encode = worker._encode_jpeg
+
+    def slow_encode(frame: np.ndarray) -> bytes | None:
+        time.sleep(0.04)
+        return original_encode(frame)
+
+    monkeypatch.setattr(worker, "_encode_jpeg", slow_encode)
+    worker.start()
+    assert got_expired.wait(1)
+    worker.stop()
+
+    expired = next(
+        observation
+        for observation in observations
+        if observation.error == "Frame expired before inference results were published"
+    )
+    assert expired.processing_stage == "jpeg"
+    assert expired.processing_timings_ms["detect"] >= 0
+    assert expired.processing_timings_ms["annotate"] >= 0
+    assert expired.processing_timings_ms["jpeg"] >= 80
+    assert expired.processing_timings_ms["age_at_publish"] >= 80
+
+
+def test_annotation_failure_reports_the_frame_and_actual_stage(monkeypatch) -> None:
+    source = ContinuousSource()
+    observations: list[SceneObservation] = []
+    got_error = threading.Event()
+
+    def callback(observation: SceneObservation, _jpeg: bytes | None) -> None:
+        observations.append(observation)
+        if observation.error == "Inference failed: synthetic annotation failure":
+            got_error.set()
+
+    def fail_annotation(_frame: np.ndarray, _detections: list[Detection]) -> np.ndarray:
+        raise RuntimeError("synthetic annotation failure")
+
+    monkeypatch.setattr(vision_module, "annotate_frame", fail_annotation)
+    worker = VisionWorker(
+        DetectingDetector(), source, callback, inference_interval=0.01, stale_after=0.5
+    )
+    worker.start()
+    assert got_error.wait(1)
+    worker.stop()
+
+    failed = next(
+        observation
+        for observation in observations
+        if observation.error == "Inference failed: synthetic annotation failure"
+    )
+    assert failed.processing_stage == "annotate"
+    assert failed.width == 30 and failed.height == 30
+    assert failed.processing_timings_ms["detect"] >= 0
+    assert failed.processing_timings_ms["jpeg"] >= 0
+    assert failed.processing_timings_ms["age_at_publish"] >= 0
 
 
 def test_replay_eof_processes_last_frame_once_then_marks_it_stale() -> None:

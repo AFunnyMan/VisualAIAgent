@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -137,3 +138,104 @@ def test_duplicate_fault_and_mismatched_pairs_are_rejected():
     observation.fresh = True
     pair["completed_monotonic"] = 0.9
     assert not target.fresh_pair(observation, pair, 1, 0.1)
+
+
+def test_failed_inference_has_timings_without_becoming_fresh_or_reusing_old_attempt():
+    observation = SimpleNamespace(status="stale", fresh=False, monotonic_at=1.0, inference_ms=560.0)
+    pair = {
+        "sequence": 2,
+        "completed_monotonic": 1.56,
+        "frame_sha256": "abc",
+        "stage_times_ms": {"person_onnx": 540.0},
+        "total_inference_ms": 560.0,
+    }
+    attempt = target.inference_attempt(observation, pair, 1)
+    assert attempt["stage_times_ms"]["person_onnx"] == 540.0
+    assert not target.fresh_pair(observation, pair, 1, 0.56)
+    assert target.inference_attempt(observation, pair, 2) is None
+    observation.monotonic_at = 2.0
+    assert target.inference_attempt(observation, pair, 1) is None
+    observation.inference_ms = None
+    assert target.inference_attempt(observation, pair, 1) is None
+
+
+def test_slow_auxiliary_never_blocks_primary_or_reuses_previous_frame(monkeypatch):
+    entered, release = threading.Event(), threading.Event()
+
+    def slow_person(_self, frame):
+        entered.set()
+        release.wait(2)
+        return {
+            "candidates": [int(frame[0, 0, 0])],
+            "elapsed_ms": 500,
+            "timings": {"person_onnx": 500},
+        }
+
+    monkeypatch.setattr(target.ort, "InferenceSession", FakeSession)
+    monkeypatch.setattr(target.BehaviorDetector, "_predict_person", slow_person)
+    classifier = SimpleNamespace(
+        predict=lambda frame: {
+            "label": "standing" if frame[0, 0, 0] == 1 else "seated",
+            "preprocess_ms": 0,
+            "inference_ms": 0,
+        }
+    )
+    detector = target.BehaviorDetector(classifier, classifier, Path("fake.onnx"), person_wait_ms=20)
+    try:
+        detector.detect(np.ones((4, 4, 3), dtype=np.uint8))
+        assert entered.is_set() and not release.is_set()
+        first = detector.snapshot()
+        assert first["auxiliary_status"] == "timeout"
+        assert first["posture"]["label"] == "standing"
+        assert first["person_candidates"] == []
+        detector.detect(np.full((4, 4, 3), 2, dtype=np.uint8))
+        second = detector.snapshot()
+        assert second["auxiliary_status"] == "busy"
+        assert second["posture"]["label"] == "seated"
+        assert second["person_candidates"] == []
+        assert second["sequence"] == first["sequence"] + 1
+    finally:
+        release.set()
+        assert detector.close()
+
+
+def test_slow_drinking_becomes_unknown_without_losing_current_posture(monkeypatch):
+    release = threading.Event()
+
+    def classify(frame):
+        return {
+            "label": "standing" if frame[0, 0, 0] == 1 else "seated",
+            "preprocess_ms": 0,
+            "inference_ms": 0,
+        }
+
+    def slow_drinking(frame):
+        release.wait(2)
+        return {"label": "drinking", "preprocess_ms": 0, "inference_ms": 500}
+
+    monkeypatch.setattr(target.ort, "InferenceSession", FakeSession)
+    monkeypatch.setattr(
+        target.BehaviorDetector,
+        "_predict_person",
+        lambda *_: {"candidates": [], "elapsed_ms": 1, "timings": {}},
+    )
+    detector = target.BehaviorDetector(
+        SimpleNamespace(predict=classify),
+        SimpleNamespace(predict=slow_drinking),
+        Path("fake.onnx"),
+        person_wait_ms=20,
+    )
+    try:
+        detector.detect(np.ones((4, 4, 3), dtype=np.uint8))
+        first = detector.snapshot()
+        assert first["drinking_auxiliary_status"] == "timeout"
+        assert first["drinking"]["label"] == "unknown"
+        assert first["posture"]["label"] == "standing"
+        detector.detect(np.full((4, 4, 3), 2, dtype=np.uint8))
+        second = detector.snapshot()
+        assert second["drinking_auxiliary_status"] == "busy"
+        assert second["drinking"]["label"] == "unknown"
+        assert second["posture"]["label"] == "seated"
+    finally:
+        release.set()
+        assert detector.close()
