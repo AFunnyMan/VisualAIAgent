@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "path": "data/training-inbox/development/2026-09-11 22-58-45.mkv",
+      "sha256": "c0143701c90f6541ebae085e89cc41e0b2c5d76a84d8f0a2dc17f379523bebc4",
+      "purpose": "development"
+    },
+    {
+      "path": "data/training-inbox/development/2026-09-11 22-59-29.mkv",
+      "sha256": "01bd0344201e9fae22e4240739a40a4da778be091388ae969eeb0103dd464961",
+      "purpose": "development"
+    },
+    {
+      "path": "data/training-inbox/development/2026-09-11 23-01-33.mkv",
+      "sha256": "b8f908681885a4a0a5af4fe36817c3c86ed466a17a8dca7445775e9b14a618c5",
+      "purpose": "development"
+    },
+    {
+      "path": "data/training-inbox/development/2026-09-11 23-02-14.mkv",
+      "sha256": "ed0ae4ce0dd083b4fc05a32d425349e2c99b3190ac0fdd117f8d0715b62fcb18",
+      "purpose": "development"
+    },
+    {
+      "path": "data/training-inbox/development/2026-09-11 23-03-14.mkv",
+      "sha256": "406eac77385f6efb2826396681a8facdab3c0a2ed89b403d40f0d710439e6e42",
+      "purpose": "development"
+    },
+    {
+      "path": "data/training-inbox/development/2026-09-11 23-04-15.mkv",
+      "sha256": "971385e218546f176b1a9be644f1397a138ecab13eb72ae765583d1b768b3ee7",
+      "purpose": "development"
+    },
+    {
+      "path": "data/training-inbox/development/2026-09-11 23-05-02.mkv",
+      "sha256": "f9e748975212a102b74a2b5844cbb2ee574691fe026d1012ef92e32a7644ea5f",
+      "purpose": "development"
+    },
+    {
+      "path": "data/training-inbox/development/验收2026-09-11 23-08-00.mkv",
+      "sha256": "6603dc2d69dd16b4d3f71219848fffaf59fd9f10ff699232c68b022322188a12",
+      "purpose": "holdout"
+    }
+  ],
+  "policy": "Split complete source groups before training. Holdout is forbidden for training or model selection, including renamed copies and derived frames."
+}

@@ -399,6 +399,7 @@ class ApplicationRuntime:
                             person_model,
                             seat_roi=config.behavior_seat_roi,
                             expected_person_sha256=config.model_sha256 or None,
+                            retain_diagnostic_frame=False,
                         )
                         self._behavior_worker = BehaviorWorker(
                             behavior_detector,

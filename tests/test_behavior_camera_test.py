@@ -239,3 +239,43 @@ def test_slow_drinking_becomes_unknown_without_losing_current_posture(monkeypatc
     finally:
         release.set()
         assert detector.close()
+
+
+def test_optional_diagnostic_frame_does_not_change_classification(monkeypatch):
+    monkeypatch.setattr(target.ort, "InferenceSession", FakeSession)
+    monkeypatch.setattr(
+        target.BehaviorDetector,
+        "_predict_person",
+        lambda self, frame: {"candidates": [], "elapsed_ms": 0, "timings": {}},
+    )
+    classifier = SimpleNamespace(
+        predict=lambda frame: {
+            "label": "seated",
+            "preprocess_ms": 0,
+            "inference_ms": 0,
+        }
+    )
+    results = []
+    for retain in (True, False):
+        detector = target.BehaviorDetector(
+            classifier,
+            classifier,
+            Path("fake.onnx"),
+            auxiliary_mode="serial",
+            retain_diagnostic_frame=retain,
+        )
+        try:
+            frame = np.ones((4, 4, 3), dtype=np.uint8)
+            detector.detect(frame)
+            frame[:] = 0
+            snapshot = detector.snapshot()
+            results.append(snapshot["posture"])
+            if retain:
+                assert snapshot["frame"].all()
+                assert snapshot["frame_sha256"]
+            else:
+                assert "frame" not in snapshot
+                assert snapshot["frame_sha256"] is None
+        finally:
+            detector.close()
+    assert results[0] == results[1]

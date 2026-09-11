@@ -185,8 +185,10 @@ class BehaviorDetector:
         auxiliary_mode: str = "bounded",
         person_wait_ms: float = PERSON_WAIT_MS,
         expected_person_sha256: str | None = None,
+        retain_diagnostic_frame: bool = True,
     ) -> None:
         self.posture, self.drinking, self.person_wait_ms = posture, drinking, person_wait_ms
+        self.retain_diagnostic_frame = retain_diagnostic_frame
         if expected_person_sha256 and sha256(person_model) != expected_person_sha256:
             raise ValueError("Person model SHA mismatch")
         options = ort.SessionOptions()
@@ -283,8 +285,10 @@ class BehaviorDetector:
             )
         person = person_outcome["result"] if person_outcome["status"] == "ready" else None
         copied_started = time.perf_counter()
-        frame_copy = frame.copy()
-        frame_hash = hashlib.sha256(memoryview(frame)).hexdigest()
+        frame_copy = frame.copy() if self.retain_diagnostic_frame else None
+        frame_hash = (
+            hashlib.sha256(memoryview(frame)).hexdigest() if self.retain_diagnostic_frame else None
+        )
         with self.lock:
             self.sequence += 1
             self.latest = {
@@ -352,7 +356,7 @@ class BehaviorDetector:
             if self.latest is None:
                 return None
             result = {key: value for key, value in self.latest.items() if key != "frame"}
-            if include_frame:
+            if include_frame and self.latest["frame"] is not None:
                 result["frame"] = self.latest["frame"].copy()
             return result
 

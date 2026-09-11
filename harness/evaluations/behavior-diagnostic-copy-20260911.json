@@ -1,0 +1,21 @@
+{
+  "scope": "microbenchmark diagnostic frame copy/hash only, not end-to-end or camera latency",
+  "iterations": 300,
+  "shape": [
+    1080,
+    1920,
+    3
+  ],
+  "results": {
+    "True": {
+      "median_ms": 2.852604608051479,
+      "p95_ms": 5.563708022236824,
+      "max_ms": 16.04429096914828
+    },
+    "False": {
+      "median_ms": 8.312053978443146e-05,
+      "p95_ms": 0.000125030055642128,
+      "max_ms": 0.00016600824892520905
+    }
+  }
+}
