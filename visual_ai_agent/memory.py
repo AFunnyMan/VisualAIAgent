@@ -136,10 +136,10 @@ class MemoryStore:
                     ).fetchone()
                 except sqlite3.Error as error:
                     raise RuntimeError("Existing database has invalid schema metadata") from error
-                if version_row is None or version_row[0] not in {"1", "2"}:
+                if version_row is None or version_row[0] not in {"1", "2", "3"}:
                     raise RuntimeError("Existing database schema version is not supported")
                 existing_version = version_row[0]
-                if existing_version == "2":
+                if existing_version == "3":
                     required_tables = {
                         "schema_meta",
                         "evidence",
@@ -151,6 +151,14 @@ class MemoryStore:
                         "chat_interactions",
                         "agent_runs",
                         "tool_runs",
+                        "behavior_observations",
+                        "behavior_intervals",
+                        "behavior_events",
+                        "context_rules",
+                        "context_rule_versions",
+                        "context_rule_jobs",
+                        "context_rule_notifications",
+                        "context_rule_state",
                     }
                     if not required_tables.issubset(existing_tables):
                         raise RuntimeError("Current database schema is missing required tables")
@@ -160,9 +168,39 @@ class MemoryStore:
                     }
                     if "usage_complete" not in current_columns:
                         raise RuntimeError("Current database schema is missing required columns")
+                    observation_columns = {
+                        row[1]
+                        for row in connection.execute("PRAGMA table_info(observations)").fetchall()
+                    }
+                    if "scene_id" not in observation_columns:
+                        raise RuntimeError("Current database schema is missing required columns")
+                    behavior_columns = {
+                        row[1]
+                        for row in connection.execute(
+                            "PRAGMA table_info(behavior_observations)"
+                        ).fetchall()
+                    }
+                    if "continuity_id" not in behavior_columns:
+                        raise RuntimeError("Current database schema is missing required columns")
+                    rule_job_columns = {
+                        row[1]
+                        for row in connection.execute(
+                            "PRAGMA table_info(context_rule_jobs)"
+                        ).fetchall()
+                    }
+                    if "fact_snapshot_json" not in rule_job_columns:
+                        raise RuntimeError("Current database schema is missing required columns")
+                    rule_state_columns = {
+                        row[1]
+                        for row in connection.execute(
+                            "PRAGMA table_info(context_rule_state)"
+                        ).fetchall()
+                    }
+                    if not {"crossed", "continuity_key"}.issubset(rule_state_columns):
+                        raise RuntimeError("Current database schema is missing required columns")
                     return
                 self._backup_before_migration(
-                    connection, from_version=existing_version, to_version="2"
+                    connection, from_version=existing_version, to_version="3"
                 )
             connection.executescript(
                 """BEGIN IMMEDIATE;
@@ -192,6 +230,7 @@ class MemoryStore:
                     width INTEGER NOT NULL,
                     height INTEGER NOT NULL,
                     source TEXT NOT NULL,
+                    scene_id TEXT NOT NULL DEFAULT 'default',
                     ingested_at TEXT NOT NULL
                 );
                 CREATE INDEX IF NOT EXISTS idx_observations_time
@@ -291,16 +330,79 @@ class MemoryStore:
                     """BEGIN IMMEDIATE;
                     ALTER TABLE agent_runs
                         ADD COLUMN usage_complete INTEGER NOT NULL DEFAULT 0;
-                    UPDATE schema_meta SET value = '2' WHERE key = 'schema_version';
                     COMMIT;
                     """
                 )
             elif "usage_complete" in agent_run_columns:
-                connection.execute(
-                    "UPDATE schema_meta SET value = '2' WHERE key = 'schema_version'"
-                )
+                pass
             else:
                 raise RuntimeError("Current database schema is missing required columns")
+            observation_columns = {
+                row[1] for row in connection.execute("PRAGMA table_info(observations)").fetchall()
+            }
+            if "scene_id" not in observation_columns:
+                connection.execute(
+                    "ALTER TABLE observations ADD COLUMN scene_id TEXT NOT NULL DEFAULT 'default'"
+                )
+            behavior_schema = (
+                """CREATE TABLE IF NOT EXISTS behavior_observations (
+                    singleton_id INTEGER PRIMARY KEY CHECK(singleton_id = 1),
+                    observed_at TEXT NOT NULL,
+                    monotonic_at REAL NOT NULL,
+                    status TEXT NOT NULL,
+                    fresh INTEGER NOT NULL,
+                    posture TEXT NOT NULL,
+                    drinking INTEGER,
+                    model_version TEXT NOT NULL,
+                    scene_id TEXT NOT NULL,
+                    source TEXT NOT NULL,
+                    error TEXT,
+                    evidence_id TEXT REFERENCES evidence(evidence_id),
+                    continuity_id TEXT NOT NULL,
+                    continuous_seated_seconds REAL NOT NULL DEFAULT 0,
+                    last_valid_at TEXT,
+                    ingested_at TEXT NOT NULL
+                )""",
+                """CREATE TABLE IF NOT EXISTS behavior_intervals (
+                    interval_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    started_at TEXT NOT NULL,
+                    ended_at TEXT NOT NULL,
+                    duration_seconds REAL NOT NULL CHECK(duration_seconds >= 0),
+                    posture TEXT NOT NULL,
+                    drinking INTEGER,
+                    model_version TEXT NOT NULL,
+                    scene_id TEXT NOT NULL,
+                    continuity_id TEXT NOT NULL
+                )""",
+                """CREATE INDEX IF NOT EXISTS idx_behavior_intervals_time
+                    ON behavior_intervals(started_at, ended_at)""",
+                """CREATE TABLE IF NOT EXISTS behavior_events (
+                    event_id TEXT PRIMARY KEY,
+                    kind TEXT NOT NULL,
+                    observed_at TEXT NOT NULL,
+                    confirmed_at TEXT NOT NULL,
+                    evidence_id TEXT REFERENCES evidence(evidence_id),
+                    model_version TEXT NOT NULL,
+                    scene_id TEXT NOT NULL,
+                    source TEXT NOT NULL
+                )""",
+                """CREATE INDEX IF NOT EXISTS idx_behavior_events_time
+                    ON behavior_events(confirmed_at DESC)""",
+            )
+            from .context_rules import create_schema as create_context_rule_schema
+
+            connection.execute("BEGIN IMMEDIATE")
+            try:
+                for statement in behavior_schema:
+                    connection.execute(statement)
+                create_context_rule_schema(connection)
+                connection.execute(
+                    "UPDATE schema_meta SET value = '3' WHERE key = 'schema_version'"
+                )
+                connection.commit()
+            except BaseException:
+                connection.rollback()
+                raise
         except BaseException:
             if connection.in_transaction:
                 connection.rollback()
@@ -375,8 +477,8 @@ class MemoryStore:
                 cursor = connection.execute(
                     """INSERT INTO observations(
                         observed_at, monotonic_at, status, fresh, detections_json, evidence_id,
-                        error, inference_ms, width, height, source, ingested_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        error, inference_ms, width, height, source, scene_id, ingested_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         _iso(stored_observation.observed_at),
                         stored_observation.monotonic_at,
@@ -389,6 +491,7 @@ class MemoryStore:
                         stored_observation.width,
                         stored_observation.height,
                         stored_observation.source,
+                        stored_observation.scene_id,
                         _iso(self.clock()),
                     ),
                 )
@@ -450,6 +553,10 @@ class MemoryStore:
                            SELECT evidence_id FROM visual_events WHERE evidence_id IS NOT NULL
                        ) AND evidence_id NOT IN (
                            SELECT evidence_id FROM last_seen WHERE evidence_id IS NOT NULL
+                       ) AND evidence_id NOT IN (
+                           SELECT evidence_id FROM behavior_events WHERE evidence_id IS NOT NULL
+                       ) AND evidence_id NOT IN (
+                           SELECT evidence_id FROM context_rule_jobs WHERE evidence_id IS NOT NULL
                        )"""
                 ).fetchall()
                 if obsolete:
@@ -522,6 +629,7 @@ class MemoryStore:
                     "evidence_id": row["evidence_id"],
                     "error": row["error"],
                     "source": row["source"],
+                    "scene_id": row["scene_id"],
                 },
             },
         )
@@ -630,6 +738,14 @@ class MemoryStore:
                      AND event_id NOT IN (SELECT event_id FROM notifications)""",
                 (cutoff,),
             ).rowcount
+            behavior_intervals = connection.execute(
+                "DELETE FROM behavior_intervals WHERE ended_at < ?", (cutoff,)
+            ).rowcount
+            behavior_events = connection.execute(
+                """DELETE FROM behavior_events WHERE confirmed_at < ?
+                   AND event_id NOT IN (SELECT event_id FROM context_rule_jobs)""",
+                (cutoff,),
+            ).rowcount
             stale_evidence = connection.execute(
                 """SELECT evidence_id, relative_path FROM evidence
                    WHERE evidence_id NOT IN (
@@ -638,6 +754,10 @@ class MemoryStore:
                        SELECT evidence_id FROM visual_events WHERE evidence_id IS NOT NULL
                    ) AND evidence_id NOT IN (
                        SELECT evidence_id FROM last_seen WHERE evidence_id IS NOT NULL
+                   ) AND evidence_id NOT IN (
+                       SELECT evidence_id FROM behavior_events WHERE evidence_id IS NOT NULL
+                   ) AND evidence_id NOT IN (
+                       SELECT evidence_id FROM context_rule_jobs WHERE evidence_id IS NOT NULL
                    )"""
             ).fetchall()
             if stale_evidence:
@@ -651,7 +771,13 @@ class MemoryStore:
                 for row in connection.execute("SELECT relative_path FROM evidence").fetchall()
             }
         removed_count = self._remove_evidence_files(removed_files, indexed_paths)
-        return {"observations": observations, "events": events, "evidence": removed_count}
+        return {
+            "observations": observations,
+            "events": events,
+            "behavior_intervals": behavior_intervals,
+            "behavior_events": behavior_events,
+            "evidence": removed_count,
+        }
 
     def _remove_evidence_files(self, removed_files: list[Path], indexed_paths: set[str]) -> int:
         for candidate in self._evidence_dir.iterdir():

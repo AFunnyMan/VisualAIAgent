@@ -52,6 +52,7 @@ def test_persists_last_seen_evidence_and_restart_is_not_current(tmp_path) -> Non
     assert "path" not in result.data
     assert store.evidence_path(result.data["evidence_id"]).read_bytes() == b"jpeg-data"
     assert store.get_current_scene().data["current"] is True
+    assert store.get_current_scene().data["observation"]["scene_id"] == "default"
 
     restarted = MemoryStore(tmp_path, clock=clock)
     scene = restarted.get_current_scene()
@@ -341,7 +342,7 @@ def test_schema_one_database_migrates_usage_completeness_without_data_loss(tmp_p
         version = migrated.execute(
             "SELECT value FROM schema_meta WHERE key = 'schema_version'"
         ).fetchone()[0]
-    assert version == "2"
+    assert version == "3"
     backups = list((tmp_path / "backups").glob("*.sqlite3"))
     assert len(backups) == 1
     backup = sqlite3.connect(backups[0])

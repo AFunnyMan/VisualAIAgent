@@ -2,11 +2,13 @@
 
 from dataclasses import asdict, is_dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 import streamlit as st
 
+from visual_ai_agent.behavior_ui import behavior_panel, rules_panel
 from visual_ai_agent.config import Config
 from visual_ai_agent.models import utcnow
 from visual_ai_agent.runtime import ApplicationRuntime
@@ -148,6 +150,35 @@ with st.sidebar:
             region_bottom / 100,
         )
     )
+    with st.expander("实验行为识别", expanded=False):
+        behavior_enabled = st.checkbox(
+            "启用在座与疑似饮水识别",
+            value=runtime.config.behavior_enabled,
+            help="使用当前固定机位的实验模型；不代表动作质量已经通过验收。",
+        )
+        posture_default = runtime.config.behavior_posture_manifest
+        drinking_default = runtime.config.behavior_drinking_manifest
+        known_root = Path("harness/artifacts/behavior-20260910-r02")
+        if (
+            posture_default is None
+            and (known_root / "posture-run/training-manifest.json").is_file()
+        ):
+            posture_default = known_root / "posture-run/training-manifest.json"
+        if (
+            drinking_default is None
+            and (known_root / "drinking-run/training-manifest.json").is_file()
+        ):
+            drinking_default = known_root / "drinking-run/training-manifest.json"
+        posture_manifest = st.text_input("姿态模型清单", value=str(posture_default or ""))
+        drinking_manifest = st.text_input("饮水模型清单", value=str(drinking_default or ""))
+        st.caption("沿用当前固定机位；视角或取景范围变化后不能沿用旧场景的质量结论。")
+        behavior_kwargs = dict(
+            behavior_enabled=behavior_enabled,
+            behavior_posture_manifest=Path(posture_manifest) if posture_manifest.strip() else None,
+            behavior_drinking_manifest=Path(drinking_manifest)
+            if drinking_manifest.strip()
+            else None,
+        )
     left, right = st.columns(2)
     if left.button("开始观察", type="primary", width="stretch"):
         if range_mode == "自定义" and (region_left >= region_right or region_top >= region_bottom):
@@ -168,8 +199,18 @@ with st.sidebar:
                 "disconnected",
                 "error",
             }
+            active_behavior = runtime.diagnostics().get("behavior_settings")
+            behavior_changed = bool(
+                active_behavior
+                and (
+                    active_behavior[0] != behavior_enabled
+                    or active_behavior[1] != behavior_kwargs["behavior_posture_manifest"]
+                    or active_behavior[2] != behavior_kwargs["behavior_drinking_manifest"]
+                )
+            )
             if needs_reconnect or (
-                runtime.camera_running and active_settings != requested_settings
+                runtime.camera_running
+                and (active_settings != requested_settings or behavior_changed)
             ):
                 stopped = runtime.stop_camera()
                 if not stopped.ok:
@@ -182,6 +223,7 @@ with st.sidebar:
                             resolution=resolution,
                             observation_region=selected_region,
                             cup_scale_recheck=cup_scale_recheck,
+                            **behavior_kwargs,
                         )
                     )
             else:
@@ -192,6 +234,7 @@ with st.sidebar:
                         resolution=resolution,
                         observation_region=selected_region,
                         cup_scale_recheck=cup_scale_recheck,
+                        **behavior_kwargs,
                     )
                 )
     if right.button("停止观察", width="stretch"):
@@ -281,8 +324,8 @@ def overview():
 
 
 overview()
-chat_tab, history_tab, watch_tab, usage_tab = st.tabs(
-    ["对话", "历史与证据", "关注与提醒", "调用记录"]
+chat_tab, history_tab, watch_tab, behavior_tab, rule_tab, usage_tab = st.tabs(
+    ["对话", "历史与证据", "关注与提醒", "行为与统计", "情境规则", "调用记录"]
 )
 
 with chat_tab:
@@ -424,6 +467,12 @@ with watch_tab:
             st.caption("暂无提醒。")
 
     watch_status()
+
+with behavior_tab:
+    behavior_panel(runtime, show_evidence, time_label)
+
+with rule_tab:
+    rules_panel(runtime, show_result, show_evidence, time_label)
 
 with usage_tab:
     st.subheader("调用与限制")

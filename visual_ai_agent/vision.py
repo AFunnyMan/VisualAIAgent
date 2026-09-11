@@ -157,6 +157,170 @@ class CameraSource:
         self.status = "stopped"
 
 
+@dataclass(slots=True)
+class SharedFrame:
+    """One immutable-by-convention camera sample shared by local consumers."""
+
+    sequence: int
+    frame: Frame
+    captured_at: datetime
+    monotonic_at: float
+
+
+class SharedCamera:
+    """Own one camera read loop and expose independent latest-frame subscriptions.
+
+    Slow consumers only skip frames. They never queue camera frames or delay capture,
+    and closing a subscription does not release the physical camera while another
+    consumer is active.
+    """
+
+    def __init__(self, source: CameraSource) -> None:
+        self.source = source
+        self._condition = threading.Condition()
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+        self._latest: SharedFrame | None = None
+        self._sequence = 0
+        self._subscribers = 0
+
+    @property
+    def running(self) -> bool:
+        return self._thread is not None and self._thread.is_alive()
+
+    def subscribe(self) -> SharedFrameSource:
+        return SharedFrameSource(self)
+
+    def _acquire(self) -> None:
+        with self._condition:
+            self._subscribers += 1
+            if self._thread is not None:
+                return
+            self._stop.clear()
+            self._latest = None
+            self._thread = threading.Thread(
+                target=self._capture_loop, name="vision-camera", daemon=True
+            )
+            self._thread.start()
+
+    def _release(self, timeout: float = 5.0) -> None:
+        with self._condition:
+            self._subscribers = max(0, self._subscribers - 1)
+            if self._subscribers:
+                return
+            thread = self._thread
+            self._stop.set()
+            self._condition.notify_all()
+        if thread is not None and thread is not threading.current_thread():
+            thread.join(timeout)
+        with self._condition:
+            if thread is not None and not thread.is_alive() and self._thread is thread:
+                self._thread = None
+
+    def _capture_loop(self) -> None:
+        terminal_error: str | None = None
+        try:
+            self.source.open()
+            while not self._stop.is_set():
+                frame = self.source.read()
+                if frame is None:
+                    with self._condition:
+                        self._condition.notify_all()
+                    if self.source.status == "stopped":
+                        return
+                    self._stop.wait(0.05)
+                    continue
+                with self._condition:
+                    self._sequence += 1
+                    self._latest = SharedFrame(
+                        sequence=self._sequence,
+                        frame=frame,
+                        captured_at=datetime.now(UTC),
+                        monotonic_at=time.monotonic(),
+                    )
+                    self._condition.notify_all()
+        except Exception as exc:
+            terminal_error = str(exc)
+        finally:
+            try:
+                self.source.close()
+            except Exception as exc:
+                terminal_error = f"Source close failed: {exc}"
+            if terminal_error is not None:
+                self.source.status = "error"
+                self.source.last_error = terminal_error
+            with self._condition:
+                self._condition.notify_all()
+
+
+class SharedFrameSource:
+    """FrameSource view of a SharedCamera for one inference worker."""
+
+    source_name: SourceName = "camera"
+
+    def __init__(self, camera: SharedCamera) -> None:
+        self.camera = camera
+        self._opened = False
+        self._last_sequence = -1
+
+    @property
+    def status(self) -> CameraStatus:
+        if self.camera.running and self.camera.source.status == "stopped":
+            # The physical source may still be inside a slow open/permission call.
+            # Consumers must not interpret that initial state as terminal EOF.
+            return "stale"
+        return self.camera.source.status
+
+    @status.setter
+    def status(self, value: CameraStatus) -> None:
+        self.camera.source.status = value
+
+    @property
+    def last_error(self) -> str | None:
+        return self.camera.source.last_error
+
+    @last_error.setter
+    def last_error(self, value: str | None) -> None:
+        self.camera.source.last_error = value
+
+    def open(self) -> None:
+        if not self._opened:
+            self._opened = True
+            self.camera._acquire()
+
+    def read_sample(self) -> SharedFrame | None:
+        with self.camera._condition:
+            self.camera._condition.wait_for(
+                lambda: (
+                    (
+                        self.camera._latest is not None
+                        and self.camera._latest.sequence > self._last_sequence
+                    )
+                    or not self.camera.running
+                ),
+                timeout=0.25,
+            )
+            latest = self.camera._latest
+            if latest is None or latest.sequence <= self._last_sequence:
+                return None
+            self._last_sequence = latest.sequence
+            return SharedFrame(
+                sequence=latest.sequence,
+                frame=cast(Frame, latest.frame.copy()),
+                captured_at=latest.captured_at,
+                monotonic_at=latest.monotonic_at,
+            )
+
+    def read(self) -> Frame | None:
+        sample = self.read_sample()
+        return sample.frame if sample is not None else None
+
+    def close(self) -> None:
+        if self._opened:
+            self._opened = False
+            self.camera._release()
+
+
 def _validate_observation_region(
     region: tuple[float, float, float, float] | None,
 ) -> tuple[float, float, float, float] | None:
@@ -681,7 +845,12 @@ class VisionWorker:
         try:
             while not self._stop.is_set():
                 read_started = time.perf_counter()
-                frame = self.source.read()
+                if isinstance(self.source, SharedFrameSource):
+                    shared = self.source.read_sample()
+                    frame = shared.frame if shared is not None else None
+                else:
+                    shared = None
+                    frame = self.source.read()
                 capture_read_ms = (time.perf_counter() - read_started) * 1000
                 if frame is None:
                     with self._condition:
@@ -690,13 +859,13 @@ class VisionWorker:
                         return
                     self._stop.wait(0.1)
                     continue
-                now_monotonic = time.monotonic()
+                now_monotonic = shared.monotonic_at if shared else time.monotonic()
                 with self._condition:
                     self._sequence += 1
                     self._latest = _LatestFrame(
                         sequence=self._sequence,
                         frame=frame,
-                        captured_at=datetime.now(UTC),
+                        captured_at=shared.captured_at if shared else datetime.now(UTC),
                         monotonic_at=now_monotonic,
                         capture_read_ms=capture_read_ms,
                     )

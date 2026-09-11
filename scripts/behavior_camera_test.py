@@ -11,7 +11,6 @@ calls the product Agent.
 from __future__ import annotations
 
 import argparse
-import ast
 import hashlib
 import json
 import math
@@ -29,25 +28,23 @@ from typing import Any
 
 import cv2
 import numpy as np
+import onnxruntime as ort  # noqa: F401 -- compatibility patch point
 import psutil
 
 os.environ.setdefault("ORT_DISABLE_TELEMETRY", "1")
-import onnxruntime as ort
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from scripts.behavior_diagnostics import TransitionEvidence  # noqa: E402
-from scripts.behavior_preprocess import preprocess_bgr, validate_roi  # noqa: E402
 from scripts.behavior_timeline_v2 import BehaviorTimelineV2  # noqa: E402
-from scripts.behavior_visibility import PersonTrackGate, _person_candidates  # noqa: E402
+from scripts.behavior_visibility import PersonTrackGate  # noqa: E402
 from scripts.camera_acceptance import _append_jsonl, _atomic_json  # noqa: E402
 from scripts.evaluate_behavior_models import (  # noqa: E402
-    accepted_label,
     load_manifest,
     sha256,
 )
-from visual_ai_agent.vision import CameraSource, VisionWorker, letterbox  # noqa: E402
+from visual_ai_agent.vision import CameraSource, VisionWorker  # noqa: E402
 
 FPS = 10.0
 INTERVAL = 1.0 / FPS
@@ -74,227 +71,14 @@ def _metrics(values: list[float]) -> dict[str, float | None]:
     }
 
 
-class OnnxClassifier:
-    """Strict manifest-backed CPU classifier without importing torch."""
+from visual_ai_agent.behavior import (  # noqa: E402
+    BehaviorDetector as ProductionBehaviorDetector,
+)
+from visual_ai_agent.behavior import OnnxClassifier as ProductionOnnxClassifier  # noqa: E402
+from visual_ai_agent.behavior_preprocess import preprocess_bgr  # noqa: E402,F401
 
-    def __init__(self, record: dict[str, Any]) -> None:
-        self.names = record["_names"]
-        preprocessing = record["preprocessing"]
-        self.size = int(preprocessing["imgsz"])
-        self.roi = validate_roi(preprocessing.get("roi"))
-        self.expected_source_size = preprocessing.get("expected_source_frame_size")
-        options = ort.SessionOptions()
-        options.intra_op_num_threads = 2
-        options.inter_op_num_threads = 1
-        options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
-        options.add_session_config_entry("session.intra_op.allow_spinning", "0")
-        options.add_session_config_entry("session.inter_op.allow_spinning", "0")
-        self.session = ort.InferenceSession(
-            str(record["_onnx"]), sess_options=options, providers=["CPUExecutionProvider"]
-        )
-        inputs, outputs = self.session.get_inputs(), self.session.get_outputs()
-        if (
-            len(inputs) != 1
-            or inputs[0].type != "tensor(float)"
-            or inputs[0].shape != [1, 3, self.size, self.size]
-        ):
-            raise ValueError("Behavior ONNX must have one static FP32 NCHW input")
-        if (
-            len(outputs) != 1
-            or outputs[0].type != "tensor(float)"
-            or outputs[0].shape != [1, len(self.names)]
-        ):
-            raise ValueError("Behavior ONNX must have one static FP32 class output")
-        metadata = self.session.get_modelmeta().custom_metadata_map.get("names")
-        try:
-            metadata_names = {int(k): str(v) for k, v in ast.literal_eval(metadata).items()}
-        except (AttributeError, SyntaxError, TypeError, ValueError) as exc:
-            raise ValueError("Behavior ONNX class metadata is invalid") from exc
-        if metadata_names != self.names:
-            raise ValueError("Behavior ONNX class metadata differs from manifest")
-        self.input_name = inputs[0].name
-        self.output_name = outputs[0].name
-
-    def predict(self, frame: np.ndarray) -> dict[str, Any]:
-        if self.expected_source_size is not None and list(frame.shape[1::-1]) != list(
-            self.expected_source_size
-        ):
-            raise ValueError("Source frame size changed; ROI recalibration required")
-        preprocess_started = time.perf_counter()
-        tensor = preprocess_bgr(frame, self.size, self.roi)
-        preprocess_ms = 1000 * (time.perf_counter() - preprocess_started)
-        started = time.perf_counter()
-        raw = self.session.run([self.output_name], {self.input_name: tensor})[0]
-        latency = 1000 * (time.perf_counter() - started)
-        values = np.asarray(raw, dtype=np.float32).reshape(-1)
-        label, confidence, margin = accepted_label(values, self.names)
-        return {
-            "label": label,
-            "confidence": confidence,
-            "margin": margin,
-            "probabilities": {self.names[i]: float(value) for i, value in enumerate(values)},
-            "inference_ms": latency,
-            "preprocess_ms": preprocess_ms,
-        }
-
-
-class BehaviorDetector:
-    """Adapt paired behavior inference to VisionWorker's detector protocol."""
-
-    def __init__(
-        self,
-        posture: OnnxClassifier,
-        drinking: OnnxClassifier,
-        person_model: Path,
-        *,
-        person_threads: int = 2,
-        person_spinning: bool = True,
-        auxiliary_mode: str = "bounded",
-        person_wait_ms: float = 120.0,
-    ) -> None:
-        self.posture, self.drinking = posture, drinking
-        options = ort.SessionOptions()
-        options.intra_op_num_threads = person_threads
-        options.inter_op_num_threads = 1
-        options.add_session_config_entry(
-            "session.intra_op.allow_spinning", str(int(person_spinning))
-        )
-        options.add_session_config_entry(
-            "session.inter_op.allow_spinning", str(int(person_spinning))
-        )
-        self.person_session = ort.InferenceSession(
-            str(person_model), sess_options=options, providers=["CPUExecutionProvider"]
-        )
-        self.person_input = self.person_session.get_inputs()[0].name
-        self.person_output = self.person_session.get_outputs()[0].name
-        self.gate = PersonTrackGate(max_gap=STALE_AFTER)
-        self.lock = threading.Lock()
-        self.sequence = 0
-        self.latest: dict[str, Any] | None = None
-        if auxiliary_mode not in {"serial", "bounded"} or not 0 < person_wait_ms <= 150:
-            raise ValueError("Invalid auxiliary mode/wait budget")
-        self.auxiliary_mode, self.person_wait_ms = auxiliary_mode, person_wait_ms
-        from scripts.behavior_auxiliary import BoundedAuxiliaryRunner
-
-        self.auxiliary = (
-            BoundedAuxiliaryRunner(self._predict_person) if auxiliary_mode == "bounded" else None
-        )
-        self.drinking_auxiliary = (
-            BoundedAuxiliaryRunner(self.drinking.predict) if auxiliary_mode == "bounded" else None
-        )
-
-    def _predict_person(self, frame: np.ndarray) -> dict:
-        person_started = time.perf_counter()
-        tensor, transform = letterbox(frame, 640)
-        person_preprocessed = time.perf_counter()
-        raw = self.person_session.run([self.person_output], {self.person_input: tensor})[0]
-        person_inferred = time.perf_counter()
-        candidates = _person_candidates(raw, transform)
-        person_parsed = time.perf_counter()
-        return {
-            "candidates": candidates,
-            "elapsed_ms": 1000 * (person_parsed - person_started),
-            "timings": {
-                "person_preprocess": 1000 * (person_preprocessed - person_started),
-                "person_onnx": 1000 * (person_inferred - person_preprocessed),
-                "person_parse": 1000 * (person_parsed - person_inferred),
-            },
-        }
-
-    def detect(self, frame: np.ndarray) -> list[Any]:
-        started = time.perf_counter()
-        job = self.auxiliary.submit(frame) if self.auxiliary else None
-        drinking_job = self.drinking_auxiliary.submit(frame) if self.drinking_auxiliary else None
-        posture = self.posture.predict(frame)
-        drinking_status, drinking_error = "ready", None
-        if self.drinking_auxiliary is None:
-            drinking = self.drinking.predict(frame)
-        else:
-            drinking_outcome = (
-                self.drinking_auxiliary.get(
-                    drinking_job,
-                    max(0.0, self.person_wait_ms / 1000 - (time.perf_counter() - started)),
-                )
-                if drinking_job
-                else {"status": "busy", "result": None, "error": None}
-            )
-            drinking_status, drinking_error = drinking_outcome["status"], drinking_outcome["error"]
-            drinking = (
-                drinking_outcome["result"]
-                if drinking_status == "ready"
-                else {
-                    "label": "unknown",
-                    "preprocess_ms": None,
-                    "inference_ms": None,
-                    "reason": "drinking_" + drinking_status,
-                }
-            )
-        if self.auxiliary is None:
-            outcome = {"status": "ready", "result": self._predict_person(frame), "error": None}
-        elif job is None:
-            outcome = {"status": "busy", "result": None, "error": None}
-        else:
-            outcome = self.auxiliary.get(
-                job, max(0.0, self.person_wait_ms / 1000 - (time.perf_counter() - started))
-            )
-        person = outcome["result"] if outcome["status"] == "ready" else None
-        copied_started = time.perf_counter()
-        frame_copy = frame.copy()
-        frame_hash = hashlib.sha256(memoryview(frame)).hexdigest()
-        now = time.monotonic()
-        with self.lock:
-            self.sequence += 1
-            self.latest = {
-                "sequence": self.sequence,
-                "frame": frame_copy,
-                "frame_sha256": frame_hash,
-                "completed_monotonic": now,
-                "posture": posture,
-                "drinking": drinking,
-                "person_candidates": person["candidates"] if person else [],
-                "person_inference_ms": person["elapsed_ms"] if person else None,
-                "auxiliary_status": outcome["status"],
-                "auxiliary_error": outcome["error"],
-                "drinking_auxiliary_status": drinking_status,
-                "drinking_auxiliary_error": drinking_error,
-                "total_inference_ms": 1000 * (time.perf_counter() - started),
-                "stage_times_ms": {
-                    "posture_preprocess": posture["preprocess_ms"],
-                    "posture_onnx": posture["inference_ms"],
-                    **(
-                        {
-                            "drinking_preprocess": drinking["preprocess_ms"],
-                            "drinking_onnx": drinking["inference_ms"],
-                        }
-                        if drinking_status == "ready"
-                        else {}
-                    ),
-                    **(person["timings"] if person else {}),
-                    "frame_copy_hash": 1000 * (time.perf_counter() - copied_started),
-                },
-            }
-        return []
-
-    def close(self, timeout: float = 5.0) -> bool:
-        deadline = time.monotonic() + timeout
-        results = [
-            runner.close(max(0.0, deadline - time.monotonic()))
-            for runner in (self.auxiliary, self.drinking_auxiliary)
-            if runner
-        ]
-        return all(results)
-
-    def snapshot(self, *, include_frame: bool = True) -> dict[str, Any] | None:
-        with self.lock:
-            if self.latest is None:
-                return None
-            result = {key: value for key, value in self.latest.items() if key != "frame"}
-            if include_frame:
-                result["frame"] = self.latest["frame"].copy()
-            return result
-
-    def reset_gate(self) -> None:
-        self.gate.reset()
+OnnxClassifier = ProductionOnnxClassifier  # noqa: F811
+BehaviorDetector = ProductionBehaviorDetector  # noqa: F811
 
 
 @dataclass

@@ -250,3 +250,20 @@ def test_disconnected_camera_stop_failure_does_not_restart(tmp_path, monkeypatch
         for instance in created:
             instance.close()
         st.cache_resource.clear()
+
+
+def test_behavior_and_rule_panels_preserve_single_runtime(app):
+    assert not app.exception
+    assert any(item.label == "行为与统计" for item in app.tabs)
+    assert any(item.label == "情境规则" for item in app.tabs)
+    assert any("休息提醒未启用" in item.value for item in app.info)
+    assert not next(item for item in app.checkbox if item.label == "启用在座与疑似饮水识别").value
+    app.button(key="FormSubmitter:create_context_rule-创建情境规则").click().run()
+    assert not app.exception
+    assert len([button for button in app.button if button.label == "取消规则"]) == 1
+    app.run()
+    assert not app.exception
+    assert len([button for button in app.button if button.label == "取消规则"]) == 1
+    next(button for button in app.button if button.label == "取消规则").click().run()
+    assert not app.exception
+    assert not [button for button in app.button if button.label == "取消规则"]

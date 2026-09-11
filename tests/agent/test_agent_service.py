@@ -536,3 +536,248 @@ async def test_event_agent_cannot_notify_another_target(tmp_path, services):
     assert notifications[0]["event_id"] == event.event_id
     assert notifications[0]["source"] == "fallback"
     assert result.request_attempts == 2
+
+
+@pytest.mark.asyncio
+async def test_behavior_statistics_uses_existing_scene_tool(tmp_path, services):
+    import json
+
+    from visual_ai_agent.behavior_models import BehaviorObservation
+    from visual_ai_agent.behavior_store import BehaviorStore
+
+    store, watches = services
+    base = datetime.now(UTC) - timedelta(seconds=1)
+    behavior = BehaviorStore(store)
+    for i in range(3):
+        behavior.ingest(
+            BehaviorObservation(
+                observed_at=base + timedelta(seconds=i / 10),
+                monotonic_at=i / 10,
+                status="running",
+                fresh=True,
+                posture="seated",
+                model_version="test",
+                scene_id="scene",
+                source="test",
+            )
+        )
+    model = ScriptedModel(
+        [
+            [tool_call("get_current_scene", json.dumps({"scope": "statistics"}), "stats")],
+            [message("有效在座时长来自统计工具，不能代表学习或专注。")],
+        ]
+    )
+    service = AgentService(configured(tmp_path), store, watches, model=model, behavior=behavior)
+    result = await service.run_user("今天在座多久？", "behavior-stats")
+    assert result.status == "completed"
+    assert len(service.tools) == 7
+    assert result.tool_calls[0]["tool"] == "get_current_scene"
+    assert result.tool_calls[0]["ok"]
+    assert behavior.statistics().data["seated_seconds"] == pytest.approx(0.2)
+
+
+def make_context_job(store):
+    from visual_ai_agent.context_rules import ContextRuleService
+
+    base = datetime.now(UTC) - timedelta(seconds=2)
+    rules = ContextRuleService(store, clock=lambda: base)
+    created = rules.create_rule("left_seat", request_id="rule-create", message="离开前检查手机。")
+    rules.clock = store.clock
+    jobs = rules.process_event(
+        {
+            "kind": "left_seat",
+            "event_id": "behavior-left",
+            "source": "test",
+            "scene_id": "scene",
+            "model_version": "test",
+            "confirmed_at": base + timedelta(seconds=1),
+        }
+    )
+    assert created.ok and len(jobs) == 1
+    return rules, jobs[0]
+
+
+@pytest.mark.asyncio
+async def test_rule_agent_reviews_snapshot_then_notifies_once(tmp_path, services):
+    import json
+
+    store, watches = services
+    rules, job = make_context_job(store)
+    model = ScriptedModel(
+        [
+            [tool_call("get_current_scene", "{}", "scene")],
+            [
+                tool_call(
+                    "search_events",
+                    json.dumps(
+                        {
+                            "scope": "rule",
+                            "rule_id": job["rule_id"],
+                            "event_id": job["event_id"],
+                        }
+                    ),
+                    "trigger",
+                )
+            ],
+            [
+                tool_call(
+                    "notify_user",
+                    json.dumps(
+                        {
+                            "watch_id": job["rule_id"],
+                            "event_id": job["event_id"],
+                            "message": "触发时确认离座，请检查物品。",
+                        }
+                    ),
+                    "notify",
+                )
+            ],
+        ]
+    )
+    service = AgentService(configured(tmp_path), store, watches, model=model, rules=rules)
+    result = await service.run_rule(job)
+    assert result.status == "completed"
+    assert result.notification_created
+    assert [call["tool"] for call in result.tool_calls] == [
+        "get_current_scene",
+        "search_events",
+        "notify_user",
+    ]
+    assert rules.list_notifications().data["notifications"][0]["source"] == "agent"
+    repeated = await service.run_rule(job)
+    assert not repeated.request_attempts
+    assert len(rules.list_notifications().data["notifications"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_rule_without_agent_falls_back_and_cancelled_job_never_calls_model(
+    tmp_path, services
+):
+    store, watches = services
+    rules, job = make_context_job(store)
+    service = AgentService(Config(data_dir=tmp_path), store, watches, rules=rules)
+    result = await service.run_rule(job)
+    assert result.status == "fallback_notified"
+    assert rules.list_notifications().data["notifications"][0]["source"] == "fallback"
+    rules.cancel_rule(job["rule_id"])
+    model = ScriptedModel([[message("不应调用")]])
+    service = AgentService(configured(tmp_path), store, watches, model=model, rules=rules)
+    result = await service.run_rule(job)
+    assert not model.calls and result.request_attempts == 0
+
+
+@pytest.mark.asyncio
+async def test_natural_rule_tools_create_disable_and_cancel(tmp_path, services):
+    import json
+
+    from visual_ai_agent.context_rules import ContextRuleService
+
+    store, watches = services
+    rules = ContextRuleService(store)
+    model = ScriptedModel(
+        [
+            [
+                tool_call(
+                    "create_watch",
+                    json.dumps(
+                        {
+                            "target": "rule",
+                            "trigger": "seated_duration",
+                            "seated_minutes": 45,
+                            "message": "请休息一下。",
+                        }
+                    ),
+                    "create",
+                )
+            ],
+            [message("已创建连续有效在座45分钟的页面提醒。")],
+        ]
+    )
+    service = AgentService(configured(tmp_path), store, watches, model=model, rules=rules)
+    result = await service.run_user("连续坐45分钟提醒休息", "create-rule")
+    assert result.status == "completed"
+    assert len(rules.list_rules().data["rules"]) == 1
+    rule = rules.list_rules().data["rules"][0]
+    model.outputs = [
+        [
+            tool_call(
+                "create_watch",
+                json.dumps(
+                    {
+                        "target": "rule",
+                        "action": "disable",
+                        "rule_id": rule["rule_id"],
+                    }
+                ),
+                "disable",
+            )
+        ],
+        [message("已停用。")],
+    ]
+    model.calls.clear()
+    result = await service.run_user("停用休息提醒", "disable-rule")
+    assert result.status == "completed"
+    assert not rules.get_rule(rule["rule_id"]).data["rule"]["enabled"]
+    model.outputs = [
+        [
+            tool_call(
+                "cancel_watch",
+                json.dumps(
+                    {
+                        "target": "rule",
+                        "watch_id": rule["rule_id"],
+                    }
+                ),
+                "cancel",
+            )
+        ],
+        [message("已取消。")],
+    ]
+    model.calls.clear()
+    assert (await service.run_user("取消规则", "cancel-rule")).status == "completed"
+    assert rules.get_rule(rule["rule_id"]).data["rule"]["status"] == "cancelled"
+
+
+@pytest.mark.asyncio
+async def test_agent_partial_rule_update_preserves_unspecified_conditions(tmp_path, services):
+    import json
+
+    from visual_ai_agent.context_rules import ContextRuleService
+
+    store, watches = services
+    rules = ContextRuleService(store)
+    created = rules.create_rule(
+        "left_seat",
+        request_id="initial",
+        message="检查手机",
+        after_time="18:00",
+        object_category="cell phone",
+        region="right",
+    )
+    rule_id = created.data["rule"]["rule_id"]
+    model = ScriptedModel(
+        [
+            [
+                tool_call(
+                    "create_watch",
+                    json.dumps(
+                        {
+                            "target": "rule",
+                            "action": "update",
+                            "rule_id": rule_id,
+                            "after_time": "19:00",
+                        }
+                    ),
+                    "patch",
+                )
+            ],
+            [message("已调整时间。")],
+        ]
+    )
+    service = AgentService(configured(tmp_path), store, watches, model=model, rules=rules)
+    assert (await service.run_user("改为19点以后", "patch-time")).status == "completed"
+    saved = rules.get_rule(rule_id).data["rule"]
+    assert saved["after_time"] == "19:00"
+    assert saved["message"] == "检查手机"
+    assert saved["trigger"] == "left_seat" and saved["object_category"] == "cell phone"
+    assert saved["region"] == "right"

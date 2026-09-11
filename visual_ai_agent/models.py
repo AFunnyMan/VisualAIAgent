@@ -49,6 +49,7 @@ class SceneObservation(Record):
     width: int = 0
     height: int = 0
     source: Literal["camera", "replay", "test"] = "camera"
+    scene_id: str = "default"
 
 
 class VisualEvent(Record):

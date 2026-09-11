@@ -567,3 +567,17 @@ r01开发验证：起身/坐下各1/1、离座0/1、饮水2/4。新增开发视�
 - 18:46:43.531—18:48:16.198新鲜跨度约92.667秒，881 fresh、3 stale、61 startup；用户完成后同源POST停止，18:48:16.495结束、退出0、worker_stop_error为空。全attempt detect中位42.942ms/p95 61.283ms/最大404.493ms。
 - 三次过期发生在已记录动作区间前后：18:47:09两次涉及JPEG累计233.6ms及旧帧225.5ms年龄叠加姿态141.1ms；18:47:47一次姿态228.7ms、复制/哈希163.4ms。辅助超时隔离仍有效，但主处理与发布长尾未完全消除，原5分钟0 stale不推广。本轮未改代码/模型，不重复全量回归，云端调用0。
 - [报告](../docs/behavior-bounded-actions-20260910.md)、[脱敏汇总](evaluations/behavior-bounded-actions-20260910.json)保留正确流程及性能限制；私人图片/完整日志仍忽略。下一步主姿态/发布长尾与重复动作、反例、长时、Windows验收。
+
+## 2026-09-11 17:45 +08:00 — 行为正式集成、统计与基础情境规则
+
+- 用户批准本轮计划，明确暂缓性能专项、物品质量/训练、自定义语义区域、钥匙/合盖、手机使用及其他可靠性增强。三个Sol分别完成推理/Runtime、SQLite/统计、规则服务；root整合七工具、UI、审查与真实验证。未训练或替换物品权重，未修改.env，未新增外部通知渠道。
+- 共享物理采集向物品1/2秒和行为目标10fps提供带原始时间的最新帧；预处理、分类、人体关联、有界推理与状态机迁入正式模块，旧实验入口兼容复用。行为沿用250ms新鲜度、原确认阈值、120ms辅助预算及person 4线程不空转。单独错误状态、停止事实、清理锁和真实模型SHA版本可见。
+- SQLite v3备份迁移、新增独立行为观察/合并区间/事件和规则表；统计在座、站立、空座、未知与事件次数，跨午夜裁切，进程停机不补时。三态条件、同场景三次有效物品事实、触发处理入口提交边界、版本化规则、原子领取、去重、重启恢复及本地降级已接入。休息提醒默认不创建，阈值45分钟可改；未知不重新获得通知资格，确认空座才重置。
+- 正式七工具增加受控行为/统计/规则参数，保持旧物品查询与关注兼容；Agent局部修改不覆盖未指定字段。Streamlit新增行为与统计、情境规则两页签及实验模型开关；无钥匙/合盖、自定义区域、手机使用或专注推断。
+- 实际`.venv/bin/pytest -q --tb=short`最后全量316 passed/1 skipped/4 deselected，12.40秒；主环境无torch导致既有训练预处理项跳过，live_api默认未选。随后补Runtime触发边界交错用例，`.venv/bin/pytest tests/ui/test_runtime.py -q --tb=short`11 passed，5.53秒。Ruff全仓与188文件格式检查、diff检查通过。未把定向新增项混写为已再次跑全量。
+- 开发迁移对照40帧概率maxabs=0；一个development完整304样本raw labels一致、3姿态事件；冻结四源cache仍17TP/0FP/0FN。命令、输入SHA、stdout与临时输出见[脱敏对照](evaluations/behavior-product-runtime-parity-20260911.json)。仅开发回归，不是新独立质量验收。
+- 真实API第一次在沙箱内网络请求失败（1次attempt、无工具），改用已授权网络环境后成功；接口/原子领取最终版本再次运行 `VAA_RUN_LIVE_API=1 .venv/bin/pytest tests/agent/test_behavior_live.py -m live_api -q --tb=short --basetemp=harness/artifacts/behavior-product-integration-live-20260911`：1 passed，8.33秒。隔离受控事实完成统计查询2次模型请求、创建离座＋手机右侧规则2次、事件复核通知3次；最终一轮共7次模型请求、17808 Token，usage完整。事件第三轮notify_user成功后SDK达到轮数上限，按既有语义记completed，通知source=agent；不是摄像头视觉条件联合验收。原始DB留忽略目录。
+- 真实组合测试入口新增`scripts/check_behavior_integration.py`，使用本地现有posture/drinking training-manifest、1920×1080、物品每秒/杯复查、行为10fps，输出各自隔离目录。session1沙箱camera权限拒绝，0有效帧，未算通过。session2授权摄像头254行为fresh但物品0fresh，诊断出慢打开时物品消费者提前退出；已修并加350ms双消费者测试。
+- 修复后实际命令 `.venv/bin/python -m scripts.check_behavior_integration --posture-manifest harness/artifacts/behavior-20260910-r02/posture-run/training-manifest.json --drinking-manifest harness/artifacts/behavior-20260910-r02/drinking-run/training-manifest.json --output data/acceptance/behavior-product-integration-20260911-session3 --seconds 30` 正常退出0。17:36:41.243—17:37:11.521（+08:00）物品24fresh/6stale/1stopped、行为244fresh/22stale/1stopped，stale计数包含启动等待，不能宣称持续运行无过期。物品推理p50/p95/max=106.71/112.03/130.22ms；行为回调结束画面年龄54.66/62.42/80.29ms；RSS峰值700.80MiB；正常停止、无最终错误、0Agent runs、0规则。本段无人工动作标签，不作为姿态准确率或长时验收。
+- 17:39启动8501正式Streamlit，临时进程环境启用现有实验清单和1920×1080，未改.env。浏览器复用原8765标签转到8501，实际点击开始观察，核对新鲜预览、当前行为和统计更新、规则表单、默认未创建休息/情境提醒；仅观察页面，不建立示例规则。当前服务保持供用户后续动作验证。
+- [使用与接口](../docs/behavior-product-integration.md)、[审查](code_review/behavior-product-integration.md)、[上下文](context/behavior-product-integration.md)已更新。待用户配合：坐站/离座/返回、杯口到嘴与靠脸负例、实际离座＋物品区域规则及统计核对。长期稳定性、Windows实机及用户本轮暂缓项保持开放。

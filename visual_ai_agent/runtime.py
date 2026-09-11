@@ -4,6 +4,7 @@ import asyncio
 import atexit
 from concurrent.futures import Future
 from dataclasses import replace
+from pathlib import Path
 from queue import Empty, Full, Queue
 from threading import Event, Lock, RLock, Thread
 from time import monotonic
@@ -11,13 +12,24 @@ from typing import Any
 from uuid import uuid4
 
 from visual_ai_agent.agent import AgentService
+from visual_ai_agent.behavior import (
+    BehaviorDetector,
+    BehaviorWorker,
+    OnnxClassifier,
+    load_behavior_manifest,
+    sha256,
+)
+from visual_ai_agent.behavior_models import BehaviorObservation
+from visual_ai_agent.behavior_store import BehaviorStore
 from visual_ai_agent.config import Config
+from visual_ai_agent.context_rules import ContextRuleService
 from visual_ai_agent.instance_lock import InstanceLock
 from visual_ai_agent.memory import MemoryStore
 from visual_ai_agent.models import SceneObservation, ToolResult, utcnow
 from visual_ai_agent.vision import (
     CameraSource,
     CupScaleRecheckDetector,
+    SharedCamera,
     VisionWorker,
     YoloOnnxDetector,
 )
@@ -35,6 +47,8 @@ class ApplicationRuntime:
         self._jobs: Queue = Queue(maxsize=64)
         self._thread: Thread | None = None
         self._vision = None
+        self._behavior_worker = None
+        self._shared_camera = None
         self._detector = None
         self._active_camera_settings: (
             tuple[int, int, int, tuple[float, float, float, float] | None, float, bool] | None
@@ -42,12 +56,21 @@ class ApplicationRuntime:
         self._last_view_key: (
             tuple[int, int, int, tuple[float, float, float, float] | None, bool] | None
         ) = None
+        self._active_behavior_settings = None
+        self._active_scene_id: str | None = None
+        self._active_behavior_model_version: str | None = None
+        self.behavior_error: str | None = None
         self.last_error: str | None = None
         try:
             self.memory = MemoryStore(config.data_dir, max_gap_seconds=config.sample_interval * 2.5)
             self.watches = WatchService(self.memory)
+            self.behavior = BehaviorStore(self.memory, config.timezone)
+            self.rules = ContextRuleService(self.memory, self.behavior, config.timezone)
             recovered = self.watches.recover()
-            self.agent = AgentService(config, self.memory, self.watches)
+            recovered_rules = self.rules.recover()
+            self.agent = AgentService(
+                config, self.memory, self.watches, behavior=self.behavior, rules=self.rules
+            )
             self.memory.cleanup()
         except Exception:
             self._instance.close()
@@ -68,6 +91,11 @@ class ApplicationRuntime:
                             f"证据 {event.evidence_id or '不可用'}。",
                             source="fallback",
                         )
+        for job in recovered_rules:
+            try:
+                self._jobs.put_nowait(("rule", (job,), None))
+            except Full:
+                self.rules.fallback(job)
         atexit.register(self.close)
 
     @property
@@ -100,6 +128,8 @@ class ApplicationRuntime:
     def ingest(self, observation: SceneObservation, jpeg: bytes | None):
         """Called by the inference worker; never blocks on a model request."""
         try:
+            if self._active_scene_id:
+                observation = observation.model_copy(update={"scene_id": self._active_scene_id})
             events = self.memory.ingest(observation, jpeg)
             for event in events:
                 for watch in self.watches.match_event(event):
@@ -139,11 +169,12 @@ class ApplicationRuntime:
                 try:
                     if future is not None and not future.set_running_or_notify_cancel():
                         continue
-                    coroutine = (
-                        self.agent.run_user(*arguments)
-                        if kind == "user"
-                        else self.agent.run_event(*arguments)
-                    )
+                    if kind == "user":
+                        coroutine = self.agent.run_user(*arguments)
+                    elif kind == "event":
+                        coroutine = self.agent.run_event(*arguments)
+                    else:
+                        coroutine = self.agent.run_rule(*arguments)
                     result = loop.run_until_complete(coroutine)
                     if future is not None:
                         future.set_result(result)
@@ -164,6 +195,11 @@ class ApplicationRuntime:
                             )
                         except Exception:
                             self.last_error = "Agent 与本地提醒写入失败，请检查本地数据目录。"
+                    elif kind == "rule":
+                        try:
+                            self.rules.fallback(arguments[0])
+                        except Exception:
+                            self.last_error = "情境规则提醒写入失败，请检查本地数据目录。"
                 finally:
                     self._jobs.task_done()
         finally:
@@ -197,19 +233,41 @@ class ApplicationRuntime:
         resolution: tuple[int, int] | None = None,
         observation_region: tuple[float, float, float, float] | None = None,
         cup_scale_recheck: bool | None = None,
+        behavior_enabled: bool | None = None,
+        behavior_posture_manifest=None,
+        behavior_drinking_manifest=None,
     ):
         with self._camera_lock:
             return self._start_camera(
-                camera_index, interval, resolution, observation_region, cup_scale_recheck
+                camera_index,
+                interval,
+                resolution,
+                observation_region,
+                cup_scale_recheck,
+                behavior_enabled,
+                behavior_posture_manifest,
+                behavior_drinking_manifest,
             )
 
     def _start_camera(
-        self, camera_index, interval, resolution, observation_region, cup_scale_recheck
+        self,
+        camera_index,
+        interval,
+        resolution,
+        observation_region,
+        cup_scale_recheck,
+        behavior_enabled,
+        behavior_posture_manifest,
+        behavior_drinking_manifest,
     ):
         with self._lock:
             if self._closed:
                 return ToolResult(ok=False, error="应用已关闭")
+            if self._behavior_worker is not None:
+                return ToolResult(ok=False, error="上一次行为识别线程尚未完成停止清理。")
             try:
+                self.behavior_error = None
+                self._active_behavior_model_version = None
                 width, height = resolution or (self.config.camera_width, self.config.camera_height)
                 config = replace(
                     self.config,
@@ -227,6 +285,21 @@ class ApplicationRuntime:
                         if cup_scale_recheck is None
                         else cup_scale_recheck
                     ),
+                    behavior_enabled=(
+                        self.config.behavior_enabled
+                        if behavior_enabled is None
+                        else behavior_enabled
+                    ),
+                    behavior_posture_manifest=(
+                        self.config.behavior_posture_manifest
+                        if behavior_posture_manifest is None
+                        else Path(behavior_posture_manifest)
+                    ),
+                    behavior_drinking_manifest=(
+                        self.config.behavior_drinking_manifest
+                        if behavior_drinking_manifest is None
+                        else Path(behavior_drinking_manifest)
+                    ),
                 )
                 settings = (
                     config.camera_index,
@@ -236,11 +309,20 @@ class ApplicationRuntime:
                     config.sample_interval,
                     config.cup_scale_recheck,
                 )
+                behavior_settings = (
+                    config.behavior_enabled,
+                    config.behavior_posture_manifest,
+                    config.behavior_drinking_manifest,
+                    config.behavior_person_model,
+                    config.behavior_model_version,
+                    config.behavior_scene_id,
+                    config.behavior_seat_roi,
+                )
                 if self._vision is not None:
                     if self._vision.running:
-                        if (
-                            self._active_camera_settings is None
-                            or settings == self._active_camera_settings
+                        if self._active_camera_settings is None or (
+                            settings == self._active_camera_settings
+                            and behavior_settings == self._active_behavior_settings
                         ):
                             return ToolResult(
                                 ok=True,
@@ -267,6 +349,13 @@ class ApplicationRuntime:
                     height=config.camera_height,
                     observation_region=config.observation_region,
                 )
+                scene_id = f"{config.behavior_scene_id}-{uuid4().hex}"
+                self._active_scene_id = scene_id
+                if config.behavior_enabled:
+                    self._shared_camera = SharedCamera(source)
+                    vision_source = self._shared_camera.subscribe()
+                else:
+                    vision_source = source
                 active_detector = (
                     CupScaleRecheckDetector(self._detector)
                     if config.cup_scale_recheck
@@ -274,15 +363,60 @@ class ApplicationRuntime:
                 )
                 self._vision = VisionWorker(
                     active_detector,
-                    source,
+                    vision_source,
                     self.ingest,
                     inference_interval=config.sample_interval,
                     stale_after=config.sample_interval * 2.5,
                 )
                 self._vision.start()
-                self._active_camera_settings = settings
-                self._last_view_key = view_key
                 self.last_error = None
+                if config.behavior_enabled:
+                    try:
+                        assert config.behavior_posture_manifest is not None
+                        assert config.behavior_drinking_manifest is not None
+                        person_model = config.behavior_person_model or config.model_path
+                        if person_model.resolve() != config.model_path.resolve():
+                            raise ValueError(
+                                "Independent behavior person models require a verified manifest"
+                            )
+                        posture_record = load_behavior_manifest(
+                            config.behavior_posture_manifest, "posture"
+                        )
+                        drinking_record = load_behavior_manifest(
+                            config.behavior_drinking_manifest, "drinking"
+                        )
+                        posture = OnnxClassifier(posture_record)
+                        drinking = OnnxClassifier(drinking_record)
+                        behavior_model_version = (
+                            f"{config.behavior_model_version}:"
+                            f"p={posture_record['onnx_sha256'][:12]}:"
+                            f"d={drinking_record['onnx_sha256'][:12]}:"
+                            f"person={sha256(person_model)[:12]}"
+                        )
+                        behavior_detector = BehaviorDetector(
+                            posture,
+                            drinking,
+                            person_model,
+                            seat_roi=config.behavior_seat_roi,
+                            expected_person_sha256=config.model_sha256 or None,
+                        )
+                        self._behavior_worker = BehaviorWorker(
+                            behavior_detector,
+                            self._shared_camera.subscribe(),
+                            self.ingest_behavior,
+                            model_version=behavior_model_version,
+                            scene_id=scene_id,
+                        )
+                        self._behavior_worker.start()
+                        self._active_behavior_model_version = behavior_model_version
+                    except Exception as exc:
+                        self._behavior_worker = None
+                        self.behavior_error = (
+                            f"行为识别未启动（{type(exc).__name__}），物品观察继续运行。"
+                        )
+                self._active_camera_settings = settings
+                self._active_behavior_settings = behavior_settings
+                self._last_view_key = view_key
                 return ToolResult(ok=True, data={"status": "starting", "settings": settings})
             except Exception as exc:
                 self.last_error = (
@@ -299,6 +433,30 @@ class ApplicationRuntime:
         with self._lock:
             worker = self._vision
         if worker:
+            if self._behavior_worker:
+                behavior_worker = self._behavior_worker
+                behavior_worker.stop()
+                if behavior_worker.running:
+                    self.behavior_error = "行为识别工作线程尚未停止，请退出进程后检查。"
+                else:
+                    self._behavior_worker = None
+                    if self._active_scene_id:
+                        self.ingest_behavior(
+                            BehaviorObservation(
+                                observed_at=utcnow(),
+                                monotonic_at=max(0.0, monotonic()),
+                                status="stopped",
+                                fresh=False,
+                                posture="unknown",
+                                drinking=None,
+                                model_version=(
+                                    self._active_behavior_model_version
+                                    or self.config.behavior_model_version
+                                ),
+                                scene_id=self._active_scene_id,
+                                source="camera",
+                            )
+                        )
             worker.stop()
             if worker.running:
                 self.last_error = "摄像头工作线程尚未停止，请退出进程后检查设备。"
@@ -321,13 +479,40 @@ class ApplicationRuntime:
             )
             if self._vision is worker:
                 self._vision = None
+                self._shared_camera = None
                 self._active_camera_settings = None
+                self._active_behavior_settings = None
+                if self._behavior_worker is None:
+                    self._active_scene_id = None
+                    self._active_behavior_model_version = None
+        if self._behavior_worker is not None:
+            return ToolResult(ok=False, error=self.behavior_error)
         return ToolResult(ok=True, data={"status": "stopped"})
 
     def snapshot(self) -> tuple[SceneObservation | None, bytes | None]:
         if self._vision:
             return self._vision.snapshot()
         return None, None
+
+    def ingest_behavior(self, observation, jpeg: bytes | None = None) -> None:
+        """Persist behavior and enqueue only newly claimed local rule jobs."""
+        try:
+            trigger_ingested_at = self.memory.clock()
+            events = self.behavior.ingest(observation, jpeg)
+            observation_payload = observation.model_dump(mode="python")
+            observation_payload["trigger_ingested_at"] = trigger_ingested_at
+            jobs = self.rules.process_observation(observation_payload)
+            for event in events:
+                event_payload = event.model_dump(mode="python")
+                event_payload["trigger_ingested_at"] = trigger_ingested_at
+                jobs.extend(self.rules.process_event(event_payload))
+            for job in jobs:
+                try:
+                    self._jobs.put_nowait(("rule", (job,), None))
+                except Full:
+                    self.rules.fallback(job)
+        except Exception as exc:
+            self.behavior_error = f"行为事实保存失败（{type(exc).__name__}），物品观察继续运行。"
 
     def close(self):
         with self._lock:
@@ -340,7 +525,12 @@ class ApplicationRuntime:
             self._stop.set()
             if self._thread:
                 self._thread.join(timeout=self.config.api_timeout_seconds * 3 + 5)
-            if (self._thread and self._thread.is_alive()) or self._vision is not None:
+            if (
+                (self._thread and self._thread.is_alive())
+                or self._vision is not None
+                or self._behavior_worker is not None
+                or (self._shared_camera is not None and self._shared_camera.running)
+            ):
                 self.last_error = self.last_error or (
                     "工作线程尚未停止；保留实例锁，避免重复访问设备。"
                 )
@@ -355,4 +545,14 @@ class ApplicationRuntime:
             "agent_configured": self.config.agent_connected,
             "error": self.last_error,
             "camera_settings": self._active_camera_settings,
+            "behavior_enabled": (
+                self._active_behavior_settings[0]
+                if self._active_behavior_settings is not None
+                else self.config.behavior_enabled
+            ),
+            "behavior_running": bool(self._behavior_worker and self._behavior_worker.running),
+            "behavior_settings": self._active_behavior_settings,
+            "behavior_error": self.behavior_error,
+            "scene_id": self._active_scene_id,
+            "behavior_model_version": self._active_behavior_model_version,
         }

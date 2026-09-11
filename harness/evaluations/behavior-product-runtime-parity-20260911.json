@@ -1,0 +1,70 @@
+{
+  "status": "completed",
+  "recorded_at": "2026-09-11T17:42:24+08:00",
+  "purpose": "Production behavior inference migration parity; development sources only",
+  "independent_accuracy": false,
+  "cloud_api_calls": 0,
+  "training_performed": false,
+  "inputs": {
+    "video": {
+      "path": "data/training-inbox/development/2026-09-10 11-15-42.mkv",
+      "sha256": "2825093165aa01464cce97db939852639392df040aa0a5fe65a6e640c63a3dc1"
+    },
+    "posture_manifest": {
+      "path": "harness/artifacts/behavior-20260910-r02/posture-run/training-manifest.json",
+      "sha256": "51cb2f2054b2631571af5bd08d93163db4c84175962b0e17757060906fc24f90"
+    },
+    "drinking_manifest": {
+      "path": "harness/artifacts/behavior-20260910-r02/drinking-run/training-manifest.json",
+      "sha256": "3588217ee6887dc66434434e402527d9a29c5221ff21e39e3ff3fc3dcba1d359"
+    }
+  },
+  "direct_onnx_parity": {
+    "command": ".venv/bin/python /private/tmp/compare_behavior_runtime.py",
+    "output_file": null,
+    "output_capture": "stdout only; temporary comparison program retained at command path for the current host session",
+    "sample_rate_fps": 10,
+    "samples": 40,
+    "posture_and_drinking_labels_equal": true,
+    "probability_max_abs": 0.0,
+    "stdout": "{\"video\": \"data/training-inbox/development/2026-09-10 11-15-42.mkv\", \"samples\": 40, \"max_abs\": 0.0, \"labels_equal\": true}"
+  },
+  "full_video_runtime_parity": {
+    "command": ".venv/bin/python /private/tmp/compare_behavior_detector.py",
+    "output_file": null,
+    "output_capture": "stdout only; temporary comparison program retained at command path for the current host session",
+    "sample_rate_fps": 10,
+    "samples": 304,
+    "raw_labels_equal": true,
+    "production_events": [
+      "stood_up",
+      "left_seat",
+      "sat_down"
+    ],
+    "stdout": "{'frames': 304, 'raw_labels_equal': True, 'production_events': ['stood_up', 'left_seat', 'sat_down']}"
+  },
+  "frozen_cache_replay": {
+    "command": ".venv/bin/python -m scripts.behavior_experiment score --cache harness/artifacts/behavior-20260910-r03/baseline-cache --output /private/tmp/behavior-runtime-score.json --annotations data/behavior-review-20260910/annotations-r03-development-rev2.json --annotation-revision-note 'Production module migration replay; development sources only.' --person-cache harness/artifacts/behavior-20260910-r03/person-cache/person-predictions.jsonl",
+    "output_file": "/private/tmp/behavior-runtime-score.json",
+    "output_sha256": "0763f6af3cbd1a53ab9da0b309cd1a47562a19c1f76cbea0e6dfae9a9db71ad4",
+    "predictions_sha256": "9a84821d57efa3f74a2836ad49b2817dfba56a99bbaaa82b1b5388e444fe4c12",
+    "person_predictions_sha256": "5089f97babd1f0cf42394a716453a04f4092fd073800fcb97a9618baf9c2c93f",
+    "profile": "v2-10fps-seat-association",
+    "sources": 4,
+    "events": 17,
+    "tp": 17,
+    "fp": 0,
+    "fn": 0,
+    "per_source": [
+      {"events": 3, "tp": 3, "fp": 0, "fn": 0},
+      {"events": 4, "tp": 4, "fp": 0, "fn": 0},
+      {"events": 8, "tp": 8, "fp": 0, "fn": 0},
+      {"events": 2, "tp": 2, "fp": 0, "fn": 0}
+    ]
+  },
+  "limitations": [
+    "All sources were already used for development and do not constitute independent quality acceptance.",
+    "The two direct parity commands wrote only stdout; the frozen-cache replay has a retained output JSON in /private/tmp for this host session.",
+    "This evidence checks migration equivalence and does not replace USB, long-duration, negative-action, or Windows validation."
+  ]
+}

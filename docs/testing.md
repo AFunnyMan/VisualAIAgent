@@ -114,3 +114,8 @@ uv run --locked python scripts/camera_acceptance.py --camera 0 --duration 1800 -
 新增座位关联对照使用`--person-association seat --seat-roi 0.2 0.2 0.95 1.0`，默认仍为旧严格关联。具体参数、同帧旧逻辑比较、有限图片证据及测试结果见[座位关联改进](behavior-seat-improvement-20260910.md)。离线`v2-10fps-seat-association`固定采用上述默认ROI；改变实机ROI后不能直接声称与该离线配置一致。故障帧不保存为动作证据；诊断图片有限，不能替代完整连续动作的独立人工标注。
 
 实时入口现默认有界并行人体/饮水推理，复现原串行需`--auxiliary-mode serial`。线程设置、等待预算、完整命令和失败耗时口径见[延迟修复](behavior-latency-fix-20260910.md)。辅助timeout/busy表示对应信息不可用，不等于相机画面过期；最终fresh与事件的安全边界保持。旧配置的“新旧同帧比较”仍只比较人体关联规则，不是两套模型运行性能对照。
+
+
+## 行为产品集成（2026-09-11）
+
+新增行为存储、共享采集、规则条件与并发领取、Agent受控扩展和UI测试。命令及实测边界见[集成说明](behavior-product-integration.md)，实际结果见build-log。`tests/agent/test_behavior_live.py`需显式live_api授权，测试隔离事实；`scripts.check_behavior_integration`访问真实相机但不创建规则或调用模型。二者不能互相替代用户动作/真实物品条件验收。

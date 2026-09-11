@@ -6,7 +6,7 @@ import asyncio
 import inspect
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any, Literal, cast
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -65,6 +65,9 @@ class _AgentContext:
     run_id: str
     request_id: str
     kind: RunKind
+    behavior: Any = None
+    rules: Any = None
+    rule_job: dict[str, Any] | None = None
     event_watch_id: str | None = None
     event_id: str | None = None
     event_category: Category | None = None
@@ -108,13 +111,13 @@ def _tool_summary(name: str, result: ToolResult) -> dict[str, Any]:
     ):
         if key in result.data and isinstance(result.data[key], (str, int, float, bool, type(None))):
             summary[key] = result.data[key]
-    for key in ("events", "watches"):
+    for key in ("events", "watches", "rules"):
         if isinstance(result.data.get(key), list):
             summary[f"{key}_count"] = len(result.data[key])
-    for key in ("watch", "notification"):
+    for key in ("watch", "notification", "rule"):
         value = result.data.get(key)
         if isinstance(value, dict):
-            for id_key in ("watch_id", "event_id", "notification_id", "status"):
+            for id_key in ("watch_id", "rule_id", "event_id", "notification_id", "status"):
                 if isinstance(value.get(id_key), str):
                     summary[id_key] = value[id_key]
     return summary
@@ -191,10 +194,15 @@ class AgentService:
         memory: Any,
         watch_service: Any,
         model: Model | None = None,
+        *,
+        behavior: Any = None,
+        rules: Any = None,
     ) -> None:
         self.config = config
         self.memory = memory
         self.watch_service = watch_service
+        self.behavior = behavior
+        self.rules = rules
         self._injected_model = model is not None
         self._client: AsyncOpenAI | None = None
         self._closed = False
@@ -268,6 +276,27 @@ class AgentService:
             f"当前时间是{now.isoformat()}，时区是{self.config.timezone}。"
             "处理最近一小时等相对时间查询时，以这个当前时间计算带时区的start和end，并确保start<end。"
         )
+        base += (
+            "行为属于实验模型的观察：在座不等于学习或专注，疑似饮水不证明吞咽或饮水量。"
+            "当前行为用get_current_scene(scope='behavior')，每日时长用scope='statistics'及YYYY-MM-DD日期。"
+            "行为历史用search_events(scope='behavior')；统计只能引用工具实际返回的有效时长，未知不能补算。"
+            "情境规则用create_watch(target='rule')；action=create/update/enable/disable，修改须提供rule_id。"
+            "规则触发支持stood_up/sat_down/left_seat/seat_occupied/suspected_drink/seated_duration。"
+            "seated_duration需seated_minutes；可选after_time为HH:MM严格晚于，object_category和region限制现有物品区域。"
+            "update仅传需要修改的字段，未提供字段保持不变；移除时间条件用clear_after_time=true，"
+            "移除物品及区域条件用clear_object_condition=true。先list_watches确定要改的rule_id。"
+            "未指定时间条件时传null；region默认any。message是用户希望收到的提醒内容。"
+            "规则默认长期有效，创建后必须说明触发、条件、实验性和页面提醒方式。"
+            "list_watches也返回rules；取消规则用cancel_watch(target='rule',watch_id=rule_id)。"
+            "不支持钥匙、合盖、手机使用判断、自定义命名区域或外部推送，不得创建此类规则或虚报成功。"
+        )
+        if context.context.rule_job is not None:
+            return base + (
+                "这是情境规则自动复查。先get_current_scene，再search_events(scope='rule',rule_id,event_id)"
+                "读取触发时已保存的规则与条件事实，最后notify_user(watch_id=rule_id,event_id,message)。"
+                "提醒说明触发时间，物品位置只能表述为触发时观察，不能将历史快照称为现在。"
+                "不要创建、修改或取消规则。只有给定规则和事件可通知。"
+            )
         if context.context.kind == "event":
             return base + (
                 "这是自动事件复查。必须先调用get_current_scene，再用search_events核验目标事件证据；"
@@ -309,19 +338,33 @@ class AgentService:
             return _safe_result(result)
 
         @function_tool(timeout=self.config.api_timeout_seconds)
-        async def get_current_scene(ctx: RunContextWrapper[_AgentContext]) -> str:
-            """Read the latest camera state and text detections, including stale/fault state."""
+        async def get_current_scene(
+            ctx: RunContextWrapper[_AgentContext],
+            scope: Literal["scene", "behavior", "statistics"] = "scene",
+            local_date: str | None = None,
+        ) -> str:
+            """Read current facts or observed behavior durations; statistics date is YYYY-MM-DD."""
+
+            def operation():
+                if scope != "scene":
+                    if ctx.context.behavior is None:
+                        return ToolResult(ok=False, error="behavior service unavailable")
+                    if scope == "statistics":
+                        return ctx.context.behavior.statistics(
+                            date.fromisoformat(local_date) if local_date else None
+                        )
+                    return ctx.context.behavior.current()
+                result = ctx.context.memory.get_current_scene()
+                if ctx.context.behavior is not None:
+                    result = result.model_copy(deep=True)
+                    result.data["behavior"] = ctx.context.behavior.current().data
+                return result
 
             def reviewed(result: ToolResult) -> None:
-                if result.ok:
+                if result.ok and scope == "scene":
                     ctx.context.reviewed_scene = True
 
-            return await finish(
-                ctx,
-                "get_current_scene",
-                ctx.context.memory.get_current_scene,
-                reviewed,
-            )
+            return await finish(ctx, "get_current_scene", operation, reviewed)
 
         @function_tool(timeout=self.config.api_timeout_seconds)
         async def find_object(ctx: RunContextWrapper[_AgentContext], category: Category) -> str:
@@ -347,60 +390,153 @@ class AgentService:
         @function_tool(timeout=self.config.api_timeout_seconds)
         async def search_events(
             ctx: RunContextWrapper[_AgentContext],
-            category: Category,
-            start: datetime,
-            end: datetime,
+            category: Category | None = None,
+            start: datetime | None = None,
+            end: datetime | None = None,
+            scope: Literal["objects", "behavior", "rule"] = "objects",
+            rule_id: str | None = None,
+            event_id: str | None = None,
         ) -> str:
-            """Search up to 20 events. Use aware datetimes and require start strictly before end."""
+            """Search with aware datetimes; require start strictly before end, or inspect a rule."""
+
+            def operation():
+                if scope == "rule":
+                    if ctx.context.rules is None or not rule_id or not event_id:
+                        return ToolResult(ok=False, error="rule_id and event_id required")
+                    return ctx.context.rules.get_job(rule_id, event_id)
+                if start is None or end is None:
+                    return ToolResult(ok=False, error="start and end required")
+                if scope == "behavior":
+                    if ctx.context.behavior is None:
+                        return ToolResult(ok=False, error="behavior service unavailable")
+                    return ctx.context.behavior.search_events(start, end, limit=20)
+                if category is None:
+                    return ToolResult(ok=False, error="category required")
+                return ctx.context.memory.search_events(category, start, end, limit=20)
 
             def reviewed(result: ToolResult) -> None:
-                if result.ok and ctx.context.reviewed_scene and ctx.context.event_id:
+                context = ctx.context
+                if result.ok and context.reviewed_scene and context.event_id:
+                    if context.rule_job is not None and (
+                        scope != "rule" or rule_id != context.event_watch_id
+                    ):
+                        return
                     events = result.data.get("events", [])
                     if any(
-                        isinstance(item, dict) and item.get("event_id") == ctx.context.event_id
+                        isinstance(item, dict) and item.get("event_id") == context.event_id
                         for item in events
                     ):
-                        ctx.context.reviewed_event = True
+                        context.reviewed_event = True
 
-            return await finish(
-                ctx,
-                "search_events",
-                lambda: ctx.context.memory.search_events(category, start, end, limit=20),
-                reviewed,
-            )
+            return await finish(ctx, "search_events", operation, reviewed)
 
         @function_tool(timeout=self.config.api_timeout_seconds)
         async def create_watch(
             ctx: RunContextWrapper[_AgentContext],
-            category: Category,
-            condition: Condition,
+            category: Category | None = None,
+            condition: Condition | None = None,
             duration_minutes: int = 30,
+            target: Literal["watch", "rule"] = "watch",
+            action: Literal["create", "update", "enable", "disable"] = "create",
+            rule_id: str | None = None,
+            trigger: Literal[
+                "stood_up",
+                "sat_down",
+                "left_seat",
+                "seat_occupied",
+                "suspected_drink",
+                "seated_duration",
+            ]
+            | None = None,
+            after_time: str | None = None,
+            object_category: Category | None = None,
+            region: Literal["any", "left", "center", "right"] | None = None,
+            seated_minutes: int | None = None,
+            message: str | None = None,
+            clear_after_time: bool = False,
+            clear_object_condition: bool = False,
         ) -> str:
-            """Create one appeared/missing watch; repeated calls in this request are idempotent."""
-            return await finish(
-                ctx,
-                "create_watch",
-                lambda: ctx.context.watches.create_watch(
-                    category,
-                    condition,
-                    duration_minutes,
-                    request_id=ctx.context.request_id,
-                ),
-            )
+            """Create an object watch or create/update/enable/disable a typed contextual rule."""
+
+            def operation():
+                context = ctx.context
+                if context.kind != "user":
+                    return ToolResult(ok=False, error="automatic runs cannot modify tasks")
+                if target == "watch":
+                    if category is None or condition is None or action != "create":
+                        return ToolResult(ok=False, error="object category and condition required")
+                    return context.watches.create_watch(
+                        category, condition, duration_minutes, request_id=context.request_id
+                    )
+                if context.rules is None:
+                    return ToolResult(ok=False, error="rule service unavailable")
+                if action in ("enable", "disable"):
+                    if not rule_id:
+                        return ToolResult(ok=False, error="rule_id required")
+                    return context.rules.update_rule(
+                        rule_id, enabled=action == "enable", request_id=context.request_id
+                    )
+                values = dict(
+                    trigger=trigger,
+                    after_time=after_time,
+                    object_category=object_category,
+                    region=region,
+                    seated_minutes=seated_minutes,
+                    message=message,
+                )
+                if action == "update":
+                    if not rule_id:
+                        return ToolResult(ok=False, error="rule_id required")
+                    changes = {key: value for key, value in values.items() if value is not None}
+                    if clear_after_time:
+                        changes["after_time"] = None
+                    if clear_object_condition:
+                        changes.update(object_category=None, region="any")
+                    if trigger is not None and trigger != "seated_duration":
+                        changes["seated_minutes"] = None
+                    if not changes:
+                        return ToolResult(ok=False, error="no rule changes supplied")
+                    return context.rules.update_rule(
+                        rule_id, **changes, request_id=context.request_id
+                    )
+                if trigger is None:
+                    return ToolResult(ok=False, error="trigger required")
+                values["region"] = region or "any"
+                values["message"] = message or "请留意本次行为事件。"
+                return context.rules.create_rule(**values, request_id=context.request_id)
+
+            return await finish(ctx, "create_watch", operation)
 
         @function_tool(timeout=self.config.api_timeout_seconds)
         async def list_watches(ctx: RunContextWrapper[_AgentContext]) -> str:
-            """List persisted watches with status and expiry."""
-            return await finish(ctx, "list_watches", ctx.context.watches.list_watches)
+            """List object watches and contextual rules with structured conditions."""
+
+            def operation():
+                result = ctx.context.watches.list_watches().model_copy(deep=True)
+                if ctx.context.rules is not None:
+                    result.data["rules"] = ctx.context.rules.list_rules().data.get("rules", [])
+                return result
+
+            return await finish(ctx, "list_watches", operation)
 
         @function_tool(timeout=self.config.api_timeout_seconds)
-        async def cancel_watch(ctx: RunContextWrapper[_AgentContext], watch_id: str) -> str:
-            """Idempotently cancel a watch or report its terminal/not-found state."""
-            return await finish(
-                ctx,
-                "cancel_watch",
-                lambda: ctx.context.watches.cancel_watch(watch_id),
-            )
+        async def cancel_watch(
+            ctx: RunContextWrapper[_AgentContext],
+            watch_id: str,
+            target: Literal["watch", "rule"] = "watch",
+        ) -> str:
+            """Cancel an object watch or a contextual rule (watch_id is the rule_id for rules)."""
+
+            def operation():
+                if ctx.context.kind != "user":
+                    return ToolResult(ok=False, error="automatic runs cannot modify tasks")
+                if target == "rule":
+                    if ctx.context.rules is None:
+                        return ToolResult(ok=False, error="rule service unavailable")
+                    return ctx.context.rules.cancel_rule(watch_id)
+                return ctx.context.watches.cancel_watch(watch_id)
+
+            return await finish(ctx, "cancel_watch", operation)
 
         @function_tool(timeout=self.config.api_timeout_seconds)
         async def notify_user(
@@ -428,7 +564,17 @@ class AgentService:
             return await finish(
                 ctx,
                 "notify_user",
-                lambda: context.watches.notify_user(watch_id, event_id, message, source="agent"),
+                lambda: (
+                    context.rules.notify(
+                        watch_id,
+                        context.rule_job["rule_version"],
+                        event_id,
+                        message,
+                        source="agent",
+                    )
+                    if context.rule_job is not None
+                    else context.watches.notify_user(watch_id, event_id, message, source="agent")
+                ),
                 notified,
             )
 
@@ -523,6 +669,91 @@ class AgentService:
             local_date=local_date,
         )
 
+    async def run_rule(self, job: dict[str, Any]) -> AgentRunResult:
+        """Review one durable contextual trigger using the same seven tools and daily budget."""
+        request_id = f"rule:{job['rule_id']}:{job['rule_version']}:{job['event_id']}"
+        now = utcnow()
+        run_id = uuid4().hex
+        local_date = now.astimezone(ZoneInfo(self.config.timezone)).date()
+        claim = self.rules.claim_job(job["rule_id"], job["rule_version"], job["event_id"])
+        active = claim.ok and claim.data.get("claimed") is True
+        if not active:
+            return AgentRunResult(
+                run_id=run_id,
+                request_id=request_id,
+                kind="event",
+                status="failed",
+                message="规则已停用、修改、取消或通知已处理；未调用模型。",
+                request_attempts=0,
+                input_tokens=None,
+                output_tokens=None,
+                total_tokens=None,
+                usage_complete=False,
+            )
+        reserved = await _invoke(
+            self.memory.reserve_event_agent_run(
+                run_id,
+                request_id,
+                local_date,
+                self.config.daily_auto_limit,
+                started_at=now,
+                model=self.config.agent_model or ("injected" if self._injected_model else None),
+            )
+        )
+        if not reserved:
+            result = self.rules.fallback(job)
+            return AgentRunResult(
+                run_id=run_id,
+                request_id=request_id,
+                kind="event",
+                status="fallback_notified" if result.ok else "limit_reached",
+                message="自动额度不足或重复任务；已尝试本地降级提醒。",
+                request_attempts=0,
+                input_tokens=None,
+                output_tokens=None,
+                total_tokens=None,
+                usage_complete=False,
+                notification_created=result.ok,
+            )
+        prompt = (
+            f"复核情境规则 rule_id={job['rule_id']}; event_id={job['event_id']}; "
+            f"rule_version={job['rule_version']}。最多三轮：第一轮get_current_scene；"
+            "第二轮search_events(scope='rule',rule_id=上述编号,event_id=上述编号)；"
+            "第三轮依据返回的触发时事实notify_user(watch_id=rule_id,event_id,message)。"
+            "提醒注明触发时间，不将触发时物品事实表述为现在。"
+        )
+        return await self._run(
+            kind="event",
+            prompt=prompt,
+            request_id=request_id,
+            run_id=run_id,
+            started_at=now,
+            local_date=local_date,
+            rule_job=job,
+        )
+
+    async def _rule_fallback(
+        self, context, started_at, local_date, reason, attempts, usage, usage_complete
+    ) -> AgentRunResult:
+        try:
+            result = self.rules.fallback(context.rule_job)
+        except Exception:
+            result = ToolResult(ok=False, error="local rule notification unavailable")
+        context.notification_created = result.ok
+        context.tool_calls.append(_tool_summary("notify_user_fallback", result))
+        return await self._finish_local(
+            context,
+            status="fallback_notified" if result.ok else "failed",
+            message="本地规则降级提醒已写入。" if result.ok else "规则已失效或提醒未写入。",
+            started_at=started_at,
+            attempts=attempts,
+            usage=usage,
+            usage_complete=usage_complete,
+            error=reason,
+            user_message=None,
+            local_date=local_date,
+        )
+
     async def _run(
         self,
         *,
@@ -534,6 +765,7 @@ class AgentService:
         started_at: datetime | None = None,
         watch: WatchTask | None = None,
         event: VisualEvent | None = None,
+        rule_job: dict[str, Any] | None = None,
         local_date=None,
     ) -> AgentRunResult:
         run_id = run_id or uuid4().hex
@@ -546,8 +778,11 @@ class AgentService:
             run_id=run_id,
             request_id=request_id,
             kind=kind,
-            event_watch_id=watch.watch_id if watch else None,
-            event_id=event.event_id if event else None,
+            behavior=self.behavior,
+            rules=self.rules,
+            rule_job=rule_job,
+            event_watch_id=rule_job["rule_id"] if rule_job else (watch.watch_id if watch else None),
+            event_id=rule_job["event_id"] if rule_job else (event.event_id if event else None),
             event_category=event.category if event else None,
             event_evidence_id=event.evidence_id if event else None,
         )
@@ -570,6 +805,16 @@ class AgentService:
                 )
             )
         if self._agent is None:
+            if rule_job is not None:
+                return await self._rule_fallback(
+                    context,
+                    started_at,
+                    local_date,
+                    "agent_not_connected",
+                    0,
+                    (None, None, None),
+                    False,
+                )
             if kind == "event" and watch is not None and event is not None:
                 return await self._fallback(
                     run_id=run_id,
@@ -628,6 +873,16 @@ class AgentService:
                     user_message=user_message,
                     local_date=local_date,
                 )
+            if rule_job is not None and not context.notification_created:
+                return await self._rule_fallback(
+                    context,
+                    started_at,
+                    local_date,
+                    "missing_validated_notification",
+                    hooks.attempts,
+                    usage,
+                    _usage_is_complete(responses, hooks.attempts),
+                )
             if kind == "event" and not context.notification_created and watch and event:
                 return await self._fallback(
                     run_id=run_id,
@@ -681,6 +936,10 @@ class AgentService:
                 local_date=local_date,
             )
 
+        if rule_job is not None:
+            return await self._rule_fallback(
+                context, started_at, local_date, code, hooks.attempts, usage, usage_complete
+            )
         if kind == "event" and watch is not None and event is not None:
             return await self._fallback(
                 run_id=run_id,

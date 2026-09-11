@@ -456,3 +456,85 @@ def test_view_change_resets_presence_without_creating_missing_event(tmp_path, mo
         assert runtime.memory.find_object("cup").data["found"] is True
     finally:
         runtime.close()
+
+
+def test_behavior_trigger_boundary_excludes_late_committed_old_object_frame(tmp_path, monkeypatch):
+    """Precisely interleave a late object commit inside behavior persistence."""
+    from visual_ai_agent.behavior_models import BehaviorEvent, BehaviorObservation
+
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path))
+    base = utcnow()
+    clock = [base]
+    runtime.memory.clock = lambda: clock[0]
+    runtime.rules.clock = lambda: clock[0]
+    rule = runtime.rules.create_rule(
+        "left_seat",
+        request_id="boundary",
+        message="检查手机",
+        object_category="cell phone",
+        region="right",
+    ).data["rule"]
+    detection = Detection(
+        category="cell phone", confidence=0.9, bbox=(50, 1, 90, 40), region="right"
+    )
+
+    def put_object(offset):
+        runtime.memory.ingest(
+            SceneObservation(
+                observed_at=base + timedelta(seconds=offset),
+                monotonic_at=10 + offset,
+                status="running",
+                fresh=True,
+                source="test",
+                scene_id="same-scene",
+                detections=[detection],
+            )
+        )
+
+    try:
+        clock[0] = base + timedelta(seconds=1)
+        put_object(0.1)
+        put_object(0.2)
+        event = BehaviorEvent(
+            kind="left_seat",
+            observed_at=base + timedelta(seconds=0.8),
+            confirmed_at=base + timedelta(seconds=0.8),
+            model_version="test",
+            scene_id="same-scene",
+            source="test",
+        )
+        observation = BehaviorObservation(
+            observed_at=event.confirmed_at,
+            monotonic_at=10.8,
+            status="running",
+            fresh=True,
+            posture="empty",
+            events=[event],
+            model_version="test",
+            scene_id="same-scene",
+            source="test",
+        )
+
+        def persist_then_late_commit(_observation, _jpeg):
+            # Sample was captured before the trigger, but became available after its boundary.
+            clock[0] = base + timedelta(seconds=1.1)
+            put_object(0.3)
+            return [event]
+
+        monkeypatch.setattr(runtime.behavior, "ingest", persist_then_late_commit)
+        seen = []
+        for name in ("process_observation", "process_event"):
+            original = getattr(runtime.rules, name)
+
+            def capture(payload, operation=original):
+                seen.append(payload["trigger_ingested_at"])
+                return operation(payload)
+
+            monkeypatch.setattr(runtime.rules, name, capture)
+        runtime.ingest_behavior(observation)
+        assert seen == [base + timedelta(seconds=1)] * 2
+        assert not runtime.rules.get_job(rule["rule_id"], event.event_id).ok
+        assert runtime.memory.list_agent_runs() == []
+        assert runtime.last_error is None
+    finally:
+        runtime.close()

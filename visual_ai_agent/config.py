@@ -41,11 +41,22 @@ class Config:
     camera_height: int = 480
     observation_region: tuple[float, float, float, float] | None = None
     cup_scale_recheck: bool = False
+    behavior_enabled: bool = False
+    behavior_posture_manifest: Path | None = None
+    behavior_drinking_manifest: Path | None = None
+    behavior_person_model: Path | None = None
+    behavior_model_version: str = "behavior-r03"
+    behavior_scene_id: str = "default"
+    behavior_seat_roi: tuple[float, float, float, float] = (0.2, 0.2, 0.95, 1.0)
 
     def __post_init__(self):
         ZoneInfo(self.timezone)
         if not isinstance(self.cup_scale_recheck, bool):
             raise ValueError("cup_scale_recheck must be a boolean")
+        if not isinstance(self.behavior_enabled, bool):
+            raise ValueError("behavior_enabled must be a boolean")
+        if not self.behavior_model_version.strip() or not self.behavior_scene_id.strip():
+            raise ValueError("Behavior model version and scene id must be non-empty")
         if self.api_mode not in ("responses", "chat_completions"):
             raise ValueError("VAA_API_MODE must be responses or chat_completions")
         if self.api_base_url:
@@ -83,6 +94,13 @@ class Config:
                 "observation_region",
                 None if values == (0.0, 0.0, 1.0, 1.0) else values,
             )
+        seat_roi = tuple(float(value) for value in self.behavior_seat_roi)
+        if len(seat_roi) != 4 or not all(math.isfinite(value) for value in seat_roi):
+            raise ValueError("Behavior seat ROI must contain four finite values")
+        left, top, right, bottom = seat_roi
+        if not (0 <= left < right <= 1 and 0 <= top < bottom <= 1):
+            raise ValueError("Behavior seat ROI must be a non-empty normalized rectangle")
+        object.__setattr__(self, "behavior_seat_roi", seat_roi)
 
     @property
     def agent_connected(self) -> bool:
@@ -101,6 +119,11 @@ class Config:
             )
         except ValueError as exc:
             raise ValueError("VAA_OBSERVATION_REGION must contain four numbers") from exc
+        raw_seat_roi = os.getenv("VAA_BEHAVIOR_SEAT_ROI", "0.2,0.2,0.95,1.0")
+        try:
+            behavior_seat_roi = tuple(float(value.strip()) for value in raw_seat_roi.split(","))
+        except ValueError as exc:
+            raise ValueError("VAA_BEHAVIOR_SEAT_ROI must contain four numbers") from exc
         return cls(
             data_dir=Path(os.getenv("VAA_DATA_DIR", "data")),
             model_path=Path(os.getenv("VAA_MODEL_PATH", "models/yolo26n-e2e.onnx")),
@@ -119,4 +142,23 @@ class Config:
             camera_height=int(os.getenv("VAA_CAMERA_HEIGHT", "480")),
             observation_region=observation_region,  # type: ignore[arg-type]
             cup_scale_recheck=_strict_bool_env("VAA_CUP_SCALE_RECHECK", False),
+            behavior_enabled=_strict_bool_env("VAA_BEHAVIOR_ENABLED", False),
+            behavior_posture_manifest=(
+                Path(value)
+                if (value := os.getenv("VAA_BEHAVIOR_POSTURE_MANIFEST", "").strip())
+                else None
+            ),
+            behavior_drinking_manifest=(
+                Path(value)
+                if (value := os.getenv("VAA_BEHAVIOR_DRINKING_MANIFEST", "").strip())
+                else None
+            ),
+            behavior_person_model=(
+                Path(value)
+                if (value := os.getenv("VAA_BEHAVIOR_PERSON_MODEL", "").strip())
+                else None
+            ),
+            behavior_model_version=os.getenv("VAA_BEHAVIOR_MODEL_VERSION", "behavior-r03"),
+            behavior_scene_id=os.getenv("VAA_BEHAVIOR_SCENE_ID", "default"),
+            behavior_seat_roi=behavior_seat_roi,  # type: ignore[arg-type]
         )
