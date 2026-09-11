@@ -58,7 +58,9 @@ async def test_real_laptop_query_rule_and_event_notification(tmp_path):
         )
         assert created.status == "completed"
         saved = rules.list_rules().data["rules"]
-        assert len(saved) == 1 and saved[0]["trigger"] == "laptop_closed"
+        assert len(saved) == 1 and saved[0]["trigger"] == "laptop_closed", (
+            created.message, created.tool_calls
+        )
 
         event_id = uuid4().hex
         event_at = utcnow() - timedelta(milliseconds=10)

@@ -284,7 +284,8 @@ class AgentService:
             "当前行为用get_current_scene(scope='behavior')，每日时长用scope='statistics'及YYYY-MM-DD日期。"
             "行为历史用search_events(scope='behavior')；统计只能引用工具实际返回的有效时长，未知不能补算。"
             "情境规则用create_watch(target='rule')；action=create/update/enable/disable，修改须提供rule_id。"
-            "规则触发支持stood_up/sat_down/left_seat/seat_occupied/suspected_drink/seated_duration。"
+            "规则触发支持stood_up/sat_down/left_seat/seat_occupied/suspected_drink/seated_duration/"
+            "laptop_closed/laptop_opened。"
             "seated_duration需seated_minutes；可选after_time为HH:MM严格晚于，object_category和region限制现有物品区域。"
             "update仅传需要修改的字段，未提供字段保持不变；移除时间条件用clear_after_time=true，"
             "移除物品及区域条件用clear_object_condition=true。先list_watches确定要改的rule_id。"
@@ -295,6 +296,12 @@ class AgentService:
             "search_events(scope='laptop')。只有工具返回available=true且current=true时才能称为开着或合上；"
             "unknown、遮挡、不在场、过期或能力未验收都必须明确说无法确认。"
             "情境规则可用laptop_closed/laptop_opened触发，但创建前须用scope='laptop'确认能力available=true。"
+            "创建规则是订阅未来的确认事件，不是在断言当前状态：available=true即可调用create_watch，"
+            "即使current=false或state=unknown也应按用户要求创建，不能以暂无画面或当前未知为由拒绝。"
+            "只有available=false才拒绝创建笔记本规则；仍不得把未知状态称为已打开或已合盖。"
+            "笔记本不是物品类别：laptop_closed/laptop_opened只能填trigger，不能把laptop填到category或"
+            "object_category。创建纯开合规则时category=null、condition=null、object_category=null、"
+            "rule_id=null；只有用户另要求杯子/手机/瓶子条件才填object_category。不要编造rule_id。"
             "不支持钥匙、手机使用判断、自定义命名区域或外部推送，不得创建此类规则或虚报成功。"
         )
         if context.context.rule_job is not None:
@@ -476,7 +483,13 @@ class AgentService:
             clear_after_time: bool = False,
             clear_object_condition: bool = False,
         ) -> str:
-            """Create an object watch or create/update/enable/disable a typed contextual rule."""
+            """Manage object watches or contextual rules.
+
+            For laptop rules use target=rule and trigger=laptop_closed/laptop_opened.
+            Laptop is NOT a category. Leave category, condition and object_category
+            null for a lid-only rule; a new rule also has rule_id=null.
+            Available capability permits a future rule even if current state is unknown.
+            """
 
             def operation():
                 context = ctx.context

@@ -1,0 +1,86 @@
+{
+  "date": "2026-09-12",
+  "timezone": "Asia/Shanghai",
+  "scope": "real qwen-flash with controlled synthetic text facts in isolated temporary database; not camera acceptance",
+  "command": "VAA_RUN_LIVE_API=1 .venv/bin/pytest -q -m live_api tests/agent/test_laptop_live.py",
+  "result": "1 passed in 7.59s",
+  "runs": [
+    {
+      "kind": "user",
+      "status": "completed",
+      "started_at": "2026-09-11T17:46:14.867657+00:00",
+      "finished_at": "2026-09-11T17:46:16.132838+00:00",
+      "model": "qwen-flash",
+      "request_attempts": 2,
+      "input_tokens": 4857,
+      "output_tokens": 34,
+      "total_tokens": 4891,
+      "usage_complete": 1,
+      "error": null,
+      "tools": [
+        {
+          "tool": "get_current_scene",
+          "ok": true,
+          "current": false
+        }
+      ]
+    },
+    {
+      "kind": "user",
+      "status": "completed",
+      "started_at": "2026-09-11T17:46:16.138095+00:00",
+      "finished_at": "2026-09-11T17:46:18.459655+00:00",
+      "model": "qwen-flash",
+      "request_attempts": 2,
+      "input_tokens": 5235,
+      "output_tokens": 168,
+      "total_tokens": 5403,
+      "usage_complete": 1,
+      "error": null,
+      "tools": [
+        {
+          "tool": "create_watch",
+          "ok": true,
+          "deduplicated": false
+        }
+      ]
+    },
+    {
+      "kind": "event",
+      "status": "completed",
+      "started_at": "2026-09-11T17:46:18.519890+00:00",
+      "finished_at": "2026-09-11T17:46:21.558468+00:00",
+      "model": "qwen-flash",
+      "request_attempts": 3,
+      "input_tokens": 8616,
+      "output_tokens": 292,
+      "total_tokens": 8908,
+      "usage_complete": 1,
+      "error": "model_turn_limit",
+      "tools": [
+        {
+          "tool": "get_current_scene",
+          "ok": true,
+          "current": false
+        },
+        {
+          "tool": "search_events",
+          "ok": true
+        },
+        {
+          "tool": "notify_user",
+          "ok": true,
+          "deduplicated": false
+        }
+      ]
+    }
+  ],
+  "new_notification_count": 1,
+  "real_camera_images_sent": false,
+  "production_database_used": false,
+  "prior_failed_attempts": 5,
+  "fixes": [
+    "Clarify future subscriptions require available capability, not a currently known lid state.",
+    "Clarify laptop belongs to rule trigger, not supported object categories; unused fields remain null."
+  ]
+}

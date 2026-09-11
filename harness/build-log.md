@@ -682,3 +682,12 @@ r01开发验证：起身/坐下各1/1、离座0/1、饮水2/4。新增开发视�
 - 最终 `.venv/bin/pytest -q`：395 passed、1 skipped、5 deselected，13.89秒；其中真实API按门控未执行，不把deselected写成通过。`.export-venv/bin/python -m pytest -q tests/test_train_behavior_model.py`：15 passed、1.99秒。`.venv/bin/ruff check .` 与 `git diff --check` 通过。
 - 最终差异扫描无真实凭据格式命中，不包含.env、私人图片/视频、SQLite、模型权重或环境目录。用户暂停钥匙之前已经完成的实验源码与脱敏结果保留提交，未恢复钥匙工作。
 - 交付入口：docs/remaining-work-20260912.md、docs/laptop-product-integration.md、docs/drinking-training-20260912.md。正式默认模型不变；当前能独立完成的程序接入和本轮回归已保存，识别质量与平台/用户联合验收按该清单继续开放。
+
+## 2026-09-12 01:42—01:46 +08 — 获授权后真实千问闭环
+
+- 用户明确允许发送受控测试文字，解除此前外发授权阻塞。只读取凭据用于连接，使用全新临时测试数据库、构造文字状态及随机证据编号，未使用生产数据库或摄像头图像。
+- 前5轮实际API测试暴露两类指令歧义：已可用能力在current=false时被误当成不能订阅未来事件；模型把laptop填入仅允许cup/phone/bottle的物品类别，参数校验拒绝后达到三轮上限。保留失败事实，不将仅有文字答复当作规则已创建。
+- 修改Agent指令与create_watch说明：未来规则只要求available能力，当前unknown不阻止订阅；开合只能是trigger，未请求附加物品条件时category/condition/object_category及新建rule_id为null。未放宽类别校验、实际能力校验或最大调用轮数。
+- 实际命令 `VAA_RUN_LIVE_API=1 .venv/bin/pytest -q -m live_api tests/agent/test_laptop_live.py` 最终1 passed/7.59秒。3个Agent任务分别2/2/3次模型请求，总19,202 Token；查询get_current_scene，创建create_watch，自动get_current_scene→search_events→notify_user，实际仅一条source=agent通知。自动任务通知写入后触及既有三轮上限，status=completed但error=model_turn_limit按原逻辑保留，不冒充没有任何诊断或额外调用。脱敏结果evaluations/laptop-agent-live-20260912.json。
+- 此结论为真实模型+受控事实工具链通过，不是笔记本视觉精度或真实USB验收；能力默认关闭，缺失可见性素材和实机项目仍保持开放。
+- 修复后Agent/情境规则离线定向33 passed/2.20秒，Ruff与差异检查通过。此前全套395项仍为前一里程碑记录，本次未将未重跑全套写成新结果。
