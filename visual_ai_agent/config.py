@@ -48,6 +48,9 @@ class Config:
     behavior_model_version: str = "behavior-r03"
     behavior_scene_id: str = "default"
     behavior_seat_roi: tuple[float, float, float, float] = (0.2, 0.2, 0.95, 1.0)
+    laptop_enabled: bool = False
+    laptop_capability_manifest: Path | None = None
+    laptop_model_version: str = "laptop-unvalidated"
 
     def __post_init__(self):
         ZoneInfo(self.timezone)
@@ -55,8 +58,12 @@ class Config:
             raise ValueError("cup_scale_recheck must be a boolean")
         if not isinstance(self.behavior_enabled, bool):
             raise ValueError("behavior_enabled must be a boolean")
+        if not isinstance(self.laptop_enabled, bool):
+            raise ValueError("laptop_enabled must be a boolean")
         if not self.behavior_model_version.strip() or not self.behavior_scene_id.strip():
             raise ValueError("Behavior model version and scene id must be non-empty")
+        if not self.laptop_model_version.strip():
+            raise ValueError("Laptop model version must be non-empty")
         if self.api_mode not in ("responses", "chat_completions"):
             raise ValueError("VAA_API_MODE must be responses or chat_completions")
         if self.api_base_url:
@@ -161,4 +168,11 @@ class Config:
             behavior_model_version=os.getenv("VAA_BEHAVIOR_MODEL_VERSION", "behavior-r03"),
             behavior_scene_id=os.getenv("VAA_BEHAVIOR_SCENE_ID", "default"),
             behavior_seat_roi=behavior_seat_roi,  # type: ignore[arg-type]
+            laptop_enabled=_strict_bool_env("VAA_LAPTOP_ENABLED", False),
+            laptop_capability_manifest=(
+                Path(value)
+                if (value := os.getenv("VAA_LAPTOP_CAPABILITY_MANIFEST", "").strip())
+                else None
+            ),
+            laptop_model_version=os.getenv("VAA_LAPTOP_MODEL_VERSION", "laptop-unvalidated"),
         )

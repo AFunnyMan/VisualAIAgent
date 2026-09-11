@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "candidate": "key-yolo26n-cpu60-r03",
+  "dataset_fingerprint": "5d5d4e0972de952c7e0f704749e22487d41439198392824519123e83503ef2d4",
+  "method": {
+    "scope": "development only; holdout excluded from this diagnostic pipeline",
+    "note": "Raw ONNX candidates were inspected below the product threshold for diagnosis only.",
+    "product_confidence_threshold": 0.35,
+    "match_iou_threshold": 0.5
+  },
+  "ground_truth_matches": [
+    {"split":"train","frame_id":"b8f908681885-000000","best_iou":0.8994,"best_iou_confidence":0.066655,"highest_confidence_match":0.313764,"highest_confidence_match_iou":0.8356,"candidate_count_iou50":15},
+    {"split":"train","frame_id":"b8f908681885-000360","best_iou":0.8395,"best_iou_confidence":0.015774,"highest_confidence_match":0.024939,"highest_confidence_match_iou":0.7804,"candidate_count_iou50":8},
+    {"split":"train","frame_id":"b8f908681885-000720","best_iou":0.8653,"best_iou_confidence":0.015409,"highest_confidence_match":0.056977,"highest_confidence_match_iou":0.8609,"candidate_count_iou50":10},
+    {"split":"train","frame_id":"b8f908681885-001440","best_iou":0.9525,"best_iou_confidence":0.036867,"highest_confidence_match":0.341820,"highest_confidence_match_iou":0.9118,"candidate_count_iou50":11},
+    {"split":"train","frame_id":"b8f908681885-001620","best_iou":0.8711,"best_iou_confidence":0.098067,"highest_confidence_match":0.312669,"highest_confidence_match_iou":0.7614,"candidate_count_iou50":10},
+    {"split":"train","frame_id":"ed0ae4ce0dd0-000240","best_iou":0.8670,"best_iou_confidence":0.194460,"highest_confidence_match":0.426227,"highest_confidence_match_iou":0.8147,"candidate_count_iou50":10},
+    {"split":"val","frame_id":"f9e748975212-003360","best_iou":0.8290,"best_iou_confidence":0.012730,"highest_confidence_match":0.189146,"highest_confidence_match_iou":0.8046,"candidate_count_iou50":7},
+    {"split":"val","frame_id":"f9e748975212-003840","best_iou":0.8340,"best_iou_confidence":0.053589,"highest_confidence_match":0.179482,"highest_confidence_match_iou":0.7782,"candidate_count_iou50":12},
+    {"split":"val","frame_id":"f9e748975212-004800","best_iou":0.8785,"best_iou_confidence":0.067575,"highest_confidence_match":0.081834,"highest_confidence_match_iou":0.8407,"candidate_count_iou50":7},
+    {"split":"val","frame_id":"f9e748975212-005280","best_iou":0.8995,"best_iou_confidence":0.042266,"highest_confidence_match":0.251254,"highest_confidence_match_iou":0.8669,"candidate_count_iou50":11},
+    {"split":"val","frame_id":"f9e748975212-005760","best_iou":0.8639,"best_iou_confidence":0.039269,"highest_confidence_match":0.196630,"highest_confidence_match_iou":0.8437,"candidate_count_iou50":9}
+  ],
+  "negative_frames": {
+    "count": 19,
+    "maximum_raw_confidence_range": [0.0199, 0.0235]
+  },
+  "training_trend": {
+    "train_box_loss": {"epoch_1":0.95229,"epoch_60":0.79110,"minimum":0.38655,"minimum_epoch":55,"maximum":1.37088,"maximum_epoch":30},
+    "train_class_loss": {"epoch_1":21.5079,"epoch_60":19.3347,"minimum":15.2814,"minimum_epoch":28,"maximum":24.4551,"maximum_epoch":4},
+    "val_box_loss": {"epoch_1":0.47681,"epoch_60":0.65881,"minimum":0.47681,"minimum_epoch":1,"maximum":0.86392,"maximum_epoch":16},
+    "val_class_loss": {"epoch_1":24.2254,"epoch_60":21.4877,"minimum":21.4877,"minimum_epoch":58,"maximum":24.6899,"maximum_epoch":16},
+    "map50": {"maximum":0.995,"first_maximum_epoch":25},
+    "map50_95": {"maximum":0.6725,"maximum_epoch":37,"epoch_60":0.58337}
+  },
+  "conclusion": "All 11 GT objects have well-localized candidates, but 10/11 remain below confidence 0.35. Localization is learned; confidence calibration/classification convergence is the immediate failure.",
+  "next_experiment": "After freezing additional development positives, first test lr0=0.01 for about 100 epochs while keeping freeze and augmentation fixed. If train confidence remains low, separately test less freezing; inspect augmented samples before reducing scale/translate/HSV."
+}

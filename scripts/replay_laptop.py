@@ -1,4 +1,4 @@
-"""Replay an explicit local video through an experimental lid model and timeline.
+"""Replay a registered development video through an experimental lid model and timeline.
 
 This is offline model evaluation, not live camera evidence or a product reminder.
 Never use independent acceptance video results to select model parameters.
@@ -14,13 +14,22 @@ from pathlib import Path
 
 import cv2
 
+from scripts.training_source_policy import verify_development_sources
 from visual_ai_agent.behavior import OnnxClassifier, load_behavior_manifest, sha256
 from visual_ai_agent.laptop_state import LaptopTimeline
 
+SOURCE_REGISTRY = (
+    Path(__file__).resolve().parent.parent
+    / "harness/evaluations/recognition-20260911-sources.json"
+)
 
-def replay(manifest: Path, video: Path, output: Path) -> dict:
+
+def replay(
+    manifest: Path, video: Path, output: Path, registry: Path = SOURCE_REGISTRY,
+) -> dict:
     if output.exists():
         raise ValueError("Refusing to overwrite evaluation output")
+    sources = verify_development_sources([video], registry)
     model = OnnxClassifier(load_behavior_manifest(manifest, "laptop"))
     cap = cv2.VideoCapture(str(video))
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -58,6 +67,8 @@ def replay(manifest: Path, video: Path, output: Path) -> dict:
         "scope": "offline experimental replay; no quality acceptance implied",
         "video_sha256": sha256(video),
         "manifest_sha256": sha256(manifest),
+        "source_registry_sha256": sha256(registry),
+        "verified_development_sources": sources,
         "frames_decoded": index,
         "samples": len(rows),
         "raw_counts": dict(Counter(row["raw"]["label"] for row in rows)),
@@ -75,5 +86,8 @@ if __name__ == "__main__":
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--video", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--registry", type=Path, default=SOURCE_REGISTRY)
     args = parser.parse_args()
-    print(json.dumps(replay(args.manifest, args.video, args.output), ensure_ascii=False))
+    print(json.dumps(
+        replay(args.manifest, args.video, args.output, args.registry), ensure_ascii=False
+    ))

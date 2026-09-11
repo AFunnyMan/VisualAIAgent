@@ -66,6 +66,7 @@ class _AgentContext:
     request_id: str
     kind: RunKind
     behavior: Any = None
+    laptop: Any = None
     rules: Any = None
     rule_job: dict[str, Any] | None = None
     event_watch_id: str | None = None
@@ -196,12 +197,14 @@ class AgentService:
         model: Model | None = None,
         *,
         behavior: Any = None,
+        laptop: Any = None,
         rules: Any = None,
     ) -> None:
         self.config = config
         self.memory = memory
         self.watch_service = watch_service
         self.behavior = behavior
+        self.laptop = laptop
         self.rules = rules
         self._injected_model = model is not None
         self._client: AsyncOpenAI | None = None
@@ -288,7 +291,11 @@ class AgentService:
             "未指定时间条件时传null；region默认any。message是用户希望收到的提醒内容。"
             "规则默认长期有效，创建后必须说明触发、条件、实验性和页面提醒方式。"
             "list_watches也返回rules；取消规则用cancel_watch(target='rule',watch_id=rule_id)。"
-            "不支持钥匙、合盖、手机使用判断、自定义命名区域或外部推送，不得创建此类规则或虚报成功。"
+            "笔记本开合是独立实验事实：当前状态用get_current_scene(scope='laptop')，历史用"
+            "search_events(scope='laptop')。只有工具返回available=true且current=true时才能称为开着或合上；"
+            "unknown、遮挡、不在场、过期或能力未验收都必须明确说无法确认。"
+            "情境规则可用laptop_closed/laptop_opened触发，但创建前须用scope='laptop'确认能力available=true。"
+            "不支持钥匙、手机使用判断、自定义命名区域或外部推送，不得创建此类规则或虚报成功。"
         )
         if context.context.rule_job is not None:
             return base + (
@@ -340,13 +347,17 @@ class AgentService:
         @function_tool(timeout=self.config.api_timeout_seconds)
         async def get_current_scene(
             ctx: RunContextWrapper[_AgentContext],
-            scope: Literal["scene", "behavior", "statistics"] = "scene",
+            scope: Literal["scene", "behavior", "statistics", "laptop"] = "scene",
             local_date: str | None = None,
         ) -> str:
             """Read current facts or observed behavior durations; statistics date is YYYY-MM-DD."""
 
             def operation():
                 if scope != "scene":
+                    if scope == "laptop":
+                        if ctx.context.laptop is None:
+                            return ToolResult(ok=False, error="laptop service unavailable")
+                        return ctx.context.laptop.current()
                     if ctx.context.behavior is None:
                         return ToolResult(ok=False, error="behavior service unavailable")
                     if scope == "statistics":
@@ -358,6 +369,9 @@ class AgentService:
                 if ctx.context.behavior is not None:
                     result = result.model_copy(deep=True)
                     result.data["behavior"] = ctx.context.behavior.current().data
+                if ctx.context.laptop is not None:
+                    result = result.model_copy(deep=True)
+                    result.data["laptop"] = ctx.context.laptop.current().data
                 return result
 
             def reviewed(result: ToolResult) -> None:
@@ -393,7 +407,7 @@ class AgentService:
             category: Category | None = None,
             start: datetime | None = None,
             end: datetime | None = None,
-            scope: Literal["objects", "behavior", "rule"] = "objects",
+            scope: Literal["objects", "behavior", "laptop", "rule"] = "objects",
             rule_id: str | None = None,
             event_id: str | None = None,
         ) -> str:
@@ -410,6 +424,10 @@ class AgentService:
                     if ctx.context.behavior is None:
                         return ToolResult(ok=False, error="behavior service unavailable")
                     return ctx.context.behavior.search_events(start, end, limit=20)
+                if scope == "laptop":
+                    if ctx.context.laptop is None:
+                        return ToolResult(ok=False, error="laptop service unavailable")
+                    return ctx.context.laptop.search_events(start, end, limit=20)
                 if category is None:
                     return ToolResult(ok=False, error="category required")
                 return ctx.context.memory.search_events(category, start, end, limit=20)
@@ -446,6 +464,8 @@ class AgentService:
                 "seat_occupied",
                 "suspected_drink",
                 "seated_duration",
+                "laptop_closed",
+                "laptop_opened",
             ]
             | None = None,
             after_time: str | None = None,
@@ -779,6 +799,7 @@ class AgentService:
             request_id=request_id,
             kind=kind,
             behavior=self.behavior,
+            laptop=self.laptop,
             rules=self.rules,
             rule_job=rule_job,
             event_watch_id=rule_job["rule_id"] if rule_job else (watch.watch_id if watch else None),

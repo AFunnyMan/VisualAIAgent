@@ -260,6 +260,7 @@ class SharedFrameSource:
 
     def __init__(self, camera: SharedCamera) -> None:
         self.camera = camera
+        self.source_name = camera.source.source_name
         self._opened = False
         self._last_sequence = -1
 

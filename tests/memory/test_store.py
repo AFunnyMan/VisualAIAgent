@@ -342,7 +342,7 @@ def test_schema_one_database_migrates_usage_completeness_without_data_loss(tmp_p
         version = migrated.execute(
             "SELECT value FROM schema_meta WHERE key = 'schema_version'"
         ).fetchone()[0]
-    assert version == "3"
+    assert version == "4"
     backups = list((tmp_path / "backups").glob("*.sqlite3"))
     assert len(backups) == 1
     backup = sqlite3.connect(backups[0])

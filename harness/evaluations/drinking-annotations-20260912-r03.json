@@ -1,0 +1,59 @@
+{
+  "review_method": "Sequential decode contact sheets every 0.5 seconds; conservative half-open clear intervals, unclear boundaries excluded. Cup rim at mouth denotes suspected drinking, not swallowing. New development only.",
+  "videos": [
+    {
+      "path": "data/training-inbox/development/2026-09-11 23-03-14.mkv",
+      "sha256": "406eac77385f6efb2826396681a8facdab3c0a2ed89b403d40f0d710439e6e42",
+      "duration_seconds": 52.617,
+      "split": "train",
+      "posture": [],
+      "drinking": [
+        {
+          "start": 0,
+          "end": 11.5,
+          "label": "not_drinking"
+        },
+        {
+          "start": 12.0,
+          "end": 13.75,
+          "label": "drinking"
+        },
+        {
+          "start": 14.5,
+          "end": 23.5,
+          "label": "not_drinking"
+        },
+        {
+          "start": 24,
+          "end": 26.75,
+          "label": "drinking"
+        },
+        {
+          "start": 27.5,
+          "end": 28.75,
+          "label": "not_drinking"
+        },
+        {
+          "start": 29.25,
+          "end": 30.75,
+          "label": "drinking"
+        },
+        {
+          "start": 31.5,
+          "end": 45.75,
+          "label": "not_drinking"
+        },
+        {
+          "start": 46.5,
+          "end": 48.75,
+          "label": "drinking"
+        },
+        {
+          "start": 49.5,
+          "end": 52.5,
+          "label": "not_drinking"
+        }
+      ]
+    }
+  ]
+}

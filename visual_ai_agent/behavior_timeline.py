@@ -170,6 +170,7 @@ class BehaviorTimelineV2:
         *,
         fresh: bool = True,
         continuous_visible: bool = False,
+        exit_evidence: bool = False,
     ) -> dict:
         """Consume one paired observation and return confirmed current states.
 
@@ -204,11 +205,20 @@ class BehaviorTimelineV2:
 
         events: list[dict[str, float | str]] = []
         posture_recovering = False
+        exit_bridge = (
+            exit_evidence
+            and self._posture_context == "standing"
+            and posture in {"unknown", "empty"}
+            and fresh
+            and not fault
+        )
         if posture == "unknown":
-            self._unknown("posture", timestamp, continuous_visible and fresh and not fault)
+            self._unknown(
+                "posture", timestamp, (continuous_visible and fresh and not fault) or exit_bridge
+            )
         else:
             posture_recovering = self._prepare_recovery(
-                "posture", timestamp, continuous_visible and fresh and not fault
+                "posture", timestamp, (continuous_visible and fresh and not fault) or exit_bridge
             )
             posture_confirmed, event = self._confirm_posture(posture, timestamp)
             if event:

@@ -331,7 +331,9 @@ def official_names() -> dict[int, str]:
         raise ValueError("Official model manifest contains invalid class metadata") from exc
 
 
-def validate_labels(files: list[Path], names: dict[int, str]) -> dict[str, Any]:
+def validate_labels(
+    files: list[Path], names: dict[int, str], required_names: set[str] | None = None
+) -> dict[str, Any]:
     label_files = [file for file in files if "labels" in file.parts and file.suffix == ".txt"]
     class_instances = {class_id: 0 for class_id in names}
     rows = 0
@@ -369,9 +371,10 @@ def validate_labels(files: list[Path], names: dict[int, str]) -> dict[str, Any]:
                 raise ValueError(f"Invalid normalized box at {label_file}:{line_number}")
             class_instances[class_id] += 1
             rows += 1
-    required_ids = {class_id for class_id, name in names.items() if name in REQUIRED_CLASSES}
-    if len(required_ids) != len(REQUIRED_CLASSES):
-        raise ValueError("Dataset class mapping is missing a required business class")
+    required_names = REQUIRED_CLASSES if required_names is None else required_names
+    required_ids = {class_id for class_id, name in names.items() if name in required_names}
+    if len(required_ids) != len(required_names):
+        raise ValueError("Dataset class mapping is missing a required class")
     missing = [names[class_id] for class_id in required_ids if class_instances[class_id] == 0]
     if missing:
         raise ValueError(f"Dataset has no labeled instances for required classes: {missing}")
@@ -401,7 +404,8 @@ def dataset_fingerprint(
         digest.update(str(file).encode("utf-8"))
         digest.update(b"\0")
         digest.update(bytes.fromhex(sha256(file)))
-    return digest.hexdigest(), len(unique), validate_labels(unique, names)
+    required_names = REQUIRED_CLASSES if expected_names == official_names() else set(names.values())
+    return digest.hexdigest(), len(unique), validate_labels(unique, names, required_names)
 
 
 def choose_device(requested: str) -> str:
@@ -414,7 +418,7 @@ def choose_device(requested: str) -> str:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data", required=True, type=Path, help="Three-class YOLO dataset YAML")
+    parser.add_argument("--data", required=True, type=Path, help="Local YOLO dataset YAML")
     parser.add_argument("--weights", type=Path, default=REPOSITORY_ROOT / "models/yolo26n.pt")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--name", default="scene-yolo26n")
@@ -435,6 +439,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--amp", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--export", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--check-only", action="store_true")
+    parser.add_argument(
+        "--class-name",
+        action="append",
+        dest="class_names",
+        help="Expected dataset class name in numeric ID order; repeat for custom heads",
+    )
     parser.add_argument(
         "--selection-manifest", type=Path, help="Val-only deployment selection manifest"
     )
@@ -465,7 +475,15 @@ def main() -> None:
     output = args.output.resolve()
     if not data.is_file() or not weights.is_file():
         raise SystemExit(f"Missing data YAML or source weights: {data}, {weights}")
-    class_names = official_names() if args.preserve_coco_head else EXPECTED_NAMES
+    if args.preserve_coco_head and args.class_names:
+        raise ValueError("--class-name cannot be combined with --preserve-coco-head")
+    class_names = (
+        official_names()
+        if args.preserve_coco_head
+        else (dict(enumerate(args.class_names)) if args.class_names else EXPECTED_NAMES)
+    )
+    if not class_names or len(set(class_names.values())) != len(class_names):
+        raise ValueError("Custom class names must be non-empty and unique")
     data_hash, dataset_file_count, label_summary = dataset_fingerprint(data, class_names)
     selection = (
         load_selection_manifest(data, args.selection_manifest.resolve())
@@ -515,7 +533,15 @@ def main() -> None:
         "dataset_hashed_file_count": dataset_file_count,
         "dataset_label_summary": label_summary,
         "class_names": class_names,
-        "head_mode": "preserved_coco_80" if args.preserve_coco_head else "rebuilt_three_class",
+        "head_mode": (
+            "preserved_coco_80"
+            if args.preserve_coco_head
+            else (
+                "rebuilt_three_class"
+                if class_names == EXPECTED_NAMES
+                else f"rebuilt_{len(class_names)}_class"
+            )
+        ),
         "parameters": parameters,
         "selection": (
             {
@@ -539,8 +565,8 @@ def main() -> None:
                 "official class mapping."
                 if args.preserve_coco_head
                 else (
-                    "The pretrained 80-class detection head is replaced for this "
-                    "three-class dataset."
+                    f"The pretrained 80-class detection head is replaced for this "
+                    f"{len(class_names)}-class dataset."
                 )
             ),
             "This experimental model does not establish real-camera or Windows acceptance.",

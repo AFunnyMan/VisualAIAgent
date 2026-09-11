@@ -20,6 +20,7 @@ os.environ.setdefault("YOLO_OFFLINE", "true")
 import cv2  # noqa: E402
 import numpy as np  # noqa: E402
 import onnxruntime as ort  # noqa: E402
+from pydantic import BaseModel  # noqa: E402
 
 from scripts.score_detections import overlap, score_dataset  # noqa: E402
 from visual_ai_agent.models import Detection  # noqa: E402
@@ -35,12 +36,20 @@ from visual_ai_agent.vision import (  # noqa: E402
 NAMES = {0: "bottle", 1: "cup", 2: "cell phone"}
 
 
+class ExperimentalDetection(BaseModel):
+    category: str
+    confidence: float
+    bbox: tuple[float, float, float, float]
+    region: str
+
+
 def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def decode(raw, transform, confidence, names=None):
+def decode(raw, transform, confidence, names=None, allowed_categories=None):
     names = NAMES if names is None else names
+    allowed_categories = set(NAMES.values()) if allowed_categories is None else allowed_categories
     raw = np.asarray(raw)
     if raw.shape != (1, 300, 6) or not np.isfinite(raw).all():
         raise ValueError("Expected finite static [1,300,6] candidate predictions")
@@ -51,12 +60,13 @@ def decode(raw, transform, confidence, names=None):
         class_id = int(round(float(row[5])))
         if class_id not in names or abs(class_id - float(row[5])) > 0.001:
             raise ValueError("Unexpected experimental class ID")
-        if names[class_id] not in NAMES.values():
+        if names[class_id] not in allowed_categories:
             continue
         if box[2] <= box[0] or box[3] <= box[1]:
             continue
+        detection_type = Detection if names[class_id] in NAMES.values() else ExperimentalDetection
         detections.append(
-            Detection(
+            detection_type(
                 category=names[class_id],
                 confidence=float(row[4]),
                 bbox=tuple(float(x) for x in box),
@@ -77,7 +87,14 @@ def expected_names(preserve_coco_head=False):
 
 
 class ExperimentalDetector:
-    def __init__(self, path, expected_sha, confidence=0.35, preserve_coco_head=False):
+    def __init__(
+        self,
+        path,
+        expected_sha,
+        confidence=0.35,
+        preserve_coco_head=False,
+        custom_names=None,
+    ):
         if sha256(path) != expected_sha:
             raise ValueError("Candidate checksum mismatch")
         options = ort.SessionOptions()
@@ -93,7 +110,8 @@ class ExperimentalDetector:
         if len(outputs) != 1 or outputs[0].shape != [1, 300, 6]:
             raise ValueError("Candidate output must be static [1,300,6]")
         names = _parse_names(self.session.get_modelmeta().custom_metadata_map.get("names"))
-        if names != expected_names(preserve_coco_head):
+        expected = custom_names or expected_names(preserve_coco_head)
+        if names != expected:
             raise ValueError(f"Unexpected candidate classes: {names}")
         self.names = names
         self.input_name = inputs[0].name
@@ -102,7 +120,13 @@ class ExperimentalDetector:
     def detect(self, frame):
         tensor, transform = letterbox(frame, 640)
         raw = self.session.run(None, {self.input_name: tensor})[0]
-        return decode(raw, transform, self.confidence, self.names)
+        return decode(
+            raw,
+            transform,
+            self.confidence,
+            self.names,
+            set(self.names.values()),
+        )
 
 
 def compare_export(reference, candidate):
@@ -141,6 +165,7 @@ def main():
     p.add_argument("--dataset", action="append", required=True, help="NAME=MANIFEST_JSON")
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--preserve-coco-head", action="store_true")
+    p.add_argument("--class-name", action="append", dest="class_names")
     args = p.parse_args()
     if args.output.exists():
         raise SystemExit("Refusing to overwrite an evaluation")
@@ -149,7 +174,13 @@ def main():
 
     torch.set_num_threads(2)
     pt = YOLO(str(args.checkpoint)).model.cpu().float().eval()
-    names = expected_names(args.preserve_coco_head)
+    if args.preserve_coco_head and args.class_names:
+        raise ValueError("--class-name cannot be combined with --preserve-coco-head")
+    names = (
+        dict(enumerate(args.class_names))
+        if args.class_names
+        else expected_names(args.preserve_coco_head)
+    )
     if pt.names != names:
         raise ValueError(f"Checkpoint classes differ: {pt.names}")
     # Ultralytics exporter selects this branch for nms=False. A saved checkpoint
@@ -158,15 +189,21 @@ def main():
     if not pt.end2end:
         raise ValueError("Checkpoint has no end-to-end branch to compare with the export")
     candidate = ExperimentalDetector(
-        args.candidate, args.candidate_sha, preserve_coco_head=args.preserve_coco_head
+        args.candidate,
+        args.candidate_sha,
+        preserve_coco_head=args.preserve_coco_head,
+        custom_names=names if args.class_names else None,
     )
-    baseline = YoloOnnxDetector(ROOT / "models/yolo26n-e2e.onnx", confidence=0.35)
-    detectors = {
-        "official_single": baseline,
-        "production_two_pass": CupScaleRecheckDetector(baseline),
-        "finetuned_single": candidate,
-        "finetuned_two_pass": CupScaleRecheckDetector(candidate),
-    }
+    if args.class_names:
+        detectors = {"finetuned_single": candidate}
+    else:
+        baseline = YoloOnnxDetector(ROOT / "models/yolo26n-e2e.onnx", confidence=0.35)
+        detectors = {
+            "official_single": baseline,
+            "production_two_pass": CupScaleRecheckDetector(baseline),
+            "finetuned_single": candidate,
+            "finetuned_two_pass": CupScaleRecheckDetector(candidate),
+        }
     result = {
         "started_at": datetime.now(UTC).isoformat(),
         "candidate_sha256": args.candidate_sha,
@@ -216,7 +253,7 @@ def main():
             if isinstance(raw, tuple):
                 raw = raw[0]
             comparison = compare_export(
-                decode(raw.detach().numpy(), transform, 0.35, names),
+                decode(raw.detach().numpy(), transform, 0.35, names, set(names.values())),
                 predictions["finetuned_single"],
             )
             comparison.update(dataset=name, id=sample["id"])
@@ -224,7 +261,10 @@ def main():
         result["datasets"][name] = {
             "manifest_sha256": sha256(manifest_path),
             "count": len(manifest["samples"]),
-            "scores": {key: score_dataset(manifest, value) for key, value in rows.items()},
+            "scores": {
+                key: score_dataset(manifest, value, categories=tuple(names.values()))
+                for key, value in rows.items()
+            },
             "predictions": rows,
             "cpu_ms": {
                 key: {"median": float(np.median(t)), "p95": float(np.percentile(t, 95))}

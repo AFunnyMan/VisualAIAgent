@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "status": "failed_development_threshold",
+  "class_names": {"0": "key"},
+  "scope": "development only; this workflow did not access or predict the registered holdout",
+  "dataset": {
+    "directory": "harness/artifacts/keys-20260911-r01/dataset-r03",
+    "manifest_sha256": "b44ece601f397eda57bb222c033aa4988ab7acf9e03a1dc89854379875dc3817",
+    "dataset_fingerprint": "e8cfd1d75de46e45ecb07411a7957fe778bbb5d2397651a56a070dd988cb2747",
+    "frames": {"train": 18, "val": 16},
+    "positive_instances": {"train": 10, "val": 5},
+    "added_positive_times_seconds": [1, 13, 18, 19],
+    "added_positive_group": "2026-09-11 23-01-33.mkv",
+    "limits": "Added frames improve position and orientation coverage but are not independent scenes."
+  },
+  "training": {
+    "source": "models/yolo26n.pt",
+    "source_sha256": "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+    "device": "mps",
+    "epochs": 100,
+    "imgsz": 640,
+    "batch": 4,
+    "freeze": 10,
+    "optimizer": "AdamW",
+    "lr0": 0.01,
+    "mosaic": 0.2,
+    "close_mosaic": 5,
+    "warmup_epochs": 1.0,
+    "warmup_bias_lr": 0.01,
+    "seed": 20260911,
+    "amp": false,
+    "elapsed_seconds_including_best_export": 925.9488
+  },
+  "selection_rule": "At confidence 0.35 and IoU 0.5, compare val recall, then val precision, then train recall. Cross-threshold mAP is not used.",
+  "checkpoints": {
+    "best": {
+      "pt_sha256": "2ed47ddedbc59ded185340df0baea0fc2c54067616c43d116a5362ae9443fafb",
+      "onnx_sha256": "0a7d73cdcfbd1226ec27c07ddb8f3f52789495d2ef05e78423a05ade9fa3be70",
+      "fixed_threshold": {
+        "train": {"tp": 0, "fp": 0, "fn": 10, "precision": null, "recall": 0.0},
+        "val": {"tp": 0, "fp": 0, "fn": 5, "precision": null, "recall": 0.0}
+      },
+      "pytorch_onnx": "34 empty prediction pairs agree, but the harness requires at least one non-empty pair and therefore records overall failure"
+    },
+    "last": {
+      "pt_sha256": "a82e94837fcde4c073df3c1dff73afabec11473fb8d1ca08d9d103ec90a3bd1a",
+      "onnx_sha256": "478183a63cb2b9600521c24f415ff83f47c83b6de3348d40ed5fa6c1c01d50e4",
+      "fixed_threshold": {
+        "train": {"tp": 6, "fp": 4, "fn": 4, "precision": 0.6, "recall": 0.6},
+        "val": {"tp": 0, "fp": 0, "fn": 5, "precision": null, "recall": 0.0}
+      },
+      "pytorch_onnx": {"passed": true, "images": 34},
+      "onnx_cpu_ms": {
+        "train": {"median": 71.1179, "p95": 102.3407},
+        "val": {"median": 66.6319, "p95": 79.7805}
+      }
+    }
+  },
+  "selected_checkpoint": "last",
+  "selection_reason": "Both checkpoints have zero val recall and undefined val precision; last has higher train recall.",
+  "acceptance": "failed: selected checkpoint has zero recall on all five val positives; do not integrate or proceed to holdout",
+  "private_evidence": {
+    "best_evaluation": "harness/artifacts/keys-20260911-r01/evaluation-r04-best.json",
+    "best_evaluation_sha256": "ce7f9ed43ca4bc202d946fcefb2f0522c5e77105dce53a54d0a1b904dcbb8d32",
+    "last_evaluation": "harness/artifacts/keys-20260911-r01/evaluation-r04-last.json",
+    "last_evaluation_sha256": "26256f37b8ed094296e1be748fe3de382d7f3286d84b4b5531ec64b47a28b576"
+  },
+  "verification": "31 relevant tests passed"
+}

@@ -38,3 +38,34 @@ def test_existing_output_preserved(tmp_path):
     with pytest.raises(ValueError, match="Output"):
         build(tmp_path / "missing.json", output)
     assert sentinel.read_text() == "keep"
+
+
+def test_registry_rejects_holdout_before_output_is_created(tmp_path):
+    source = tmp_path / "holdout.mkv"
+    source.write_bytes(b"held-out-video")
+    import hashlib
+    import json
+
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    registry = tmp_path / "registry.json"
+    registry.write_text(json.dumps({"sources": [{"sha256": digest, "purpose": "holdout"}]}))
+    annotations = tmp_path / "annotations.json"
+    annotations.write_text(
+        json.dumps(
+            {
+                "videos": [
+                    {
+                        "path": str(source),
+                        "sha256": digest,
+                        "duration_seconds": 1.0,
+                        "posture": [{"start": 0, "end": 1, "label": "seated"}],
+                        "drinking": [{"start": 0, "end": 1, "label": "unknown"}],
+                    }
+                ]
+            }
+        )
+    )
+    output = tmp_path / "dataset"
+    with pytest.raises(ValueError, match="held out or unregistered"):
+        build(annotations, output, source_registry=registry)
+    assert not output.exists()

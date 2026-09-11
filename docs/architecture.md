@@ -130,3 +130,9 @@ SQLite 持久化最新观察、事件、任务、通知和用量/执行摘要；
 ## 2026-09-11 行为与情境集成扩展
 
 现行行为类型、共享摄像头、SQLite v3、七工具兼容扩展和规则时序语义见[行为产品集成](behavior-product-integration.md)。实验模型标识保留；本轮暂缓长尾专项、物品训练和钥匙/合盖、自定义区域，不将基础规则框架视为这些视觉能力已完成。实际验证见build-log。
+
+## 2026-09-12 可选笔记本能力与候选行为更新
+
+`ApplicationRuntime` 新增独立 `LaptopWorker`，与物品和行为订阅同一个 `SharedCamera`。`LaptopObservation` / `LaptopEvent` / `LaptopStore` 不混入行为时长；SQLite v4 迁移前备份，当前笔记本观察只保留一条，事件和证据持久化。七个原工具通过受控 scope/trigger 扩展查询和开合规则，不新增执行工具。加载需绑定独立验收、状态与在场模型及 SHA；当前没有合格 capability，默认关闭。契约和故障语义见[笔记本接入](laptop-product-integration.md)。
+
+姿态退出边缘证据独立于人体持续可见支持，只维护站立至空座的有限前态，不能恢复饮水、坐下或故障缺口；见[离座修复](behavior-exit-evidence-20260912.md)。饮水 r03 为可复现的实验候选，适用结果见[训练报告](drinking-training-20260912.md)。正式默认模型维持原配置，候选可用于显式验证，不等同于实机质量验收通过。

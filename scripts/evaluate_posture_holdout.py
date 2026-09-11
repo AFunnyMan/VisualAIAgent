@@ -125,6 +125,7 @@ def evaluate(args: argparse.Namespace) -> dict:
                     state = timelines[name].observe(
                         timestamp, prediction["label"], "not_drinking",
                         continuous_visible=support["person_track_supported"] is True,
+                        exit_evidence=support["exit_evidence"] is True,
                     )
                     if label != "unknown":
                         counts[name][f"{label}->{prediction['label']}"] += 1

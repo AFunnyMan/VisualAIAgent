@@ -1,0 +1,203 @@
+{
+  "date": "2026-09-12",
+  "timezone": "Asia/Shanghai",
+  "training_check": {
+    "scope": "training resubstitution only; not independent accuracy",
+    "samples": 697,
+    "confusion": {
+      "not_drinking -> not_drinking": 609,
+      "drinking -> drinking": 88
+    },
+    "pt_onnx_max_abs": 1.1920928955078125e-07,
+    "dataset_sha256": "3c5a782244214f36706483dab8c0df5d7249cee063511fa392fce323a0d27292"
+  },
+  "development": {
+    "scope": "development regression, not independent acceptance",
+    "models": {
+      "baseline": "269c06a00e2b31b230251cd9271ebf3ba61e8c3cf25457732cf86f41d6e90a97",
+      "r03": "3b3cb250670a95c7af9f5243e601ccd8461cee4ffde582c6ac194cf98bb37dca"
+    },
+    "annotations_sha256": "b9a6d450aef1cd82c6eb74953d3e0a6740b702ddf37b4e9522a53468d9d7ff01",
+    "pt_onnx_max_abs": 5.811452865600586e-06,
+    "videos": [
+      {
+        "source_sha256": "406eac77385f6efb2826396681a8facdab3c0a2ed89b403d40f0d710439e6e42",
+        "samples": 526,
+        "unscored_samples": 51,
+        "models": {
+          "baseline": {
+            "confusion": {
+              "not_drinking->not_drinking": 302,
+              "not_drinking->drinking": 65,
+              "not_drinking->unknown": 24,
+              "drinking->unknown": 12,
+              "drinking->not_drinking": 10,
+              "drinking->drinking": 62
+            },
+            "events": [
+              {
+                "kind": "suspected_drink",
+                "timestamp": 2.8
+              },
+              {
+                "kind": "suspected_drink",
+                "timestamp": 12.8
+              },
+              {
+                "kind": "suspected_drink",
+                "timestamp": 16.2
+              },
+              {
+                "kind": "suspected_drink",
+                "timestamp": 25.2
+              },
+              {
+                "kind": "suspected_drink",
+                "timestamp": 29.6
+              },
+              {
+                "kind": "suspected_drink",
+                "timestamp": 46.9
+              }
+            ],
+            "event_score": {
+              "annotated": true,
+              "tolerance_seconds": 0,
+              "per_kind": {
+                "suspected_drink": {
+                  "tp": 4,
+                  "fp": 2,
+                  "fn": 0
+                }
+              },
+              "tp": 4,
+              "fp": 2,
+              "fn": 0
+            }
+          },
+          "r03": {
+            "confusion": {
+              "not_drinking->not_drinking": 391,
+              "drinking->drinking": 84
+            },
+            "events": [
+              {
+                "kind": "suspected_drink",
+                "timestamp": 12.3
+              },
+              {
+                "kind": "suspected_drink",
+                "timestamp": 24.3
+              },
+              {
+                "kind": "suspected_drink",
+                "timestamp": 29.3
+              },
+              {
+                "kind": "suspected_drink",
+                "timestamp": 46.5
+              }
+            ],
+            "event_score": {
+              "annotated": true,
+              "tolerance_seconds": 0,
+              "per_kind": {
+                "suspected_drink": {
+                  "tp": 4,
+                  "fp": 0,
+                  "fn": 0
+                }
+              },
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        }
+      }
+    ]
+  },
+  "held_out_drinking_check": {
+    "scope": "held-out drinking model check; posture pipeline has used this clip for diagnosis, so this is not independent whole-product acceptance",
+    "freeze_sha256": "0d1c3efe133fef4c47cda2e58b422391034fdfc6f70a4aa0604ea311eb842e1c",
+    "models": {
+      "baseline": "269c06a00e2b31b230251cd9271ebf3ba61e8c3cf25457732cf86f41d6e90a97",
+      "r03": "3b3cb250670a95c7af9f5243e601ccd8461cee4ffde582c6ac194cf98bb37dca"
+    },
+    "annotations_sha256": "adfb1d657892f2517be62140d7cbf2d19c07b020f3c557914a27356b1ed904b1",
+    "pt_onnx_max_abs": 1.2487173080444336e-05,
+    "videos": [
+      {
+        "source_sha256": "6603dc2d69dd16b4d3f71219848fffaf59fd9f10ff699232c68b022322188a12",
+        "samples": 1767,
+        "unscored_samples": 522,
+        "models": {
+          "baseline": {
+            "confusion": {
+              "not_drinking->not_drinking": 739,
+              "not_drinking->drinking": 85,
+              "drinking->drinking": 13,
+              "drinking->unknown": 9,
+              "drinking->not_drinking": 6,
+              "not_drinking->unknown": 393
+            },
+            "events": [
+              {
+                "kind": "suspected_drink",
+                "timestamp": 25.6
+              }
+            ],
+            "event_score": {
+              "annotated": true,
+              "tolerance_seconds": 0,
+              "per_kind": {
+                "suspected_drink": {
+                  "tp": 1,
+                  "fp": 0,
+                  "fn": 0
+                }
+              },
+              "tp": 1,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "r03": {
+            "confusion": {
+              "not_drinking->not_drinking": 1155,
+              "not_drinking->unknown": 56,
+              "not_drinking->drinking": 6,
+              "drinking->drinking": 28
+            },
+            "events": [
+              {
+                "kind": "suspected_drink",
+                "timestamp": 25.6
+              }
+            ],
+            "event_score": {
+              "annotated": true,
+              "tolerance_seconds": 0,
+              "per_kind": {
+                "suspected_drink": {
+                  "tp": 1,
+                  "fp": 0,
+                  "fn": 0
+                }
+              },
+              "tp": 1,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        }
+      }
+    ]
+  },
+  "production_default_replaced": false,
+  "limitations": [
+    "单段留出只有一次饮水，不能估计日常误报率",
+    "姿态/离座链已使用留出片诊断，非整产品独立验收",
+    "未进行本轮真实摄像头与Windows验证"
+  ]
+}

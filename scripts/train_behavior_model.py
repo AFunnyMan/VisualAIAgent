@@ -186,6 +186,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch", type=int, default=8)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--freeze", type=int, default=5)
+    parser.add_argument("--threads", type=int, default=2)
     parser.add_argument("--roi", type=float, nargs=4, metavar=("X1", "Y1", "X2", "Y2"))
     parser.add_argument("--source-size", type=int, nargs=2, metavar=("WIDTH", "HEIGHT"))
     parser.add_argument(
@@ -198,8 +199,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    if min(args.epochs, args.imgsz, args.batch) <= 0 or args.freeze < 0:
-        raise ValueError("epochs, imgsz and batch must be positive; freeze must be non-negative")
+    if min(args.epochs, args.imgsz, args.batch, args.threads) <= 0 or args.freeze < 0:
+        raise ValueError(
+            "epochs, imgsz, batch and threads must be positive; freeze must be non-negative"
+        )
     dataset, weights, output = validate_paths(
         args.data, args.weights, args.output, train_only=args.train_only
     )
@@ -253,7 +256,7 @@ def main() -> None:
                 return super().final_eval()
             return None
 
-    torch.set_num_threads(2)
+    torch.set_num_threads(args.threads)
     parameters = {
         "data": str(Path(dataset["root"])),
         "model": str(weights),
@@ -298,6 +301,7 @@ def main() -> None:
         "source_weights": str(weights),
         "source_weights_sha256": sha256(weights),
         "parameters": parameters,
+        "runtime": {"torch_cpu_threads": args.threads},
         "versions": {
             "python": platform.python_version(),
             "torch": torch.__version__,

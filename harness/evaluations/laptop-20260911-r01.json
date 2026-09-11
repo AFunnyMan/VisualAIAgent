@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "scope": "fixed-scene development comparison; this training task did not read, train on, predict, or tune against the independent acceptance video",
+  "model": {
+    "kind": "YOLO26n full-frame binary classifier",
+    "classes": ["closed", "open"],
+    "onnx_sha256": "0b77ed0f327bfd042653f06058de37ac7d8d1760fcd696151773d6c6a061188e",
+    "checkpoint_sha256": "e7daa11056fc78436d645fe80d1b3e1b5a7b3182199dff8f4a7bcc8f0696033a"
+  },
+  "data": {
+    "train": {"closed": 40, "open": 24, "source_videos": 4},
+    "development_validation": {"closed": 37, "open": 42, "source_videos": 3},
+    "dataset_sha256": "1247cfe97697c5a68ce81112df56fe2b56049716f605b23e476cf5d2cf573f20",
+    "dataset_manifest_sha256": "2512784bd9417c8fa58561032def639d8a6ddfb5d2ed424782303a5eee2aa2fb"
+  },
+  "gate": {"confidence": 0.75, "margin": 0.2, "rejected_label": "unknown"},
+  "development_validation": {
+    "total": 79,
+    "correct": 69,
+    "unknown": 7,
+    "accuracy_all": 0.8734177215189873,
+    "accuracy_accepted": 0.9583333333333334,
+    "closed": {"correct": 36, "unknown": 1, "wrong": 0},
+    "open": {"correct": 33, "unknown": 6, "wrong_as_closed": 3}
+  },
+  "onnx_cpu_inference_ms": {
+    "samples": 143,
+    "p50": 13.99258291348815,
+    "p95": 22.20917062368244,
+    "max": 32.493624836206436
+  },
+  "export_consistency": {
+    "samples": 143,
+    "argmax_disagreements": 0,
+    "maximum_probability_difference": 0.0000016093254089355469
+  },
+  "decision": "experimental_only_pending_independent_acceptance_and_timeline_replay"
+}

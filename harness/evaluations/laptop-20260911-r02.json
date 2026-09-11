@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "scope": "three-class fixed-scene development experiment; no independent acceptance evaluation",
+  "model": {
+    "kind": "YOLO26n full-frame open/closed/partial classifier",
+    "onnx_sha256": "8aaa9edba847e32de7896a434d50ed97de961d9e3a4794bc1070332013b3759c",
+    "checkpoint_sha256": "4c50927434bbb39e16a7ac7d2ad426f64d62a8c18684f13707586026619daee4"
+  },
+  "data": {
+    "sample_fps": 4,
+    "train": {"closed": 80, "open": 48, "partial": 12, "source_videos": 4},
+    "development_validation": {"closed": 74, "open": 80, "partial": 46, "source_videos": 3},
+    "dataset_sha256": "760ddd6862e60fa04fffaa9006039ce3782840956924778e24ee4166df7e0160",
+    "dataset_manifest_sha256": "8941c87a7a7f5bf7a600ba0d638ba6985887abfe2c104ea7daea9b332f000e6c"
+  },
+  "development_validation": {
+    "total": 200,
+    "correct": 147,
+    "unknown": 13,
+    "accuracy_all": 0.735,
+    "accuracy_accepted": 0.786096256684492,
+    "partial": {"correct": 21, "wrong_open": 14, "wrong_closed": 1, "unknown": 10},
+    "closed": {"correct": 49, "wrong_open": 2, "wrong_partial": 21, "unknown": 2},
+    "open": {"correct": 77, "wrong_partial": 2, "unknown": 1}
+  },
+  "all_development_video_replay": {
+    "videos": 7,
+    "samples": 3761,
+    "raw_counts": {"closed": 3164, "open": 375, "partial": 175, "unknown": 47},
+    "state_counts": {"closed": 3100, "open": 350, "partial": 175, "unknown": 136},
+    "events": 0,
+    "finding": "The classifier over-predicts partial on stable closed validation frames and keeps transitions partial long enough for the conservative timeline to invalidate the open baseline. The end-to-end close event path remains broken."
+  },
+  "onnx_cpu_inference_ms": {
+    "samples": 340,
+    "p50": 11.971354018896818,
+    "p95": 18.048623146023605,
+    "max": 34.43308314308524
+  },
+  "export_consistency": {
+    "samples": 340,
+    "argmax_disagreements": 0,
+    "maximum_probability_difference": 0.0000025033950805664062
+  },
+  "decision": "reject_for_acceptance_and_product_integration"
+}

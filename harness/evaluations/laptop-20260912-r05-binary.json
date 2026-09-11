@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-09-12T00:55:16+08:00",
+  "scope": "fixed-ROI binary open/closed train-only experiment and registered development replay; sparse annotation intervals only, independent holdout was not read",
+  "semantics": {
+    "open": "visibly not fully closed, including visible partial opening and lid motion",
+    "closed": "visibly fully closed",
+    "unknown": "occluded, absent, blurred or otherwise unclear; classifier rejection result"
+  },
+  "training": {
+    "dataset_counts": {"open": 186, "closed": 154},
+    "source_video_groups": 7,
+    "epochs": 20,
+    "device": "cpu",
+    "threads": 4,
+    "elapsed_seconds": 355.282731333049,
+    "roi": [0.17, 0.32, 0.75, 1.0],
+    "checkpoint_selection": "last_epoch",
+    "validation_mode": "none_train_only",
+    "training_manifest_sha256": "0a2d02b714e9622a76b082e68e3c9a60aacfb4f4a0cb2429945058ca99c75281",
+    "onnx_sha256": "c15dd7b5641a81794a4b1446bba4ea0714080d948951f85d60909672456971e3"
+  },
+  "fit_check": {
+    "correct": 340,
+    "total": 340,
+    "unknown": 0,
+    "note": "Same-source fit check only; not an independent quality metric."
+  },
+  "export_consistency": {
+    "samples": 340,
+    "argmax_disagreements": 0,
+    "maximum_probability_difference": 2.980232238769531e-07
+  },
+  "development_replay": {
+    "registered_videos": 7,
+    "samples": 3761,
+    "sparse_annotated_confusion": {
+      "closed->closed": 379,
+      "closed->open": 3,
+      "closed->unknown": 3,
+      "open->open": 462,
+      "open->closed": 1,
+      "open->unknown": 2,
+      "unscored->unknown": 2,
+      "unscored->closed": 2851,
+      "unscored->open": 58
+    },
+    "events": {
+      "2026-09-11 23-02-14": [
+        {"kind": "laptop_opened", "timestamp": 4.5},
+        {"kind": "laptop_closed", "timestamp": 25.1},
+        {"kind": "laptop_closed", "timestamp": 33.9},
+        {"kind": "laptop_opened", "timestamp": 35.8}
+      ],
+      "2026-09-11 23-05-02": []
+    },
+    "finding": "Sparse labeled states classify well. Unannotated samples are not unknown ground truth and cannot measure absence or occlusion rejection. One low-margin frame at 71.8 seconds resets the timeline, so the explicit open-to-closed sequence in 23-05-02 still yields no close event."
+  },
+  "binary_action_rescore": {
+    "truth_sha256": "a6bafb28bdb3a5ee8f6f1b2b37b5eb653f8d8bc494201b7a5ced4851cb8fe6de",
+    "expected": 8,
+    "matched": 4,
+    "missed": 4,
+    "extra": 0,
+    "note": "Truth was manually frozen under the new binary semantics before r06 prediction; unannotated frames were not scored as unknown."
+  },
+  "r06_dense_sampling_contrast": {
+    "single_changed_factor": "training sample rate increased from 4 fps to 10 fps over the same reviewed intervals and source videos",
+    "dataset_counts": {"open": 465, "closed": 385},
+    "training_manifest_sha256": "8f10e56de8fffffff812f8db26012e083de938629ac10f49b8f7096a79b3a098",
+    "onnx_sha256": "eae21d419fab75f6adfa882b4895b69326934c13516578da4351adbd9a2b4481",
+    "fit_correct": 850,
+    "fit_total": 850,
+    "export_argmax_disagreements": 0,
+    "export_maximum_probability_difference": 1.1920928955078125e-7,
+    "action_score": {"expected": 8, "matched": 6, "missed": 2, "extra": 0},
+    "negative_action_videos": {"videos": 5, "extra_events": 0},
+    "remaining_misses": [
+      {"video": "2026-09-11 23-02-14", "kind": "laptop_closed", "window": [24.5, 26.0]},
+      {"video": "2026-09-11 23-02-14", "kind": "laptop_closed", "window": [44.0, 45.5]}
+    ]
+  },
+  "acceptance": "r06 improved development actions from 4/8 to 6/8 with zero extras but still failed the development gate; holdout remains sealed and no model is enabled",
+  "next_evidence_needed": "A bounded timeline design may bridge brief classifier-boundary unknown only while separate continuous laptop-visibility evidence remains positive; actual occlusion, absence, blur, discontinuity and scene change must still clear the baseline. This requires explicit development evidence before another holdout attempt."
+}

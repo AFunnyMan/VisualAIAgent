@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "purpose": "Freeze all seven reviewed development source groups as train after r01-r03 choices were completed; no independent validation claim is allowed.",
+  "base_annotations": "laptop-annotations-20260911-r02.json",
+  "base_annotations_sha256": "6904ea4b95e07a94d27eccfbe5cc5abe7c4cfdd138cbc2474fa0f7675a912115",
+  "force_split": "train"
+}

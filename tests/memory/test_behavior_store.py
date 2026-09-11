@@ -243,7 +243,7 @@ def test_source_change_breaks_interval_and_rejects_mismatched_event(tmp_path) ->
         behavior.ingest(observation(0.1).model_copy(update={"source": "camera", "events": [event]}))
 
 
-def test_v3_schema_and_rule_schema_roll_back_together(tmp_path, monkeypatch) -> None:
+def test_v4_schema_and_rule_schema_roll_back_together(tmp_path, monkeypatch) -> None:
     import visual_ai_agent.context_rules as context_rules
 
     database = tmp_path / "memory.sqlite3"
@@ -345,7 +345,7 @@ def test_schema_two_is_backed_up_and_upgraded_without_losing_data(tmp_path) -> N
             migrated.execute("SELECT value FROM schema_meta WHERE key='schema_version'").fetchone()[
                 0
             ]
-            == "3"
+            == "4"
         )
         tables = {
             row[0]
@@ -353,7 +353,13 @@ def test_schema_two_is_backed_up_and_upgraded_without_losing_data(tmp_path) -> N
                 "SELECT name FROM sqlite_master WHERE type='table'"
             ).fetchall()
         }
-    assert {"behavior_observations", "behavior_intervals", "behavior_events"} <= tables
+    assert {
+        "behavior_observations",
+        "behavior_intervals",
+        "behavior_events",
+        "laptop_observations",
+        "laptop_events",
+    } <= tables
     backup = next((tmp_path / "backups").glob("*.sqlite3"))
     with sqlite3.connect(backup) as archived:
         assert (

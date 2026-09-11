@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 import streamlit as st
 
-from visual_ai_agent.behavior_ui import behavior_panel, rules_panel
+from visual_ai_agent.behavior_ui import behavior_panel, laptop_panel, rules_panel
 from visual_ai_agent.config import Config
 from visual_ai_agent.models import utcnow
 from visual_ai_agent.runtime import ApplicationRuntime
@@ -179,6 +179,25 @@ with st.sidebar:
             if drinking_manifest.strip()
             else None,
         )
+    with st.expander("实验笔记本开合", expanded=False):
+        laptop_enabled = st.checkbox(
+            "启用笔记本开合识别",
+            value=runtime.config.laptop_enabled,
+            help=(
+                "只有经独立验证能确认电脑仍在画面中且清晰可见的实验模型才能加载；"
+                "当前训练模型不会自动启用。"
+            ),
+        )
+        laptop_manifest = st.text_input(
+            "笔记本能力清单",
+            value=str(runtime.config.laptop_capability_manifest or ""),
+            help="请选择完整验收后的实验能力清单，不能选择单独的开合分类训练清单。",
+        )
+        st.caption("未验收、遮挡、电脑移出画面或画面过期时一律显示未知。")
+        laptop_kwargs = dict(
+            laptop_enabled=laptop_enabled,
+            laptop_capability_manifest=(Path(laptop_manifest) if laptop_manifest.strip() else None),
+        )
     left, right = st.columns(2)
     if left.button("开始观察", type="primary", width="stretch"):
         if range_mode == "自定义" and (region_left >= region_right or region_top >= region_bottom):
@@ -208,9 +227,17 @@ with st.sidebar:
                     or active_behavior[2] != behavior_kwargs["behavior_drinking_manifest"]
                 )
             )
+            active_laptop = runtime.diagnostics().get("laptop_settings")
+            laptop_changed = bool(
+                active_laptop
+                and (
+                    active_laptop[0] != laptop_enabled
+                    or active_laptop[1] != laptop_kwargs["laptop_capability_manifest"]
+                )
+            )
             if needs_reconnect or (
                 runtime.camera_running
-                and (active_settings != requested_settings or behavior_changed)
+                and (active_settings != requested_settings or behavior_changed or laptop_changed)
             ):
                 stopped = runtime.stop_camera()
                 if not stopped.ok:
@@ -224,6 +251,7 @@ with st.sidebar:
                             observation_region=selected_region,
                             cup_scale_recheck=cup_scale_recheck,
                             **behavior_kwargs,
+                            **laptop_kwargs,
                         )
                     )
             else:
@@ -235,6 +263,7 @@ with st.sidebar:
                         observation_region=selected_region,
                         cup_scale_recheck=cup_scale_recheck,
                         **behavior_kwargs,
+                        **laptop_kwargs,
                     )
                 )
     if right.button("停止观察", width="stretch"):
@@ -324,8 +353,16 @@ def overview():
 
 
 overview()
-chat_tab, history_tab, watch_tab, behavior_tab, rule_tab, usage_tab = st.tabs(
-    ["对话", "历史与证据", "关注与提醒", "行为与统计", "情境规则", "调用记录"]
+chat_tab, history_tab, watch_tab, behavior_tab, laptop_tab, rule_tab, usage_tab = st.tabs(
+    [
+        "对话",
+        "历史与证据",
+        "关注与提醒",
+        "行为与统计",
+        "笔记本开合",
+        "情境规则",
+        "调用记录",
+    ]
 )
 
 with chat_tab:
@@ -470,6 +507,9 @@ with watch_tab:
 
 with behavior_tab:
     behavior_panel(runtime, show_evidence, time_label)
+
+with laptop_tab:
+    laptop_panel(runtime, show_evidence, time_label)
 
 with rule_tab:
     rules_panel(runtime, show_result, show_evidence, time_label)

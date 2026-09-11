@@ -19,11 +19,17 @@ from visual_ai_agent.behavior import (
     load_behavior_manifest,
     sha256,
 )
-from visual_ai_agent.behavior_models import BehaviorObservation
+from visual_ai_agent.behavior_models import BehaviorObservation, LaptopObservation
 from visual_ai_agent.behavior_store import BehaviorStore
 from visual_ai_agent.config import Config
 from visual_ai_agent.context_rules import ContextRuleService
 from visual_ai_agent.instance_lock import InstanceLock
+from visual_ai_agent.laptop import (
+    LaptopWorker,
+    detector_from_capability,
+    load_laptop_capability_manifest,
+)
+from visual_ai_agent.laptop_store import LaptopStore
 from visual_ai_agent.memory import MemoryStore
 from visual_ai_agent.models import SceneObservation, ToolResult, utcnow
 from visual_ai_agent.vision import (
@@ -48,6 +54,7 @@ class ApplicationRuntime:
         self._thread: Thread | None = None
         self._vision = None
         self._behavior_worker = None
+        self._laptop_worker = None
         self._shared_camera = None
         self._detector = None
         self._active_camera_settings: (
@@ -57,19 +64,31 @@ class ApplicationRuntime:
             tuple[int, int, int, tuple[float, float, float, float] | None, bool] | None
         ) = None
         self._active_behavior_settings = None
+        self._active_laptop_settings = None
         self._active_scene_id: str | None = None
         self._active_behavior_model_version: str | None = None
+        self._active_laptop_model_version: str | None = None
+        self._active_laptop_presence_version: str | None = None
         self.behavior_error: str | None = None
+        self.laptop_error: str | None = None
         self.last_error: str | None = None
         try:
             self.memory = MemoryStore(config.data_dir, max_gap_seconds=config.sample_interval * 2.5)
             self.watches = WatchService(self.memory)
             self.behavior = BehaviorStore(self.memory, config.timezone)
-            self.rules = ContextRuleService(self.memory, self.behavior, config.timezone)
+            self.laptop = LaptopStore(self.memory)
+            self.rules = ContextRuleService(
+                self.memory, self.behavior, config.timezone, laptop=self.laptop
+            )
             recovered = self.watches.recover()
             recovered_rules = self.rules.recover()
             self.agent = AgentService(
-                config, self.memory, self.watches, behavior=self.behavior, rules=self.rules
+                config,
+                self.memory,
+                self.watches,
+                behavior=self.behavior,
+                laptop=self.laptop,
+                rules=self.rules,
             )
             self.memory.cleanup()
         except Exception:
@@ -236,6 +255,8 @@ class ApplicationRuntime:
         behavior_enabled: bool | None = None,
         behavior_posture_manifest=None,
         behavior_drinking_manifest=None,
+        laptop_enabled: bool | None = None,
+        laptop_capability_manifest=None,
     ):
         with self._camera_lock:
             return self._start_camera(
@@ -247,6 +268,8 @@ class ApplicationRuntime:
                 behavior_enabled,
                 behavior_posture_manifest,
                 behavior_drinking_manifest,
+                laptop_enabled,
+                laptop_capability_manifest,
             )
 
     def _start_camera(
@@ -259,15 +282,22 @@ class ApplicationRuntime:
         behavior_enabled,
         behavior_posture_manifest,
         behavior_drinking_manifest,
+        laptop_enabled,
+        laptop_capability_manifest,
     ):
         with self._lock:
             if self._closed:
                 return ToolResult(ok=False, error="应用已关闭")
             if self._behavior_worker is not None:
                 return ToolResult(ok=False, error="上一次行为识别线程尚未完成停止清理。")
+            if self._laptop_worker is not None:
+                return ToolResult(ok=False, error="上一次笔记本识别线程尚未完成停止清理。")
             try:
                 self.behavior_error = None
+                self.laptop_error = None
                 self._active_behavior_model_version = None
+                self._active_laptop_model_version = None
+                self._active_laptop_presence_version = None
                 width, height = resolution or (self.config.camera_width, self.config.camera_height)
                 config = replace(
                     self.config,
@@ -300,6 +330,14 @@ class ApplicationRuntime:
                         if behavior_drinking_manifest is None
                         else Path(behavior_drinking_manifest)
                     ),
+                    laptop_enabled=(
+                        self.config.laptop_enabled if laptop_enabled is None else laptop_enabled
+                    ),
+                    laptop_capability_manifest=(
+                        self.config.laptop_capability_manifest
+                        if laptop_capability_manifest is None
+                        else Path(laptop_capability_manifest)
+                    ),
                 )
                 settings = (
                     config.camera_index,
@@ -318,11 +356,17 @@ class ApplicationRuntime:
                     config.behavior_scene_id,
                     config.behavior_seat_roi,
                 )
+                laptop_settings = (
+                    config.laptop_enabled,
+                    config.laptop_capability_manifest,
+                    config.laptop_model_version,
+                )
                 if self._vision is not None:
                     if self._vision.running:
                         if self._active_camera_settings is None or (
                             settings == self._active_camera_settings
                             and behavior_settings == self._active_behavior_settings
+                            and laptop_settings == self._active_laptop_settings
                         ):
                             return ToolResult(
                                 ok=True,
@@ -351,7 +395,7 @@ class ApplicationRuntime:
                 )
                 scene_id = f"{config.behavior_scene_id}-{uuid4().hex}"
                 self._active_scene_id = scene_id
-                if config.behavior_enabled:
+                if config.behavior_enabled or config.laptop_enabled:
                     self._shared_camera = SharedCamera(source)
                     vision_source = self._shared_camera.subscribe()
                 else:
@@ -415,8 +459,67 @@ class ApplicationRuntime:
                         self.behavior_error = (
                             f"行为识别未启动（{type(exc).__name__}），物品观察继续运行。"
                         )
+                if config.laptop_enabled:
+                    self.laptop.set_capability(
+                        configured=True,
+                        available=False,
+                        reason="笔记本开合模型尚不能确认电脑仍在画面中且清晰可见。",
+                    )
+                    laptop_detector = None
+                    candidate_worker = None
+                    try:
+                        if config.laptop_capability_manifest is None:
+                            raise ValueError("laptop capability manifest is required")
+                        capability = load_laptop_capability_manifest(
+                            config.laptop_capability_manifest,
+                            expected_scene_id=config.behavior_scene_id,
+                            expected_source_size=(config.camera_width, config.camera_height),
+                        )
+                        laptop_detector, laptop_version, presence_version = (
+                            detector_from_capability(capability)
+                        )
+                        assert self._shared_camera is not None
+                        candidate_worker = LaptopWorker(
+                            laptop_detector,
+                            self._shared_camera.subscribe(),
+                            self.ingest_laptop,
+                            model_version=laptop_version,
+                            presence_model_version=presence_version,
+                            scene_id=scene_id,
+                        )
+                        candidate_worker.start()
+                        self._laptop_worker = candidate_worker
+                        self._active_laptop_model_version = laptop_version
+                        self._active_laptop_presence_version = presence_version
+                        self.laptop.set_capability(
+                            configured=True,
+                            available=True,
+                            reason="实验能力已加载；模型仍按固定场景实验范围使用。",
+                        )
+                    except Exception as exc:
+                        if candidate_worker is not None:
+                            candidate_worker.stop()
+                        elif laptop_detector is not None:
+                            laptop_detector.close()
+                        self._laptop_worker = None
+                        self.laptop_error = (
+                            f"笔记本开合识别未启动（{type(exc).__name__}）："
+                            "配置的实验能力尚不能确认电脑仍在画面中且清晰可见；物品观察继续运行。"
+                        )
+                        self.laptop.set_capability(
+                            configured=True,
+                            available=False,
+                            reason=self.laptop_error,
+                        )
+                else:
+                    self.laptop.set_capability(
+                        configured=False,
+                        available=False,
+                        reason="笔记本开合实验未启用。",
+                    )
                 self._active_camera_settings = settings
                 self._active_behavior_settings = behavior_settings
+                self._active_laptop_settings = laptop_settings
                 self._last_view_key = view_key
                 return ToolResult(ok=True, data={"status": "starting", "settings": settings})
             except Exception as exc:
@@ -434,8 +537,36 @@ class ApplicationRuntime:
         with self._lock:
             worker = self._vision
         if worker:
+            if self._laptop_worker:
+                laptop_worker = self._laptop_worker
+                laptop_source = getattr(laptop_worker.source, "source_name", "camera")
+                laptop_worker.stop()
+                if laptop_worker.running:
+                    self.laptop_error = "笔记本识别工作线程尚未停止，请退出进程后检查。"
+                else:
+                    self._laptop_worker = None
+                    if self._active_scene_id:
+                        self.ingest_laptop(
+                            LaptopObservation(
+                                observed_at=utcnow(),
+                                monotonic_at=max(0.0, monotonic()),
+                                status="stopped",
+                                fresh=False,
+                                state="unknown",
+                                model_version=(
+                                    self._active_laptop_model_version
+                                    or self.config.laptop_model_version
+                                ),
+                                presence_model_version=(
+                                    self._active_laptop_presence_version or "presence-unavailable"
+                                ),
+                                scene_id=self._active_scene_id,
+                                source=laptop_source,
+                            )
+                        )
             if self._behavior_worker:
                 behavior_worker = self._behavior_worker
+                behavior_source = getattr(behavior_worker.source, "source_name", "camera")
                 behavior_worker.stop()
                 if behavior_worker.running:
                     self.behavior_error = "行为识别工作线程尚未停止，请退出进程后检查。"
@@ -455,7 +586,7 @@ class ApplicationRuntime:
                                     or self.config.behavior_model_version
                                 ),
                                 scene_id=self._active_scene_id,
-                                source="camera",
+                                source=behavior_source,
                             )
                         )
             worker.stop()
@@ -475,6 +606,7 @@ class ApplicationRuntime:
                     monotonic_at=0,
                     status="stopped",
                     fresh=False,
+                    source=getattr(getattr(worker, "source", None), "source_name", "camera"),
                 ),
                 None,
             )
@@ -483,11 +615,16 @@ class ApplicationRuntime:
                 self._shared_camera = None
                 self._active_camera_settings = None
                 self._active_behavior_settings = None
-                if self._behavior_worker is None:
+                self._active_laptop_settings = None
+                if self._behavior_worker is None and self._laptop_worker is None:
                     self._active_scene_id = None
                     self._active_behavior_model_version = None
+                    self._active_laptop_model_version = None
+                    self._active_laptop_presence_version = None
         if self._behavior_worker is not None:
             return ToolResult(ok=False, error=self.behavior_error)
+        if self._laptop_worker is not None:
+            return ToolResult(ok=False, error=self.laptop_error)
         return ToolResult(ok=True, data={"status": "stopped"})
 
     def snapshot(self) -> tuple[SceneObservation | None, bytes | None]:
@@ -515,6 +652,28 @@ class ApplicationRuntime:
         except Exception as exc:
             self.behavior_error = f"行为事实保存失败（{type(exc).__name__}），物品观察继续运行。"
 
+    def ingest_laptop(self, observation, jpeg: bytes | None = None) -> None:
+        """Persist independent lid facts and enqueue only confirmed transition jobs."""
+        try:
+            trigger_ingested_at = self.memory.clock()
+            events = self.laptop.ingest(observation, jpeg)
+            if observation.status in {"error", "disconnected"}:
+                self.laptop_error = f"笔记本识别当前不可用（{observation.status}）。"
+            elif observation.status == "running" and observation.fresh:
+                self.laptop_error = None
+            for event in events:
+                payload = event.model_dump(mode="python")
+                payload["trigger_ingested_at"] = trigger_ingested_at
+                for job in self.rules.process_event(payload):
+                    try:
+                        self._jobs.put_nowait(("rule", (job,), None))
+                    except Full:
+                        self.rules.fallback(job)
+        except Exception as exc:
+            self.laptop_error = (
+                f"笔记本开合事实保存失败（{type(exc).__name__}），物品观察继续运行。"
+            )
+
     def close(self):
         with self._lock:
             if self._closed:
@@ -530,6 +689,7 @@ class ApplicationRuntime:
                 (self._thread and self._thread.is_alive())
                 or self._vision is not None
                 or self._behavior_worker is not None
+                or self._laptop_worker is not None
                 or (self._shared_camera is not None and self._shared_camera.running)
             ):
                 self.last_error = self.last_error or (
@@ -556,4 +716,15 @@ class ApplicationRuntime:
             "behavior_error": self.behavior_error,
             "scene_id": self._active_scene_id,
             "behavior_model_version": self._active_behavior_model_version,
+            "laptop_enabled": (
+                self._active_laptop_settings[0]
+                if self._active_laptop_settings is not None
+                else self.config.laptop_enabled
+            ),
+            "laptop_running": bool(self._laptop_worker and self._laptop_worker.running),
+            "laptop_available": self.laptop.current().data.get("available", False),
+            "laptop_settings": self._active_laptop_settings,
+            "laptop_error": self.laptop_error,
+            "laptop_model_version": self._active_laptop_model_version,
+            "laptop_presence_model_version": self._active_laptop_presence_version,
         }

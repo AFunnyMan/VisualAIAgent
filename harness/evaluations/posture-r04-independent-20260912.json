@@ -1,0 +1,185 @@
+{
+  "frozen_at": "2026-09-11T16:00:38.462732+00:00",
+  "truth_sha256": "fa833eecfc9d5f68929800da7e05fc661fab3b958f607228a624d49e4ea52c17",
+  "video_sha256": "6603dc2d69dd16b4d3f71219848fffaf59fd9f10ff699232c68b022322188a12",
+  "models": {
+    "r02": {
+      "manifest_sha256": "51cb2f2054b2631571af5bd08d93163db4c84175962b0e17757060906fc24f90",
+      "onnx_sha256": "fef224cc6009030f66b0cf3ebc11e9e5116e3ce3df04b57dff15055596d5d31f",
+      "confusion": {
+        "seated->seated": 638,
+        "seated->unknown": 621,
+        "seated->standing": 272,
+        "standing->standing": 148,
+        "empty->standing": 20
+      },
+      "critical": {
+        "56:standing": 20,
+        "114:standing": 30
+      },
+      "events": [
+        {
+          "kind": "stood_up",
+          "timestamp": 2.4
+        },
+        {
+          "kind": "sat_down",
+          "timestamp": 59.6
+        },
+        {
+          "kind": "stood_up",
+          "timestamp": 63.5
+        },
+        {
+          "kind": "sat_down",
+          "timestamp": 124.4
+        }
+      ],
+      "action_score": {
+        "matches": [
+          {
+            "expected_index": 0,
+            "actual": {
+              "kind": "stood_up",
+              "timestamp": 63.5
+            }
+          },
+          {
+            "expected_index": 4,
+            "actual": {
+              "kind": "sat_down",
+              "timestamp": 124.4
+            }
+          }
+        ],
+        "extra": [
+          {
+            "kind": "stood_up",
+            "timestamp": 2.4
+          },
+          {
+            "kind": "sat_down",
+            "timestamp": 59.6
+          }
+        ],
+        "missed": [
+          {
+            "kinds": [
+              "sat_down"
+            ],
+            "start": 78.8,
+            "end": 80.2
+          },
+          {
+            "kinds": [
+              "stood_up"
+            ],
+            "start": 117.4,
+            "end": 118.8
+          },
+          {
+            "kinds": [
+              "left_seat"
+            ],
+            "start": 119.2,
+            "end": 120.2
+          }
+        ]
+      }
+    },
+    "r04": {
+      "manifest_sha256": "29b1df100babf82fd10061c9b0a1127fbe17076a7a67bde5f5c0a913d74d5113",
+      "onnx_sha256": "b46aeb38f1dc7dcb90d162223796732b4666f192e68130e328583dab1873b1bb",
+      "confusion": {
+        "seated->seated": 1531,
+        "standing->standing": 148,
+        "empty->empty": 20
+      },
+      "critical": {
+        "56:seated": 20,
+        "114:seated": 30
+      },
+      "events": [
+        {
+          "kind": "stood_up",
+          "timestamp": 63.9
+        },
+        {
+          "kind": "sat_down",
+          "timestamp": 79.4
+        },
+        {
+          "kind": "stood_up",
+          "timestamp": 118.4
+        },
+        {
+          "kind": "sat_down",
+          "timestamp": 123.2
+        }
+      ],
+      "action_score": {
+        "matches": [
+          {
+            "expected_index": 0,
+            "actual": {
+              "kind": "stood_up",
+              "timestamp": 63.9
+            }
+          },
+          {
+            "expected_index": 1,
+            "actual": {
+              "kind": "sat_down",
+              "timestamp": 79.4
+            }
+          },
+          {
+            "expected_index": 2,
+            "actual": {
+              "kind": "stood_up",
+              "timestamp": 118.4
+            }
+          },
+          {
+            "expected_index": 4,
+            "actual": {
+              "kind": "sat_down",
+              "timestamp": 123.2
+            }
+          }
+        ],
+        "extra": [],
+        "missed": [
+          {
+            "kinds": [
+              "left_seat"
+            ],
+            "start": 119.2,
+            "end": 120.2
+          }
+        ]
+      }
+    }
+  },
+  "fps": 10,
+  "max_gap": 0.25,
+  "posture_confirm_seconds": 0.3,
+  "unknown_bridge_seconds": 1.0,
+  "seat_roi": [
+    0.2,
+    0.2,
+    0.95,
+    1.0
+  ],
+  "person_sha256": "9c60d351bb2865a8169d0590c07c905b372e81e4a846a8ff920d244955e2516c",
+  "completed_at": "2026-09-11T16:04:25.562861+00:00",
+  "samples": 1767,
+  "scope": "One independent fixed-scene video; not long-term or live acceptance",
+  "observations_sha256": "c81580f2f437fd0c2852a74fb9a55851a5e6855cc3cca72fc50d035df8856b82",
+  "review_notes": [
+    "Manual truth frozen before prediction; 1699 stable labelled samples and 68 uncertain/unlabelled boundary samples.",
+    "At 118.8s classifier unknown with person_track_supported=false cleared standing context. Empty state confirmed by 119.4s, but no left_seat event was inferred.",
+    "No candidate/threshold/expectation changed after seeing these predictions. Candidate stays experimental; 4/5 events does not pass complete action acceptance.",
+    "Offline serial inference on recorded frames; not live bounded-worker latency or Windows acceptance."
+  ]
+}

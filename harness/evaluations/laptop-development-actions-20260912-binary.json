@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "frozen_at": "2026-09-12T01:00:30+08:00",
+  "scope": "development-only action truth frozen before r06 prediction; derived by manual source-video review under the 2026-09-12 binary lid semantics",
+  "semantics": {
+    "open": "the visible lid is not fully closed, including visible partial motion",
+    "closed": "the visible lid is fully closed",
+    "unknown": "the laptop is absent, occluded, blurred or not visually judgeable"
+  },
+  "videos": [
+    {
+      "stem": "2026-09-11 22-58-45",
+      "video_sha256": "c0143701c90f6541ebae085e89cc41e0b2c5d76a84d8f0a2dc17f379523bebc4",
+      "expected_events": []
+    },
+    {
+      "stem": "2026-09-11 22-59-29",
+      "video_sha256": "01bd0344201e9fae22e4240739a40a4da778be091388ae969eeb0103dd464961",
+      "expected_events": []
+    },
+    {
+      "stem": "2026-09-11 23-01-33",
+      "video_sha256": "b8f908681885a4a0a5af4fe36817c3c86ed466a17a8dca7445775e9b14a618c5",
+      "expected_events": []
+    },
+    {
+      "stem": "2026-09-11 23-02-14",
+      "video_sha256": "ed0ae4ce0dd083b4fc05a32d425349e2c99b3190ac0fdd117f8d0715b62fcb18",
+      "expected_events": [
+        {"kinds": ["laptop_opened"], "start": 4.0, "end": 5.5},
+        {"kinds": ["laptop_closed"], "start": 24.5, "end": 26.0},
+        {"kinds": ["laptop_opened"], "start": 26.5, "end": 28.0},
+        {"kinds": ["laptop_closed"], "start": 33.0, "end": 34.5},
+        {"kinds": ["laptop_opened"], "start": 35.0, "end": 36.5},
+        {"kinds": ["laptop_closed"], "start": 44.0, "end": 45.5}
+      ]
+    },
+    {
+      "stem": "2026-09-11 23-03-14",
+      "video_sha256": "406eac77385f6efb2826396681a8facdab3c0a2ed89b403d40f0d710439e6e42",
+      "expected_events": []
+    },
+    {
+      "stem": "2026-09-11 23-04-15",
+      "video_sha256": "971385e218546f176b1a9be644f1397a138ecab13eb72ae765583d1b768b3ee7",
+      "expected_events": []
+    },
+    {
+      "stem": "2026-09-11 23-05-02",
+      "video_sha256": "f9e748975212a102b74a2b5844cbb2ee574691fe026d1012ef92e32a7644ea5f",
+      "expected_events": [
+        {"kinds": ["laptop_opened"], "start": 55.0, "end": 56.5},
+        {"kinds": ["laptop_closed"], "start": 71.5, "end": 73.0}
+      ]
+    }
+  ],
+  "revision_reason": "The user changed visible partial lid motion from a separate partial state to open. Therefore each visible partial-to-fully-closed transition is a real close action, including the close near 33.5 seconds in 23-02-14."
+}

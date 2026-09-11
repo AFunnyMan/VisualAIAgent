@@ -256,8 +256,11 @@ def test_behavior_and_rule_panels_preserve_single_runtime(app):
     assert not app.exception
     assert any(item.label == "行为与统计" for item in app.tabs)
     assert any(item.label == "情境规则" for item in app.tabs)
+    assert any(item.label == "笔记本开合" for item in app.tabs)
     assert any("休息提醒未启用" in item.value for item in app.info)
     assert not next(item for item in app.checkbox if item.label == "启用在座与疑似饮水识别").value
+    assert not next(item for item in app.checkbox if item.label == "启用笔记本开合识别").value
+    assert any("笔记本开合实验未启用" in item.value for item in app.info)
     app.button(key="FormSubmitter:create_context_rule-创建情境规则").click().run()
     assert not app.exception
     assert len([button for button in app.button if button.label == "取消规则"]) == 1

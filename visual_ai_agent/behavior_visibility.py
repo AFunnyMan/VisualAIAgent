@@ -66,6 +66,7 @@ class PersonTrackGate:
         raw = list(candidates)
         result: dict[str, object] = {
             "person_track_supported": False,
+            "exit_evidence": False,
             "person_candidate": None,
             "reason": "invalid_frame",
         }

@@ -335,6 +335,7 @@ def run(args: argparse.Namespace) -> int:
             if pair["auxiliary_status"] != "ready":
                 pair["person_gate"]["reason"] = "auxiliary_" + pair["auxiliary_status"]
             continuous = pair["person_gate"]["person_track_supported"] is True
+            exit_evidence = pair["person_gate"].get("exit_evidence", False) is True
             baseline_support = baseline_gate.observe(
                 observation.monotonic_at,
                 pair["person_candidates"],
@@ -343,6 +344,7 @@ def run(args: argparse.Namespace) -> int:
         else:
             raw_posture = raw_drinking = "unknown"
             continuous = False
+            exit_evidence = False
             detector.reset_gate()
             baseline_gate.reset()
             baseline_support = False
@@ -352,6 +354,7 @@ def run(args: argparse.Namespace) -> int:
             raw_drinking,
             fresh=fresh,
             continuous_visible=continuous,
+            exit_evidence=exit_evidence,
         )
         baseline = baseline_timeline.observe(
             observation.monotonic_at,
@@ -393,7 +396,11 @@ def run(args: argparse.Namespace) -> int:
             "drinking": pair["drinking"] if fresh else {"label": "unknown"},
             "person_gate_weak_auxiliary": pair["person_gate"]
             if fresh
-            else {"person_track_supported": False, "reason": "not_fresh"},
+            else {
+                "person_track_supported": False,
+                "exit_evidence": False,
+                "reason": "not_fresh",
+            },
             "confirmed_posture": result["posture"],
             "confirmed_drinking": result["drinking"],
             "events": result["events"],

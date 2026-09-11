@@ -9,6 +9,8 @@ from agents import Model, ModelResponse, Usage
 
 from visual_ai_agent.agent import AgentService
 from visual_ai_agent.config import Config
+from visual_ai_agent.context_rules import ContextRuleService
+from visual_ai_agent.laptop_store import LaptopStore
 from visual_ai_agent.memory import MemoryStore
 from visual_ai_agent.models import Detection, SceneObservation
 from visual_ai_agent.watches import WatchService
@@ -173,6 +175,53 @@ async def test_sdk_executes_one_of_exactly_seven_business_tools_and_records_usag
     await service.close()
     await service.close()
     assert model.closed == 1
+
+
+@pytest.mark.asyncio
+async def test_laptop_queries_extend_existing_tool_without_adding_an_eighth(tmp_path, services):
+    store, watches = services
+    laptop = LaptopStore(store)
+    model = ScriptedModel(
+        [
+            [tool_call("get_current_scene", '{"scope":"laptop"}', "call-laptop")],
+            [message("笔记本开合实验未启用，当前无法确认。")],
+        ]
+    )
+    service = AgentService(configured(tmp_path), store, watches, model=model, laptop=laptop)
+    result = await service.run_user("笔记本现在合上了吗？", "laptop-query")
+    assert len(service.tools) == 7
+    assert result.status == "completed"
+    assert result.tool_calls == ({"tool": "get_current_scene", "ok": True, "current": False},)
+    assert "available" in model.calls[0]["system_instructions"]
+    await service.close()
+
+
+@pytest.mark.asyncio
+async def test_agent_cannot_create_laptop_rule_while_capability_is_unavailable(tmp_path, services):
+    store, watches = services
+    laptop = LaptopStore(store)
+    rules = ContextRuleService(store, timezone="UTC", laptop=laptop)
+    model = ScriptedModel(
+        [
+            [
+                tool_call(
+                    "create_watch",
+                    '{"target":"rule","trigger":"laptop_closed","message":"提醒我"}',
+                    "call-rule",
+                )
+            ],
+            [message("笔记本能力尚未验收，不能创建这条规则。")],
+        ]
+    )
+    service = AgentService(
+        configured(tmp_path), store, watches, model=model, laptop=laptop, rules=rules
+    )
+    result = await service.run_user("合盖时提醒我", "laptop-rule-unavailable")
+    assert result.status == "completed"
+    assert result.tool_calls[0]["tool"] == "create_watch"
+    assert result.tool_calls[0]["ok"] is False
+    assert rules.list_rules().data["rules"] == []
+    await service.close()
 
 
 @pytest.mark.asyncio

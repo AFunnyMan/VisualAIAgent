@@ -49,6 +49,23 @@ def test_duplicate_manifest_image_is_error_not_silently_collapsed():
         score_dataset({"samples": [sample, sample]}, [{"id": 1, "detections": []}])
 
 
+def test_custom_key_category_counts_miss_and_extra_box():
+    manifest = {
+        "samples": [
+            {"id": "positive", "annotations": [annotation("key")]},
+            {"id": "negative", "annotations": []},
+        ]
+    }
+    predictions = [
+        {"id": "positive", "detections": []},
+        {"id": "negative", "detections": [prediction("key")]},
+    ]
+    scored = score_dataset(manifest, predictions, categories=("key",))["categories"]["key"]
+    assert (scored["tp"], scored["fp"], scored["fn"]) == (0, 1, 1)
+    assert scored["precision"] == 0
+    assert scored["recall"] == 0
+
+
 def test_cli_keeps_class_calibrated_low_confidence_predictions(tmp_path, monkeypatch):
     manifest, predictions, output = [tmp_path / n for n in ("gt.json", "pred.json", "score.json")]
     manifest.write_text(json.dumps({"samples": [{"id": 1, "annotations": [annotation()]}]}))

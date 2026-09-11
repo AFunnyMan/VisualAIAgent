@@ -28,6 +28,7 @@ def run(args):
         api_key="",
         daily_auto_limit=0,
         behavior_enabled=True,
+        laptop_enabled=False,
         behavior_posture_manifest=args.posture_manifest.resolve(),
         behavior_drinking_manifest=args.drinking_manifest.resolve(),
         camera_index=args.camera,
@@ -38,6 +39,7 @@ def run(args):
     runtime = ApplicationRuntime(config)
     lock = threading.Lock()
     counts = {"objects": Counter(), "behavior": Counter()}
+    sources = {"objects": Counter(), "behavior": Counter()}
     inference = []
     callbacks = []
     behavior_ages = []
@@ -49,6 +51,7 @@ def run(args):
             originals[name](observation, jpeg)
             with lock:
                 counts[name]["fresh" if observation.fresh else observation.status] += 1
+                sources[name][observation.source] += 1
                 if name == "objects" and observation.inference_ms is not None:
                     inference.append(observation.inference_ms)
                 if name == "behavior" and observation.fresh:
@@ -84,9 +87,10 @@ def run(args):
             summary = {
                 "started_at": began_at.isoformat(),
                 "finished_at": utcnow().isoformat(),
-                "source": "real USB camera; no action labels",
+                "source": getattr(args, "source_description", "real USB camera; no action labels"),
                 "requested_seconds": args.seconds,
                 "counts": {key: dict(value) for key, value in counts.items()},
+                "observation_sources": {key: dict(value) for key, value in sources.items()},
                 "object_inference_ms": metrics(inference),
                 "behavior_age_at_callback_end_ms": metrics(behavior_ages),
                 "callback_ms": metrics(callbacks),

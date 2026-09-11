@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "scope": "all-development train-only fixed-ROI fit check; no independent validation or acceptance evaluation",
+  "model": {
+    "roi": [0.17, 0.32, 0.75, 1.0],
+    "expected_source_size": [1920, 1080],
+    "checkpoint_selection": "last_epoch",
+    "onnx_sha256": "0863db4066259c8be81e0b8f01d572e5a0403604e8144aad55164829db1bd894",
+    "checkpoint_sha256": "69bab967b741e59bbf4c3931f3df6df30763cb6a6e5fa07d9d9e8dc28da545be"
+  },
+  "data": {
+    "sample_fps": 4,
+    "train": {"closed": 154, "open": 128, "partial": 58, "source_videos": 7},
+    "validation": null,
+    "dataset_sha256": "223ab78d695598436c681e92b62b6e7b2b623e855b0f51fcbc510875ced84802",
+    "dataset_manifest_sha256": "776fe89c2f54e92ec060b319f8d95f132ac34c5175d77132a292cb1bce41f556"
+  },
+  "training_fit": {
+    "total": 340,
+    "correct": 339,
+    "unknown": 1,
+    "accuracy_all": 0.9970588235294118,
+    "accuracy_accepted": 1.0,
+    "warning": "These are fitted training frames and are not validation evidence."
+  },
+  "all_development_fit_replay": {
+    "videos": 7,
+    "samples": 3761,
+    "raw_counts": {"closed": 3207, "open": 325, "partial": 173, "unknown": 56},
+    "state_counts": {"closed": 3107, "open": 282, "partial": 173, "unknown": 199},
+    "events": 1,
+    "event_detail": [{"source_sha256": "ed0ae4ce0dd083b4fc05a32d425349e2c99b3190ac0fdd117f8d0715b62fcb18", "kind": "laptop_closed", "timestamp": 25.3}],
+    "finding": "Even on the same source groups used for fitting, only one close event was recovered from the repeated-close development video and none from the other open-close development video. The end-to-end event chain is still inadequate."
+  },
+  "export_consistency": {
+    "samples": 340,
+    "argmax_disagreements": 0,
+    "maximum_probability_difference": 0.0000007152557373046875
+  },
+  "decision": "reject_before_independent_acceptance_and_product_integration"
+}

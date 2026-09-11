@@ -44,3 +44,12 @@ def test_preserved_head_keeps_coco_indices_and_filters_nonbusiness_classes():
     result = decode(raw, transform, 0.35, expected_names(True))
     assert len(result) == 1
     assert result[0].category == "cup"
+
+
+def test_custom_single_class_decode_keeps_key():
+    _, transform = letterbox(np.zeros((640, 640, 3), dtype=np.uint8), 640)
+    raw = np.zeros((1, 300, 6), dtype=np.float32)
+    raw[0, 0] = [10, 20, 50, 70, 0.9, 0]
+    result = decode(raw, transform, 0.35, {0: "key"}, {"key"})
+    assert len(result) == 1
+    assert result[0].category == "key"

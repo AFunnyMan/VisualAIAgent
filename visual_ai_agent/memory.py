@@ -136,10 +136,10 @@ class MemoryStore:
                     ).fetchone()
                 except sqlite3.Error as error:
                     raise RuntimeError("Existing database has invalid schema metadata") from error
-                if version_row is None or version_row[0] not in {"1", "2", "3"}:
+                if version_row is None or version_row[0] not in {"1", "2", "3", "4"}:
                     raise RuntimeError("Existing database schema version is not supported")
                 existing_version = version_row[0]
-                if existing_version == "3":
+                if existing_version == "4":
                     required_tables = {
                         "schema_meta",
                         "evidence",
@@ -154,6 +154,8 @@ class MemoryStore:
                         "behavior_observations",
                         "behavior_intervals",
                         "behavior_events",
+                        "laptop_observations",
+                        "laptop_events",
                         "context_rules",
                         "context_rule_versions",
                         "context_rule_jobs",
@@ -198,9 +200,21 @@ class MemoryStore:
                     }
                     if not {"crossed", "continuity_key"}.issubset(rule_state_columns):
                         raise RuntimeError("Current database schema is missing required columns")
+                    laptop_columns = {
+                        row[1]
+                        for row in connection.execute(
+                            "PRAGMA table_info(laptop_observations)"
+                        ).fetchall()
+                    }
+                    if not {
+                        "presence_verified",
+                        "presence_model_version",
+                        "state_reason",
+                    }.issubset(laptop_columns):
+                        raise RuntimeError("Current database schema is missing required columns")
                     return
                 self._backup_before_migration(
-                    connection, from_version=existing_version, to_version="3"
+                    connection, from_version=existing_version, to_version="4"
                 )
             connection.executescript(
                 """BEGIN IMMEDIATE;
@@ -388,6 +402,38 @@ class MemoryStore:
                 )""",
                 """CREATE INDEX IF NOT EXISTS idx_behavior_events_time
                     ON behavior_events(confirmed_at DESC)""",
+                """CREATE TABLE IF NOT EXISTS laptop_observations (
+                    singleton_id INTEGER PRIMARY KEY CHECK(singleton_id = 1),
+                    observed_at TEXT NOT NULL,
+                    monotonic_at REAL NOT NULL,
+                    status TEXT NOT NULL,
+                    fresh INTEGER NOT NULL,
+                    state TEXT NOT NULL,
+                    state_reason TEXT,
+                    presence_verified INTEGER NOT NULL,
+                    presence_confidence REAL,
+                    occluded INTEGER NOT NULL,
+                    model_version TEXT NOT NULL,
+                    presence_model_version TEXT NOT NULL,
+                    scene_id TEXT NOT NULL,
+                    source TEXT NOT NULL,
+                    error TEXT,
+                    ingested_at TEXT NOT NULL
+                )""",
+                """CREATE TABLE IF NOT EXISTS laptop_events (
+                    event_id TEXT PRIMARY KEY,
+                    kind TEXT NOT NULL,
+                    observed_at TEXT NOT NULL,
+                    confirmed_at TEXT NOT NULL,
+                    evidence_id TEXT REFERENCES evidence(evidence_id),
+                    state TEXT NOT NULL,
+                    model_version TEXT NOT NULL,
+                    presence_model_version TEXT NOT NULL,
+                    scene_id TEXT NOT NULL,
+                    source TEXT NOT NULL
+                )""",
+                """CREATE INDEX IF NOT EXISTS idx_laptop_events_time
+                    ON laptop_events(confirmed_at DESC)""",
             )
             from .context_rules import create_schema as create_context_rule_schema
 
@@ -397,7 +443,7 @@ class MemoryStore:
                     connection.execute(statement)
                 create_context_rule_schema(connection)
                 connection.execute(
-                    "UPDATE schema_meta SET value = '3' WHERE key = 'schema_version'"
+                    "UPDATE schema_meta SET value = '4' WHERE key = 'schema_version'"
                 )
                 connection.commit()
             except BaseException:
@@ -555,6 +601,8 @@ class MemoryStore:
                            SELECT evidence_id FROM last_seen WHERE evidence_id IS NOT NULL
                        ) AND evidence_id NOT IN (
                            SELECT evidence_id FROM behavior_events WHERE evidence_id IS NOT NULL
+                       ) AND evidence_id NOT IN (
+                           SELECT evidence_id FROM laptop_events WHERE evidence_id IS NOT NULL
                        ) AND evidence_id NOT IN (
                            SELECT evidence_id FROM context_rule_jobs WHERE evidence_id IS NOT NULL
                        )"""
@@ -746,6 +794,11 @@ class MemoryStore:
                    AND event_id NOT IN (SELECT event_id FROM context_rule_jobs)""",
                 (cutoff,),
             ).rowcount
+            laptop_events = connection.execute(
+                """DELETE FROM laptop_events WHERE confirmed_at < ?
+                   AND event_id NOT IN (SELECT event_id FROM context_rule_jobs)""",
+                (cutoff,),
+            ).rowcount
             stale_evidence = connection.execute(
                 """SELECT evidence_id, relative_path FROM evidence
                    WHERE evidence_id NOT IN (
@@ -756,6 +809,8 @@ class MemoryStore:
                        SELECT evidence_id FROM last_seen WHERE evidence_id IS NOT NULL
                    ) AND evidence_id NOT IN (
                        SELECT evidence_id FROM behavior_events WHERE evidence_id IS NOT NULL
+                   ) AND evidence_id NOT IN (
+                       SELECT evidence_id FROM laptop_events WHERE evidence_id IS NOT NULL
                    ) AND evidence_id NOT IN (
                        SELECT evidence_id FROM context_rule_jobs WHERE evidence_id IS NOT NULL
                    )"""
@@ -776,6 +831,7 @@ class MemoryStore:
             "events": events,
             "behavior_intervals": behavior_intervals,
             "behavior_events": behavior_events,
+            "laptop_events": laptop_events,
             "evidence": removed_count,
         }
 

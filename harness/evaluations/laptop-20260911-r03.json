@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "scope": "fixed-ROI three-class development experiment; no independent acceptance evaluation",
+  "model": {
+    "roi": [0.17, 0.32, 0.75, 1.0],
+    "expected_source_size": [1920, 1080],
+    "onnx_sha256": "6ef37d93de9443e1cd35fc7b9ffeb8a6cb4ee91936415fe2cfd49377f60b5236",
+    "checkpoint_sha256": "1c6899d329d05e957edc825c8d43a101047e5f17fb431899ff856781714b03d5"
+  },
+  "training": {
+    "epochs": 20,
+    "imgsz": 320,
+    "batch": 8,
+    "seed": 20260911,
+    "freeze": 5,
+    "device": "cpu",
+    "torch_cpu_threads": 4,
+    "dataset_sha256": "760ddd6862e60fa04fffaa9006039ce3782840956924778e24ee4166df7e0160"
+  },
+  "development_validation": {
+    "total": 200,
+    "correct": 122,
+    "unknown": 56,
+    "accuracy_all": 0.61,
+    "accuracy_accepted": 0.8472222222222222,
+    "closed": {"correct": 49, "wrong_open": 1, "wrong_partial": 10, "unknown": 14},
+    "open": {"correct": 69, "wrong_partial": 1, "unknown": 10},
+    "partial": {"correct": 4, "wrong_open": 9, "wrong_closed": 1, "unknown": 32}
+  },
+  "development_video_replay": {
+    "videos": [
+      {
+        "source_sha256": "ed0ae4ce0dd083b4fc05a32d425349e2c99b3190ac0fdd117f8d0715b62fcb18",
+        "samples": 469,
+        "raw_counts": {"closed": 44, "open": 207, "partial": 45, "unknown": 173},
+        "events": 0
+      },
+      {
+        "source_sha256": "f9e748975212a102b74a2b5844cbb2ee574691fe026d1012ef92e32a7644ea5f",
+        "samples": 1160,
+        "raw_counts": {"closed": 986, "open": 117, "partial": 38, "unknown": 19},
+        "events": 0
+      }
+    ],
+    "finding": "The fixed ROI improves stable class separation relative to r02 but rejects most independent partial frames. Both key development videos still produce zero events under the unchanged conservative timeline."
+  },
+  "onnx_cpu_inference_ms": {
+    "samples": 340,
+    "p50": 16.76081249024719,
+    "p95": 21.135294425766915,
+    "max": 27.43274997919798
+  },
+  "export_consistency": {
+    "samples": 340,
+    "argmax_disagreements": 0,
+    "maximum_probability_difference": 0.0000016093254089355469
+  },
+  "decision": "reject_for_acceptance_and_product_integration"
+}

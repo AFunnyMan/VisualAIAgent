@@ -16,6 +16,8 @@ TRIGGERS = {
     "seat_occupied": "返回在座",
     "suspected_drink": "疑似饮水",
     "seated_duration": "连续有效在座达到时长",
+    "laptop_closed": "笔记本确认合盖",
+    "laptop_opened": "笔记本确认打开",
 }
 OBJECTS = {"cup": "杯子", "cell phone": "手机", "bottle": "瓶子"}
 REGIONS = {"any": "任意区域", "left": "左侧", "center": "中间", "right": "右侧"}
@@ -90,10 +92,54 @@ def behavior_panel(runtime, show_evidence, time_label):
     contents()
 
 
+def laptop_panel(runtime, show_evidence, time_label):
+    st.subheader("笔记本开合 · 未验收实验能力")
+    st.caption(
+        "笔记本状态与行为时长分开记录。只有确认电脑仍在画面中且清晰可见后，"
+        "才允许输出开着或合上；半开算开着，低置信、遮挡、移出画面和过期画面均为未知。"
+    )
+
+    @st.fragment(run_every=1)
+    def contents():
+        current = runtime.laptop.current().data
+        diagnostics = runtime.diagnostics()
+        if diagnostics.get("laptop_error"):
+            st.warning(diagnostics["laptop_error"])
+        if not current.get("available"):
+            st.info(current.get("capability_reason") or "笔记本开合能力不可用。")
+        state = current.get("state", "unknown") if current.get("current") else "unknown"
+        labels = {"open": "开着（含半开）", "closed": "完全合上", "unknown": "未知"}
+        first, second, third = st.columns(3)
+        first.metric("当前笔记本状态", labels.get(state, "未知"))
+        second.metric("能力状态", "实验可用" if current.get("available") else "未验收/不可用")
+        observation = current.get("observation") or {}
+        presence = observation.get("presence_verified")
+        third.metric("画面确认", "电脑清晰可见" if presence else "未确认")
+        st.caption(f"最近笔记本观察：{time_label(observation.get('observed_at'))}")
+        st.subheader("最近笔记本开合事件")
+        end = utcnow()
+        events = runtime.laptop.search_events(end - timedelta(days=7), end, limit=20)
+        labels = {"laptop_closed": "确认合盖", "laptop_opened": "确认打开"}
+        for event in events.data.get("events", []):
+            with st.expander(
+                f"{time_label(event['confirmed_at'])} · {labels.get(event['kind'], event['kind'])}"
+            ):
+                st.caption(
+                    f"事件 {event['event_id']} · 场景 {event['scene_id']} · "
+                    f"状态模型 {event['model_version']} · "
+                    f"画面确认模型 {event['presence_model_version']}"
+                )
+                show_evidence(event.get("evidence_id"))
+        if not events.data.get("events"):
+            st.caption("暂无确认的笔记本开合事件。")
+
+    contents()
+
+
 def _rule_fields(key, rule=None):
     rule = rule or {}
     trigger = st.selectbox(
-        "行为触发",
+        "触发条件",
         list(TRIGGERS),
         index=list(TRIGGERS).index(rule.get("trigger", "left_seat")),
         format_func=TRIGGERS.get,
@@ -169,7 +215,10 @@ def rules_panel(runtime, show_result, show_evidence, time_label):
             show_result(result)
             if result.ok:
                 st.rerun()
-    st.caption("例如：离座＋18:00之后＋手机在右侧。钥匙、合盖和自定义区域暂未支持。")
+    st.caption(
+        "例如：离座＋18:00之后＋手机在右侧。笔记本规则只在实验能力显示可用时创建；"
+        "钥匙和自定义区域暂未支持。"
+    )
     for rule in rules:
         rule_id = rule["rule_id"]
         state = (

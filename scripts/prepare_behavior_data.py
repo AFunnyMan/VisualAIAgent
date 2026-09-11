@@ -45,13 +45,25 @@ def label_at(intervals: list[dict], timestamp: float) -> str | None:
     return None
 
 
-def build(annotations: Path, output: Path, sample_fps: float = 2.0) -> dict:
+def build(
+    annotations: Path,
+    output: Path,
+    sample_fps: float = 2.0,
+    source_registry: Path | None = None,
+) -> dict:
     if not math.isfinite(sample_fps) or not 0 < sample_fps <= 10:
         raise ValueError("sample_fps must be in (0, 10]")
     if output.exists():
         raise ValueError("Output must not exist")
     spec = json.loads(annotations.read_text())
     sources: list[dict] = spec["videos"]
+    verified_registry_sources: dict[str, str] | None = None
+    if source_registry is not None:
+        from scripts.training_source_policy import verify_development_sources
+
+        verified_registry_sources = verify_development_sources(
+            [Path(source["path"]).resolve() for source in sources], source_registry.resolve()
+        )
     seen_sources: set[str] = set()
     # Verify all sources and annotation bounds before creating any output.
     for source in sources:
@@ -126,6 +138,15 @@ def build(annotations: Path, output: Path, sample_fps: float = 2.0) -> dict:
         counts=dict(Counter(f"{r['task']}/{r['split']}/{r['label']}" for r in records)),
         samples=records,
         source_groups={s["sha256"]: s.get("split", "train") for s in sources},
+        source_registry=(
+            {
+                "path": str(source_registry.resolve()),
+                "sha256": sha256(source_registry.resolve()),
+                "verified_development_sources": verified_registry_sources,
+            }
+            if source_registry is not None
+            else None
+        ),
     )
     (output / "manifest.json").write_text(json.dumps(result, ensure_ascii=False, indent=2))
     return result
@@ -136,5 +157,10 @@ if __name__ == "__main__":
     parser.add_argument("--annotations", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--sample-fps", type=float, default=2.0)
+    parser.add_argument("--source-registry", type=Path)
     args = parser.parse_args()
-    print(json.dumps(build(args.annotations, args.output, args.sample_fps)["counts"]))
+    print(
+        json.dumps(
+            build(args.annotations, args.output, args.sample_fps, args.source_registry)["counts"]
+        )
+    )

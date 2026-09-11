@@ -77,7 +77,7 @@ def load_behavior_manifest(path: Path, task: str) -> dict[str, Any]:
     wanted = {
         "posture": {"seated", "standing", "empty"},
         "drinking": {"drinking", "not_drinking"},
-        "laptop": ({"open", "closed"}, {"open", "closed", "partial"}),
+        "laptop": ({"open", "closed"},),
     }
     expected_classes = wanted.get(task)
     class_mapping_valid = (
@@ -350,6 +350,7 @@ class BehaviorDetector:
             drinking["label"],
             fresh=True,
             continuous_visible=gate["person_track_supported"] is True,
+            exit_evidence=gate.get("exit_evidence", False) is True,
         )
         return {**result, "raw_posture": posture, "raw_drinking": drinking, "person_gate": gate}
 
@@ -429,7 +430,7 @@ class BehaviorWorker:
             events=events or [],
             model_version=self.model_version,
             scene_id=self.scene_id,
-            source="camera",
+            source=self.source.source_name,
             error=error,
         )
 
@@ -493,7 +494,7 @@ class BehaviorWorker:
                             confirmed_at=confirmed_at,
                             model_version=self.model_version,
                             scene_id=self.scene_id,
-                            source="camera",
+                            source=self.source.source_name,
                         )
                         for item in result["events"]
                     ]

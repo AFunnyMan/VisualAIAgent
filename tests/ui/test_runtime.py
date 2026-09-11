@@ -458,6 +458,130 @@ def test_view_change_resets_presence_without_creating_missing_event(tmp_path, mo
         runtime.close()
 
 
+def test_unaccepted_laptop_capability_stays_unavailable_while_objects_start(tmp_path, monkeypatch):
+    import visual_ai_agent.runtime as module
+
+    class FakeWorker:
+        running = False
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def start(self):
+            self.running = True
+
+        def stop(self):
+            self.running = False
+
+        def snapshot(self):
+            return None, None
+
+    class FakeSource:
+        source_name = "camera"
+        status = "stopped"
+        last_error = None
+
+    monkeypatch.setattr(module, "CameraSource", lambda **_kwargs: FakeSource())
+    monkeypatch.setattr(module, "YoloOnnxDetector", lambda *_args, **_kwargs: object())
+    monkeypatch.setattr(module, "VisionWorker", FakeWorker)
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path, laptop_enabled=True))
+    try:
+        result = runtime.start_camera()
+        assert result.ok
+        diagnostics = runtime.diagnostics()
+        assert diagnostics["camera_running"] is True
+        assert diagnostics["laptop_running"] is False
+        assert diagnostics["laptop_available"] is False
+        assert "电脑仍在画面中且清晰可见" in diagnostics["laptop_error"]
+        current = runtime.laptop.current().data
+        assert current["configured"] is True
+        assert current["state"] == "unknown"
+    finally:
+        runtime.close()
+
+
+def test_accepted_laptop_worker_uses_an_independent_subscription_to_shared_camera(
+    tmp_path, monkeypatch
+):
+    import visual_ai_agent.runtime as module
+
+    sources = []
+    laptop_workers = []
+
+    class FakeSource:
+        source_name = "replay"
+        status = "stopped"
+        last_error = None
+
+    class FakeVisionWorker:
+        running = False
+
+        def __init__(self, _detector, source, *_args, **_kwargs):
+            self.source = source
+            sources.append(source)
+
+        def start(self):
+            self.running = True
+
+        def stop(self):
+            self.running = False
+
+        def snapshot(self):
+            return None, None
+
+    class FakeLaptopWorker:
+        running = False
+
+        def __init__(self, _detector, source, *_args, **kwargs):
+            self.source = source
+            self.model_version = kwargs["model_version"]
+            self.presence_model_version = kwargs["presence_model_version"]
+            laptop_workers.append(self)
+
+        def start(self):
+            self.running = True
+
+        def stop(self):
+            self.running = False
+
+    manifest = tmp_path / "accepted.json"
+    manifest.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(module, "CameraSource", lambda **_kwargs: FakeSource())
+    monkeypatch.setattr(module, "YoloOnnxDetector", lambda *_args, **_kwargs: object())
+    monkeypatch.setattr(module, "VisionWorker", FakeVisionWorker)
+    monkeypatch.setattr(module, "LaptopWorker", FakeLaptopWorker)
+    monkeypatch.setattr(module, "load_laptop_capability_manifest", lambda _path, **_kwargs: {})
+    monkeypatch.setattr(
+        module,
+        "detector_from_capability",
+        lambda _record: (object(), "lid-accepted", "presence-accepted"),
+    )
+    runtime = ApplicationRuntime(
+        Config(
+            data_dir=tmp_path,
+            laptop_enabled=True,
+            laptop_capability_manifest=manifest,
+        )
+    )
+    try:
+        assert runtime.start_camera().ok
+        assert len(sources) == 1 and len(laptop_workers) == 1
+        assert sources[0] is not laptop_workers[0].source
+        assert sources[0].camera is laptop_workers[0].source.camera
+        assert runtime.diagnostics()["laptop_available"] is True
+        assert runtime.stop_camera().ok
+        laptop_current = runtime.laptop.current().data["observation"]
+        assert laptop_current["status"] == "stopped"
+        assert laptop_current["source"] == "replay"
+        with runtime.memory._read_connection() as connection:
+            row = connection.execute(
+                "SELECT status,source FROM observations ORDER BY observation_id DESC LIMIT 1"
+            ).fetchone()
+        assert (row["status"], row["source"]) == ("stopped", "replay")
+    finally:
+        runtime.close()
+
+
 def test_behavior_trigger_boundary_excludes_late_committed_old_object_frame(tmp_path, monkeypatch):
     """Precisely interleave a late object commit inside behavior persistence."""
     from visual_ai_agent.behavior_models import BehaviorEvent, BehaviorObservation

@@ -80,3 +80,13 @@ def test_environment_loads_strict_cup_scale_recheck(monkeypatch):
     monkeypatch.setenv("VAA_CUP_SCALE_RECHECK", "yes")
     with pytest.raises(ValueError, match="VAA_CUP_SCALE_RECHECK"):
         Config.from_env(dotenv_path=None)
+
+
+def test_laptop_experiment_is_off_by_default_and_uses_only_explicit_capability(monkeypatch):
+    assert Config().laptop_enabled is False
+    assert Config().laptop_capability_manifest is None
+    monkeypatch.setenv("VAA_LAPTOP_ENABLED", "true")
+    monkeypatch.setenv("VAA_LAPTOP_CAPABILITY_MANIFEST", "models/laptop-capability.json")
+    config = Config.from_env(dotenv_path=None)
+    assert config.laptop_enabled is True
+    assert config.laptop_capability_manifest.as_posix() == "models/laptop-capability.json"

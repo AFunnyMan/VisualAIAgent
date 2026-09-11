@@ -19,14 +19,14 @@ def overlap(a, b, crowd=False):
     return intersection / denominator if denominator else 0.0
 
 
-def score_image(annotations, detections, threshold=0.35, iou=0.5):
+def score_image(annotations, detections, threshold=0.35, iou=0.5, categories=CATEGORIES):
     """Match by class/descending confidence; duplicate boxes count as false positives.
 
     Non-crowd matches take precedence; unmatched predictions covered by a same-class
     crowd region are ignored by intersection over prediction area, not counted TP.
     """
     result = {}
-    for category in CATEGORIES:
+    for category in categories:
         targets = [a for a in annotations if a["category"] == category and not a["iscrowd"]]
         crowds = [a for a in annotations if a["category"] == category and a["iscrowd"]]
         predictions = sorted(
@@ -64,7 +64,7 @@ def score_image(annotations, detections, threshold=0.35, iou=0.5):
     return result
 
 
-def score_dataset(manifest, predictions, threshold=0.35):
+def score_dataset(manifest, predictions, threshold=0.35, categories=CATEGORIES):
     samples = {str(s["id"]): s for s in manifest["samples"]}
     rows = {str(s["id"]): s for s in predictions}
     if (
@@ -74,11 +74,13 @@ def score_dataset(manifest, predictions, threshold=0.35):
     ):
         raise ValueError("Predictions must cover exactly the unique manifest image IDs")
     images = []
-    counts = {c: dict.fromkeys(("tp", "fp", "fn", "ignored"), 0) for c in CATEGORIES}
+    counts = {c: dict.fromkeys(("tp", "fp", "fn", "ignored"), 0) for c in categories}
     for sample_id, sample in samples.items():
-        metrics = score_image(sample["annotations"], rows[sample_id]["detections"], threshold)
+        metrics = score_image(
+            sample["annotations"], rows[sample_id]["detections"], threshold, categories=categories
+        )
         images.append({"id": sample_id, "metrics": metrics})
-        for category in CATEGORIES:
+        for category in categories:
             for key in counts[category]:
                 counts[category][key] += metrics[category][key]
     for values in counts.values():

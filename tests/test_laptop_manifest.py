@@ -30,12 +30,14 @@ def test_laptop_manifest_requires_exact_classes_and_verified_weights(tmp_path):
         load_behavior_manifest(path, "posture")
     record["dataset"]["classes"]["2"] = "partial"
     path.write_text(json.dumps(record))
-    assert load_behavior_manifest(path, "laptop")["_names"][2] == "partial"
+    with pytest.raises(ValueError, match="class mapping"):
+        load_behavior_manifest(path, "laptop")
     record["dataset"]["classes"]["3"] = "partial"
     path.write_text(json.dumps(record))
     with pytest.raises(ValueError, match="class mapping"):
         load_behavior_manifest(path, "laptop")
     del record["dataset"]["classes"]["3"]
+    del record["dataset"]["classes"]["2"]
     path.write_text(json.dumps(record))
     weights.write_bytes(b"changed")
     with pytest.raises(ValueError, match="SHA mismatch"):

@@ -140,3 +140,33 @@ def test_posture_and_drinking_use_different_confirmation_windows():
     assert model.observe(1.1, "standing", "drinking")["events"] == [
         {"kind": "stood_up", "timestamp": 1.1}
     ]
+
+
+def test_exit_evidence_only_bridges_standing_to_empty_and_not_drinking():
+    model = BehaviorTimelineV2(posture_confirm_seconds=0.3)
+    _confirm_initial(model, "standing")
+    model.observe(0.6, "unknown", "unknown", exit_evidence=True)
+    model.observe(0.7, "empty", "unknown", exit_evidence=True)
+    result = model.observe(1.0, "empty", "unknown", exit_evidence=True)
+    assert result["events"] == [{"kind": "left_seat", "timestamp": 1.0}]
+    assert result["drinking"] == "unknown"
+
+    seated = BehaviorTimelineV2(posture_confirm_seconds=0.3)
+    _confirm_initial(seated)
+    seated.observe(0.6, "unknown", "unknown", exit_evidence=True)
+    seated.observe(0.7, "empty", "unknown", exit_evidence=True)
+    assert seated.observe(1.0, "empty", "unknown", exit_evidence=True)["events"] == []
+
+
+def test_exit_evidence_does_not_bridge_standing_recovery_or_faults():
+    recovery = BehaviorTimelineV2(posture_confirm_seconds=0.3)
+    _confirm_initial(recovery, "standing")
+    recovery.observe(0.6, "unknown", "unknown", exit_evidence=True)
+    recovery.observe(0.7, "seated", "not_drinking", exit_evidence=True)
+    assert recovery.observe(1.0, "seated", "not_drinking", exit_evidence=True)["events"] == []
+
+    stale = BehaviorTimelineV2(posture_confirm_seconds=0.3)
+    _confirm_initial(stale, "standing")
+    stale.observe(0.6, "unknown", "unknown", fresh=False, exit_evidence=True)
+    stale.observe(0.7, "empty", "unknown", exit_evidence=True)
+    assert stale.observe(1.0, "empty", "unknown", exit_evidence=True)["events"] == []

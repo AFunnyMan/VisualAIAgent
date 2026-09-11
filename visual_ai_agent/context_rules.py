@@ -26,6 +26,8 @@ TRIGGERS = {
     "seat_occupied",
     "suspected_drink",
     "seated_duration",
+    "laptop_closed",
+    "laptop_opened",
 }
 REGIONS = {"left", "center", "right", "any"}
 
@@ -138,10 +140,12 @@ class ContextRuleService:
         behavior: object | None = None,
         timezone: str | ZoneInfo = "Asia/Shanghai",
         *,
+        laptop: object | None = None,
         clock: Callable[[], datetime] = utcnow,
     ) -> None:
         self.store = store
         self.behavior = behavior
+        self.laptop = laptop
         self.timezone = ZoneInfo(timezone) if isinstance(timezone, str) else timezone
         self.clock = clock
         with store._transaction(immediate=True) as connection:
@@ -201,6 +205,8 @@ class ContextRuleService:
         error = self._validate(
             trigger, after_time, object_category, region, seated_minutes, message
         )
+        if not error and trigger.startswith("laptop_") and not self._laptop_available():
+            error = "laptop capability is unavailable"
         if error or not request_id.strip():
             return ToolResult(ok=False, error=error or "request_id is required")
         if not isinstance(enabled, bool):
@@ -308,6 +314,11 @@ class ContextRuleService:
             }
             values.update({key: value for key, value in changes.items() if key != "enabled"})
             error = self._validate(**values)
+            activating_laptop = values["trigger"].startswith("laptop_") and (
+                current["trigger"] != values["trigger"] or changes.get("enabled") is True
+            )
+            if not error and activating_laptop and not self._laptop_available():
+                error = "laptop capability is unavailable"
             if error:
                 return ToolResult(ok=False, error=error)
             version = current["version"] + 1
@@ -367,6 +378,15 @@ class ContextRuleService:
         local = event_at.astimezone(self.timezone)
         threshold = datetime.strptime(after_time, "%H:%M").time()
         return local.time().replace(tzinfo=None) > threshold
+
+    def _laptop_available(self) -> bool:
+        if self.laptop is None:
+            return False
+        try:
+            result = self.laptop.status()
+        except Exception:
+            return False
+        return bool(result.ok and result.data.get("available"))
 
     def _stable_fact(
         self, connection: sqlite3.Connection, rule: sqlite3.Row, event: object, event_at: datetime
@@ -447,26 +467,30 @@ class ContextRuleService:
 
     @staticmethod
     def _event_fact(event: object, event_at: datetime) -> dict[str, Any]:
+        detail = {
+            key: _value(event, key)
+            for key in (
+                "kind",
+                "posture",
+                "drinking",
+                "state",
+                "scene_id",
+                "source",
+                "model_version",
+                "presence_model_version",
+                "session_id",
+                "evidence_id",
+                "continuous_since",
+                "continuous_until",
+                "continuous_seated_seconds",
+                "threshold_minutes",
+            )
+        }
+        fact_type = "laptop" if str(_value(event, "kind", "")).startswith("laptop_") else "behavior"
         return {
             "fact_observed_at": _iso(event_at),
             "evidence_id": _value(event, "evidence_id"),
-            "behavior": {
-                key: _value(event, key)
-                for key in (
-                    "kind",
-                    "posture",
-                    "drinking",
-                    "scene_id",
-                    "source",
-                    "model_version",
-                    "session_id",
-                    "evidence_id",
-                    "continuous_since",
-                    "continuous_until",
-                    "continuous_seated_seconds",
-                    "threshold_minutes",
-                )
-            },
+            fact_type: detail,
         }
 
     def process_event(self, event: object) -> list[dict[str, Any]]:
@@ -474,11 +498,24 @@ class ContextRuleService:
         event_at = _value(
             event, "confirmed_at", _value(event, "timestamp", _value(event, "observed_at"))
         )
+        expected_laptop_state = {
+            "laptop_closed": "closed",
+            "laptop_opened": "open",
+        }.get(kind)
+        laptop_fact_valid = expected_laptop_state is None or (
+            _value(event, "state") == expected_laptop_state
+            and bool(_value(event, "evidence_id"))
+            and bool(_value(event, "model_version"))
+            and bool(_value(event, "presence_model_version"))
+            and bool(_value(event, "scene_id"))
+            and _value(event, "source") in {"camera", "replay", "test"}
+        )
         if (
             kind not in TRIGGERS - {"seated_duration"}
             or not isinstance(event_at, datetime)
             or event_at.tzinfo is None
             or event_at > self.clock()
+            or not laptop_fact_valid
         ):
             return []
         event_id = str(_value(event, "event_id", "") or f"{kind}:{_iso(event_at)}")

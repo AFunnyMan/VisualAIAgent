@@ -1,0 +1,113 @@
+{
+  "date": "2026-09-12",
+  "timezone": "Asia/Shanghai",
+  "models": {
+    "posture": "r04",
+    "drinking": "r03",
+    "objects": "existing configured official model + cup scale recheck",
+    "laptop": "disabled; no accepted capability"
+  },
+  "load_300_seconds": {
+    "started_at": "2026-09-11T17:16:47.567555+00:00",
+    "finished_at": "2026-09-11T17:21:48.219853+00:00",
+    "source": "paced looping development video; real models; no action labels",
+    "requested_seconds": 300,
+    "counts": {
+      "objects": {
+        "fresh": 300,
+        "stopped": 1
+      },
+      "behavior": {
+        "fresh": 2996,
+        "stale": 3,
+        "stopped": 1
+      }
+    },
+    "object_inference_ms": {
+      "n": 300,
+      "median": 114.00135396979749,
+      "p95": 170.7388749346137,
+      "max": 453.30716599710286
+    },
+    "behavior_age_at_callback_end_ms": {
+      "n": 2996,
+      "median": 55.152,
+      "p95": 79.00200000000001,
+      "max": 312.901
+    },
+    "callback_ms": {
+      "n": 3301,
+      "median": 1.548792002722621,
+      "p95": 2.676582895219326,
+      "max": 132.10362498648465
+    },
+    "rss_peak_mib": 638.9375,
+    "closed": true,
+    "final_error": null,
+    "source_instances": 1,
+    "source_open_counts": [
+      1
+    ],
+    "single_source_passed": true,
+    "scope": "Integration/load check only, not action accuracy or long-term acceptance"
+  },
+  "final_provenance_60_seconds": {
+    "started_at": "2026-09-11T17:23:19.099826+00:00",
+    "finished_at": "2026-09-11T17:24:19.337721+00:00",
+    "source": "paced looping development video; real models; no action labels",
+    "requested_seconds": 60,
+    "counts": {
+      "objects": {
+        "fresh": 60,
+        "stopped": 1
+      },
+      "behavior": {
+        "fresh": 601,
+        "stopped": 1
+      }
+    },
+    "object_inference_ms": {
+      "n": 60,
+      "median": 115.29510351829231,
+      "p95": 143.3843330014497,
+      "max": 198.9719159901142
+    },
+    "behavior_age_at_callback_end_ms": {
+      "n": 601,
+      "median": 54.739999999999995,
+      "p95": 67.586,
+      "max": 148.608
+    },
+    "callback_ms": {
+      "n": 663,
+      "median": 1.6715419478714466,
+      "p95": 2.3932079784572124,
+      "max": 16.96658320724964
+    },
+    "rss_peak_mib": 612.96875,
+    "closed": true,
+    "final_error": null,
+    "source_instances": 1,
+    "source_open_counts": [
+      1
+    ],
+    "single_source_passed": true,
+    "scope": "Integration/load check only, not action accuracy or long-term acceptance",
+    "observation_sources": {
+      "objects": {
+        "replay": 61
+      },
+      "behavior": {
+        "replay": 602
+      }
+    },
+    "provenance_passed": true
+  },
+  "cloud_calls": 0,
+  "notes": [
+    "本机开发视频原速循环，非USB或动作评分",
+    "300秒期间存在小测试、浏览器和页面重启竞争，非独占基准",
+    "回调完成年龄包括持久化耗时，不等同推理接受时间",
+    "最终停止来源修正后另跑60秒；未称整套30分钟稳定通过"
+  ]
+}
