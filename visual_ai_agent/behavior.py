@@ -74,11 +74,22 @@ def load_behavior_manifest(path: Path, task: str) -> dict[str, Any]:
     names = (
         {int(key): str(value) for key, value in names.items()} if isinstance(names, dict) else {}
     )
-    wanted = {"posture": {"seated", "standing", "empty"}, "drinking": {"drinking", "not_drinking"}}
+    wanted = {
+        "posture": {"seated", "standing", "empty"},
+        "drinking": {"drinking", "not_drinking"},
+        "laptop": ({"open", "closed"}, {"open", "closed", "partial"}),
+    }
+    expected_classes = wanted.get(task)
+    class_mapping_valid = (
+        set(names.values()) in expected_classes
+        if task == "laptop" and expected_classes is not None
+        else set(names.values()) == expected_classes
+    )
     if (
         task not in wanted
         or set(names) != set(range(len(names)))
-        or set(names.values()) != wanted[task]
+        or len(set(names.values())) != len(names)
+        or not class_mapping_valid
     ):
         raise ValueError(f"{task} class mapping is unexpected")
     onnx = _resolve_path(path, record["onnx"])
