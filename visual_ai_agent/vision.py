@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal, Protocol, cast
+from typing import Literal, Protocol, TypeVar, cast
 
 import cv2
 import numpy as np
@@ -43,6 +43,7 @@ COCO_CLASS_NAMES: dict[int, str] = {
     67: "cell phone",
 }
 TARGET_CLASS_IDS = {name: class_id for class_id, name in COCO_CLASS_NAMES.items()}
+NEAR_DUPLICATE_IOU_THRESHOLD = 0.97
 
 
 class FrameSource(Protocol):
@@ -61,6 +62,50 @@ class FrameSource(Protocol):
 
 class Detector(Protocol):
     def detect(self, frame_bgr: Frame) -> list[Detection]: ...
+
+
+class BoxDetection(Protocol):
+    category: str
+    confidence: float
+    bbox: tuple[float, float, float, float]
+
+
+BoxDetectionT = TypeVar("BoxDetectionT", bound=BoxDetection)
+
+
+def suppress_near_duplicate_detections(
+    detections: list[BoxDetectionT], iou_threshold: float = NEAR_DUPLICATE_IOU_THRESHOLD
+) -> list[BoxDetectionT]:
+    """Drop only near-identical same-class boxes, preserving distinct instances."""
+    if not 0 < iou_threshold <= 1:
+        raise ValueError("iou_threshold must be between 0 and 1")
+
+    kept: list[BoxDetectionT] = []
+    for candidate in sorted(detections, key=lambda item: item.confidence, reverse=True):
+        candidate_box = candidate.bbox
+        candidate_area = max(0.0, candidate_box[2] - candidate_box[0]) * max(
+            0.0, candidate_box[3] - candidate_box[1]
+        )
+        duplicate = False
+        for existing in kept:
+            if existing.category != candidate.category:
+                continue
+            existing_box = existing.bbox
+            intersection = max(
+                0.0, min(candidate_box[2], existing_box[2]) - max(candidate_box[0], existing_box[0])
+            ) * max(
+                0.0, min(candidate_box[3], existing_box[3]) - max(candidate_box[1], existing_box[1])
+            )
+            existing_area = max(0.0, existing_box[2] - existing_box[0]) * max(
+                0.0, existing_box[3] - existing_box[1]
+            )
+            union = candidate_area + existing_area - intersection
+            if union > 0 and intersection / union >= iou_threshold:
+                duplicate = True
+                break
+        if not duplicate:
+            kept.append(candidate)
+    return kept
 
 
 class CameraSource:
@@ -641,7 +686,7 @@ class YoloOnnxDetector:
                     region=region_for_box(box, transform.original_width),
                 )
             )
-        return sorted(detections, key=lambda detection: detection.confidence, reverse=True)
+        return suppress_near_duplicate_detections(detections)
 
 
 class CupScaleRecheckDetector:

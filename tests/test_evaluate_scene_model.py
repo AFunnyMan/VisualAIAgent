@@ -16,6 +16,35 @@ def test_experimental_class_ids_are_not_coco_ids():
         decode(raw, transform, 0.35)
 
 
+def test_experimental_decode_suppresses_near_duplicate_but_keeps_distinct_boxes():
+    _, transform = letterbox(np.zeros((640, 640, 3), dtype=np.uint8), 640)
+    raw = np.zeros((1, 300, 6), dtype=np.float32)
+    raw[0, 0] = [10, 20, 110, 120, 0.9, 1]
+    raw[0, 1] = [10.5, 20.5, 110.5, 120.5, 0.8, 1]
+    raw[0, 2] = [60, 20, 160, 120, 0.7, 1]
+
+    result = decode(raw, transform, 0.35)
+
+    assert [item.confidence for item in result] == pytest.approx([0.9, 0.7])
+
+
+def test_raw_decode_exposes_difference_that_postprocessing_would_hide():
+    _, transform = letterbox(np.zeros((640, 640, 3), dtype=np.uint8), 640)
+    reference_raw = np.zeros((1, 300, 6), dtype=np.float32)
+    reference_raw[0, 0] = [10, 20, 110, 120, 0.9, 1]
+    reference_raw[0, 1] = [10.5, 20.5, 110.5, 120.5, 0.8, 1]
+    candidate_raw = reference_raw.copy()
+    candidate_raw[0, 1, 4] = 0.0
+
+    reference_post = decode(reference_raw, transform, 0.35)
+    candidate_post = decode(candidate_raw, transform, 0.35)
+    reference_unfiltered = decode(reference_raw, transform, 0.35, suppress_duplicates=False)
+    candidate_unfiltered = decode(candidate_raw, transform, 0.35, suppress_duplicates=False)
+
+    assert compare_export(reference_post, candidate_post)["passed"]
+    assert not compare_export(reference_unfiltered, candidate_unfiltered)["passed"]
+
+
 def test_export_comparison_rejects_duplicate_or_wrong_class():
     _, transform = letterbox(np.zeros((640, 640, 3), dtype=np.uint8), 640)
     raw = np.zeros((1, 300, 6), dtype=np.float32)

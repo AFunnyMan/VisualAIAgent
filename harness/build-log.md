@@ -691,3 +691,13 @@ r01开发验证：起身/坐下各1/1、离座0/1、饮水2/4。新增开发视�
 - 实际命令 `VAA_RUN_LIVE_API=1 .venv/bin/pytest -q -m live_api tests/agent/test_laptop_live.py` 最终1 passed/7.59秒。3个Agent任务分别2/2/3次模型请求，总19,202 Token；查询get_current_scene，创建create_watch，自动get_current_scene→search_events→notify_user，实际仅一条source=agent通知。自动任务通知写入后触及既有三轮上限，status=completed但error=model_turn_limit按原逻辑保留，不冒充没有任何诊断或额外调用。脱敏结果evaluations/laptop-agent-live-20260912.json。
 - 此结论为真实模型+受控事实工具链通过，不是笔记本视觉精度或真实USB验收；能力默认关闭，缺失可见性素材和实机项目仍保持开放。
 - 修复后Agent/情境规则离线定向33 passed/2.20秒，Ruff与差异检查通过。此前全套395项仍为前一里程碑记录，本次未将未重跑全套写成新结果。
+
+
+## 2026-09-17 15:51—16:06 +08 — 物品R03分析、近重复框修复与训练前标注复核
+
+- 用户要求使用新增development_pic修复固定场景物品R03，并允许最高Sol并行。51图全为1920×1080、约4分钟同会话；整组仅development，不随机拆独立测试，未读取final-test。三名Sol分别审查/修复与人工标注，root复核整合。
+- 修复正式/实验共用同类IoU≥0.97近重复抑制，保留不同类别、相邻/普通重叠同类与稳定排序；评估增加未去重导出对照，避免部署去重掩盖PT/ONNX差异。旧归档180fresh中13重复杯采样全部消除，另删1手机重复框；旧168静态输入R03各组TP/FP/FN不变。脱敏证据：[去重复算](evaluations/scene-r03-dedup-20260917.json)。新51图原R03单遍/复查输出已本机保存，标签未获用户确认前不发布最终评分。
+- 新人工框初稿存在明显坐标偏移，root渲染发现并拒绝，错误版本保留本机；两Agent逐张重做960宽QA，root再次整批复核。底边银白物体类别不确定，撤下后半批25个武断phone框，与前半批保持不标，已向用户询问类别。不是已确认的手机真值。
+- 用户追加明确要求先看全部待训练人工标注图再确认。已输出本机 `data/标注复核-物品R04-20260917/`：87张（新增51＋旧train36）、总览HTML、说明和来源SHA清单；不包含val/test或公共COCO。原图1920×1080另加105px说明条。全部原图/坐标校验、旧36源SHA及渲染目检完成。**未开始R04训练，等待用户语义与整批标注确认**，不将数据复核当质量验收。
+- 实际 `.venv/bin/pytest -q`：400passed、1skipped、5deselected/14.21秒；`.export-venv/bin/python -m pytest -q tests/test_train_scene_model.py`：19passed/0.76秒；Ruff check全库通过，本轮4个Python文件format通过，diff检查通过。全库format check报告13个既有无关文件需格式化，本轮未扩大修改。隔离MPS探针成功仅确认设备可用，未训练。
+- 未开摄像头、无云API、未改生产权重/.env。私人图片/标注/模型不提交；保留工作树此前用户的build-log补记及其他未跟踪文件。后续与问题依据见[修复报告](../docs/scene-repair-20260917.md)和[上下文](context/scene-repair-20260917.md)。

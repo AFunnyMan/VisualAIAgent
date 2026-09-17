@@ -25,12 +25,14 @@ from pydantic import BaseModel  # noqa: E402
 from scripts.score_detections import overlap, score_dataset  # noqa: E402
 from visual_ai_agent.models import Detection  # noqa: E402
 from visual_ai_agent.vision import (  # noqa: E402
+    NEAR_DUPLICATE_IOU_THRESHOLD,
     CupScaleRecheckDetector,
     YoloOnnxDetector,
     _parse_names,
     inverse_letterbox,
     letterbox,
     region_for_box,
+    suppress_near_duplicate_detections,
 )
 
 NAMES = {0: "bottle", 1: "cup", 2: "cell phone"}
@@ -47,7 +49,15 @@ def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def decode(raw, transform, confidence, names=None, allowed_categories=None):
+def decode(
+    raw,
+    transform,
+    confidence,
+    names=None,
+    allowed_categories=None,
+    *,
+    suppress_duplicates=True,
+):
     names = NAMES if names is None else names
     allowed_categories = set(NAMES.values()) if allowed_categories is None else allowed_categories
     raw = np.asarray(raw)
@@ -73,7 +83,9 @@ def decode(raw, transform, confidence, names=None, allowed_categories=None):
                 region=region_for_box(tuple(box), transform.original_width),
             )
         )
-    return sorted(detections, key=lambda d: d.confidence, reverse=True)
+    if suppress_duplicates:
+        return suppress_near_duplicate_detections(detections)
+    return sorted(detections, key=lambda detection: detection.confidence, reverse=True)
 
 
 def expected_names(preserve_coco_head=False):
@@ -118,15 +130,20 @@ class ExperimentalDetector:
         self.confidence = confidence
 
     def detect(self, frame):
+        detections, _ = self.detect_with_raw(frame)
+        return detections
+
+    def detect_with_raw(self, frame):
         tensor, transform = letterbox(frame, 640)
         raw = self.session.run(None, {self.input_name: tensor})[0]
-        return decode(
+        arguments = (
             raw,
             transform,
             self.confidence,
             self.names,
             set(self.names.values()),
         )
+        return decode(*arguments), decode(*arguments, suppress_duplicates=False)
 
 
 def compare_export(reference, candidate):
@@ -212,9 +229,11 @@ def main():
         "preserve_coco_head": args.preserve_coco_head,
         "confidence": 0.35,
         "iou": 0.5,
+        "postprocessing": {"near_duplicate_iou": NEAR_DUPLICATE_IOU_THRESHOLD},
         "limits": "Offline still-image evidence, not live event or independent-instance acceptance",
         "datasets": {},
         "export_comparisons": [],
+        "raw_export_comparisons": [],
     }
     for specification in args.dataset:
         name, filename = specification.split("=", 1)
@@ -236,9 +255,13 @@ def main():
             if frame is None:
                 raise ValueError(f"Unreadable image: {sample['id']}")
             predictions = {}
+            candidate_raw_predictions = None
             for key, detector in detectors.items():
                 start = time.perf_counter()
-                predictions[key] = detector.detect(frame)
+                if key == "finetuned_single":
+                    predictions[key], candidate_raw_predictions = candidate.detect_with_raw(frame)
+                else:
+                    predictions[key] = detector.detect(frame)
                 timings[key].append(1000 * (time.perf_counter() - start))
                 rows[key].append(
                     {
@@ -252,12 +275,26 @@ def main():
                 raw = pt(torch.from_numpy(tensor))
             if isinstance(raw, tuple):
                 raw = raw[0]
+            raw_array = raw.detach().numpy()
             comparison = compare_export(
-                decode(raw.detach().numpy(), transform, 0.35, names, set(names.values())),
+                decode(raw_array, transform, 0.35, names, set(names.values())),
                 predictions["finetuned_single"],
             )
             comparison.update(dataset=name, id=sample["id"])
             result["export_comparisons"].append(comparison)
+            raw_comparison = compare_export(
+                decode(
+                    raw_array,
+                    transform,
+                    0.35,
+                    names,
+                    set(names.values()),
+                    suppress_duplicates=False,
+                ),
+                candidate_raw_predictions,
+            )
+            raw_comparison.update(dataset=name, id=sample["id"])
+            result["raw_export_comparisons"].append(raw_comparison)
         result["datasets"][name] = {
             "manifest_sha256": sha256(manifest_path),
             "count": len(manifest["samples"]),
@@ -287,11 +324,14 @@ def main():
     result["export_comparison_passed"] = all(
         c["passed"] for c in result["export_comparisons"]
     ) and any(not c.get("empty_pair", False) for c in result["export_comparisons"])
+    result["raw_export_comparison_passed"] = all(
+        c["passed"] for c in result["raw_export_comparisons"]
+    ) and any(not c.get("empty_pair", False) for c in result["raw_export_comparisons"])
     result["export_compared_image_count"] = len(result["export_comparisons"])
     result["finished_at"] = datetime.now(UTC).isoformat()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
-    if not result["export_comparison_passed"]:
+    if not (result["export_comparison_passed"] and result["raw_export_comparison_passed"]):
         raise SystemExit("Candidate reference/ONNX comparison failed; see saved results")
 
 

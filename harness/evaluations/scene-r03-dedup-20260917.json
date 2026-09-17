@@ -1,0 +1,1156 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-17T16:00:50.248078+08:00",
+  "scope": "Archived-prediction recomputation only; no model or image inference",
+  "postprocessing": {
+    "method": "stable confidence-descending, same-class greedy suppression against retained boxes",
+    "near_duplicate_iou": 0.97
+  },
+  "scoring": {
+    "confidence": 0.35,
+    "iou": 0.5,
+    "triplet_order": [
+      "tp",
+      "fp",
+      "fn"
+    ],
+    "note": "Archived predictions were rescored at their original fixed threshold; no lower-threshold candidates were introduced."
+  },
+  "sources": {
+    "live_samples": {
+      "sha256": "118cc956bf8ab649c90bac8fa36116e58ec3284da23beec104ce51941d7c3db8",
+      "jsonl_rows": 188,
+      "fresh_paired_samples": 180
+    },
+    "scene_evaluation": {
+      "sha256": "596a4e1efdb983f7fe5ca6636e4cf17252e728ffbea2afe5dba291943a083b88",
+      "evaluated_inputs": 168,
+      "dataset_entries": 7
+    }
+  },
+  "live_candidate": {
+    "multiple_cup_samples_before": 13,
+    "multiple_cup_samples_after": 0,
+    "changed_samples": 14,
+    "removed_detections": {
+      "cup": 13,
+      "cell phone": 1
+    },
+    "conclusion": "All 13 archived candidate samples with multiple cup boxes were reduced to one cup box; one additional near-duplicate cell-phone box was removed."
+  },
+  "datasets": {
+    "scene_val": {
+      "image_count": 18,
+      "manifest_sha256": "e37a1bf52cd0b5cf2a357cec9acd2634d9a37eec0861ffd14aa6e74764349acb",
+      "pipelines": {
+        "official_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              1,
+              0
+            ],
+            "cup": [
+              3,
+              0,
+              6
+            ],
+            "cell phone": [
+              2,
+              0,
+              4
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              1,
+              0
+            ],
+            "cup": [
+              3,
+              0,
+              6
+            ],
+            "cell phone": [
+              2,
+              0,
+              4
+            ]
+          }
+        },
+        "production_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              1,
+              0
+            ],
+            "cup": [
+              3,
+              0,
+              6
+            ],
+            "cell phone": [
+              2,
+              0,
+              4
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              1,
+              0
+            ],
+            "cup": [
+              3,
+              0,
+              6
+            ],
+            "cell phone": [
+              2,
+              0,
+              4
+            ]
+          }
+        },
+        "finetuned_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              9,
+              0,
+              0
+            ],
+            "cell phone": [
+              6,
+              0,
+              0
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              9,
+              0,
+              0
+            ],
+            "cell phone": [
+              6,
+              0,
+              0
+            ]
+          }
+        },
+        "finetuned_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              9,
+              0,
+              0
+            ],
+            "cell phone": [
+              6,
+              0,
+              0
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              9,
+              0,
+              0
+            ],
+            "cell phone": [
+              6,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "public_val": {
+      "image_count": 24,
+      "manifest_sha256": "0cd4fc303af2b265bd081929ecb62f69b1868736244927d645699492f96c194a",
+      "pipelines": {
+        "official_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              12,
+              1,
+              23
+            ],
+            "cup": [
+              10,
+              2,
+              15
+            ],
+            "cell phone": [
+              4,
+              0,
+              4
+            ]
+          },
+          "after": {
+            "bottle": [
+              12,
+              1,
+              23
+            ],
+            "cup": [
+              10,
+              2,
+              15
+            ],
+            "cell phone": [
+              4,
+              0,
+              4
+            ]
+          }
+        },
+        "production_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              12,
+              1,
+              23
+            ],
+            "cup": [
+              11,
+              2,
+              14
+            ],
+            "cell phone": [
+              4,
+              0,
+              4
+            ]
+          },
+          "after": {
+            "bottle": [
+              12,
+              1,
+              23
+            ],
+            "cup": [
+              11,
+              2,
+              14
+            ],
+            "cell phone": [
+              4,
+              0,
+              4
+            ]
+          }
+        },
+        "finetuned_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              16,
+              3,
+              19
+            ],
+            "cup": [
+              11,
+              5,
+              14
+            ],
+            "cell phone": [
+              5,
+              2,
+              3
+            ]
+          },
+          "after": {
+            "bottle": [
+              16,
+              3,
+              19
+            ],
+            "cup": [
+              11,
+              5,
+              14
+            ],
+            "cell phone": [
+              5,
+              2,
+              3
+            ]
+          }
+        },
+        "finetuned_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              16,
+              3,
+              19
+            ],
+            "cup": [
+              12,
+              6,
+              13
+            ],
+            "cell phone": [
+              5,
+              2,
+              3
+            ]
+          },
+          "after": {
+            "bottle": [
+              16,
+              3,
+              19
+            ],
+            "cup": [
+              12,
+              6,
+              13
+            ],
+            "cell phone": [
+              5,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    "public60": {
+      "image_count": 60,
+      "manifest_sha256": "ce041325689a02c0c049ce9f5d2e318615e8b262404763211637c5e2be6b567f",
+      "pipelines": {
+        "official_single": {
+          "changed_images": 2,
+          "removed_detections": 2,
+          "before": {
+            "bottle": [
+              23,
+              9,
+              57
+            ],
+            "cup": [
+              24,
+              10,
+              24
+            ],
+            "cell phone": [
+              9,
+              2,
+              18
+            ]
+          },
+          "after": {
+            "bottle": [
+              23,
+              8,
+              57
+            ],
+            "cup": [
+              24,
+              9,
+              24
+            ],
+            "cell phone": [
+              9,
+              2,
+              18
+            ]
+          }
+        },
+        "production_two_pass": {
+          "changed_images": 2,
+          "removed_detections": 2,
+          "before": {
+            "bottle": [
+              23,
+              9,
+              57
+            ],
+            "cup": [
+              24,
+              10,
+              24
+            ],
+            "cell phone": [
+              9,
+              2,
+              18
+            ]
+          },
+          "after": {
+            "bottle": [
+              23,
+              8,
+              57
+            ],
+            "cup": [
+              24,
+              9,
+              24
+            ],
+            "cell phone": [
+              9,
+              2,
+              18
+            ]
+          }
+        },
+        "finetuned_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              26,
+              13,
+              54
+            ],
+            "cup": [
+              31,
+              15,
+              17
+            ],
+            "cell phone": [
+              14,
+              8,
+              13
+            ]
+          },
+          "after": {
+            "bottle": [
+              26,
+              13,
+              54
+            ],
+            "cup": [
+              31,
+              15,
+              17
+            ],
+            "cell phone": [
+              14,
+              8,
+              13
+            ]
+          }
+        },
+        "finetuned_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              26,
+              13,
+              54
+            ],
+            "cup": [
+              31,
+              15,
+              17
+            ],
+            "cell phone": [
+              14,
+              8,
+              13
+            ]
+          },
+          "after": {
+            "bottle": [
+              26,
+              13,
+              54
+            ],
+            "cup": [
+              31,
+              15,
+              17
+            ],
+            "cell phone": [
+              14,
+              8,
+              13
+            ]
+          }
+        }
+      }
+    },
+    "public30": {
+      "image_count": 30,
+      "manifest_sha256": "d7b725b45f7acbb4b954d4575c614e695e224489234eed89b0fdd67236c7e425",
+      "pipelines": {
+        "official_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              8,
+              0,
+              15
+            ],
+            "cup": [
+              7,
+              4,
+              13
+            ],
+            "cell phone": [
+              5,
+              0,
+              4
+            ]
+          },
+          "after": {
+            "bottle": [
+              8,
+              0,
+              15
+            ],
+            "cup": [
+              7,
+              4,
+              13
+            ],
+            "cell phone": [
+              5,
+              0,
+              4
+            ]
+          }
+        },
+        "production_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              8,
+              0,
+              15
+            ],
+            "cup": [
+              7,
+              4,
+              13
+            ],
+            "cell phone": [
+              5,
+              0,
+              4
+            ]
+          },
+          "after": {
+            "bottle": [
+              8,
+              0,
+              15
+            ],
+            "cup": [
+              7,
+              4,
+              13
+            ],
+            "cell phone": [
+              5,
+              0,
+              4
+            ]
+          }
+        },
+        "finetuned_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              9,
+              1,
+              14
+            ],
+            "cup": [
+              8,
+              3,
+              12
+            ],
+            "cell phone": [
+              6,
+              1,
+              3
+            ]
+          },
+          "after": {
+            "bottle": [
+              9,
+              1,
+              14
+            ],
+            "cup": [
+              8,
+              3,
+              12
+            ],
+            "cell phone": [
+              6,
+              1,
+              3
+            ]
+          }
+        },
+        "finetuned_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              9,
+              1,
+              14
+            ],
+            "cup": [
+              8,
+              3,
+              12
+            ],
+            "cell phone": [
+              6,
+              1,
+              3
+            ]
+          },
+          "after": {
+            "bottle": [
+              9,
+              1,
+              14
+            ],
+            "cup": [
+              8,
+              3,
+              12
+            ],
+            "cell phone": [
+              6,
+              1,
+              3
+            ]
+          }
+        }
+      }
+    },
+    "hard30": {
+      "image_count": 30,
+      "manifest_sha256": "d4010120c198cb44fb624ce47d5083e5b3ff6b5ed0b4c443207f19a96d01def5",
+      "pipelines": {
+        "official_single": {
+          "changed_images": 2,
+          "removed_detections": 2,
+          "before": {
+            "bottle": [
+              17,
+              9,
+              27
+            ],
+            "cup": [
+              14,
+              16,
+              12
+            ],
+            "cell phone": [
+              1,
+              0,
+              4
+            ]
+          },
+          "after": {
+            "bottle": [
+              17,
+              8,
+              27
+            ],
+            "cup": [
+              14,
+              15,
+              12
+            ],
+            "cell phone": [
+              1,
+              0,
+              4
+            ]
+          }
+        },
+        "production_two_pass": {
+          "changed_images": 2,
+          "removed_detections": 2,
+          "before": {
+            "bottle": [
+              17,
+              9,
+              27
+            ],
+            "cup": [
+              14,
+              16,
+              12
+            ],
+            "cell phone": [
+              1,
+              0,
+              4
+            ]
+          },
+          "after": {
+            "bottle": [
+              17,
+              8,
+              27
+            ],
+            "cup": [
+              14,
+              15,
+              12
+            ],
+            "cell phone": [
+              1,
+              0,
+              4
+            ]
+          }
+        },
+        "finetuned_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              18,
+              12,
+              26
+            ],
+            "cup": [
+              19,
+              22,
+              7
+            ],
+            "cell phone": [
+              3,
+              1,
+              2
+            ]
+          },
+          "after": {
+            "bottle": [
+              18,
+              12,
+              26
+            ],
+            "cup": [
+              19,
+              22,
+              7
+            ],
+            "cell phone": [
+              3,
+              1,
+              2
+            ]
+          }
+        },
+        "finetuned_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              18,
+              12,
+              26
+            ],
+            "cup": [
+              19,
+              22,
+              7
+            ],
+            "cell phone": [
+              3,
+              1,
+              2
+            ]
+          },
+          "after": {
+            "bottle": [
+              18,
+              12,
+              26
+            ],
+            "cup": [
+              19,
+              22,
+              7
+            ],
+            "cell phone": [
+              3,
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    "old_scene": {
+      "image_count": 4,
+      "manifest_sha256": "1d9d28fc42352b64940a91fe676478887b2d6ca0fac3174eba2279fa743eae6c",
+      "pipelines": {
+        "official_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              3,
+              0,
+              1
+            ],
+            "cell phone": [
+              0,
+              0,
+              4
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              3,
+              0,
+              1
+            ],
+            "cell phone": [
+              0,
+              0,
+              4
+            ]
+          }
+        },
+        "production_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              3,
+              0,
+              1
+            ],
+            "cell phone": [
+              0,
+              0,
+              4
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              3,
+              0,
+              1
+            ],
+            "cell phone": [
+              0,
+              0,
+              4
+            ]
+          }
+        },
+        "finetuned_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              4,
+              0,
+              0
+            ],
+            "cell phone": [
+              4,
+              0,
+              0
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              4,
+              0,
+              0
+            ],
+            "cell phone": [
+              4,
+              0,
+              0
+            ]
+          }
+        },
+        "finetuned_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              4,
+              0,
+              0
+            ],
+            "cell phone": [
+              4,
+              0,
+              0
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              4,
+              0,
+              0
+            ],
+            "cell phone": [
+              4,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "known_center": {
+      "image_count": 2,
+      "manifest_sha256": "fd6e6d9dc412bc06f948360772fe64c3a3f98388a766e74b0d631fa6f94e237d",
+      "pipelines": {
+        "official_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              0,
+              0,
+              2
+            ],
+            "cell phone": [
+              0,
+              0,
+              2
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              0,
+              0,
+              2
+            ],
+            "cell phone": [
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "production_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              2,
+              0,
+              0
+            ],
+            "cell phone": [
+              0,
+              0,
+              2
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              2,
+              0,
+              0
+            ],
+            "cell phone": [
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "finetuned_single": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              2,
+              0,
+              0
+            ],
+            "cell phone": [
+              2,
+              0,
+              0
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              2,
+              0,
+              0
+            ],
+            "cell phone": [
+              2,
+              0,
+              0
+            ]
+          }
+        },
+        "finetuned_two_pass": {
+          "changed_images": 0,
+          "removed_detections": 0,
+          "before": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              2,
+              0,
+              0
+            ],
+            "cell phone": [
+              2,
+              0,
+              0
+            ]
+          },
+          "after": {
+            "bottle": [
+              0,
+              0,
+              0
+            ],
+            "cup": [
+              2,
+              0,
+              0
+            ],
+            "cell phone": [
+              2,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    }
+  },
+  "checks": {
+    "archived_scores_reproduced": true,
+    "old_results_modified": false,
+    "new_inference_performed": false,
+    "finetuned_pipelines_metric_changes": false,
+    "note": "The 0.97 rule changed only official baseline predictions in overlapping public60/hard30 sets; finetuned_single and finetuned_two_pass TP/FP/FN were unchanged in all seven archived datasets."
+  }
+}

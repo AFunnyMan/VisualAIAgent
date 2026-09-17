@@ -8,7 +8,45 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from visual_ai_agent.vision import YoloOnnxDetector
+from visual_ai_agent.models import Detection
+from visual_ai_agent.vision import YoloOnnxDetector, suppress_near_duplicate_detections
+
+
+def detection(category, confidence, bbox):
+    return Detection(category=category, confidence=confidence, bbox=bbox, region="left")
+
+
+def test_near_duplicate_suppression_is_conservative_and_stable() -> None:
+    high = detection("cup", 0.9, (0, 0, 100, 100))
+    duplicate = detection("cup", 0.8, (0.5, 0.5, 100.5, 100.5))
+    adjacent = detection("cup", 0.7, (50, 0, 150, 100))
+    cross_class = detection("bottle", 0.6, (0, 0, 100, 100))
+
+    assert suppress_near_duplicate_detections([adjacent, duplicate, cross_class, high]) == [
+        high,
+        adjacent,
+        cross_class,
+    ]
+
+
+def test_near_duplicate_suppression_does_not_chain_through_removed_box() -> None:
+    # At a lower explicit threshold: A overlaps B and B overlaps C enough, while
+    # A and C do not. B is removed, but it must not transitively remove C.
+    first = detection("cup", 0.9, (0, 0, 100, 100))
+    bridge = detection("cup", 0.8, (5, 0, 105, 100))
+    last = detection("cup", 0.7, (10, 0, 110, 100))
+
+    assert suppress_near_duplicate_detections([last, bridge, first], iou_threshold=0.9) == [
+        first,
+        last,
+    ]
+
+
+def test_near_duplicate_suppression_keeps_input_order_for_equal_scores() -> None:
+    first = detection("cup", 0.8, (0, 0, 20, 20))
+    second = detection("cup", 0.8, (30, 0, 50, 20))
+
+    assert suppress_near_duplicate_detections([second, first]) == [second, first]
 
 
 class FakeSession:
