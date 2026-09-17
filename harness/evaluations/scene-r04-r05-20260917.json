@@ -1,0 +1,1580 @@
+{
+  "schema_version": 1,
+  "scope": "fixed-scene object R03 revision; all results are development/training regression, not independent final acceptance",
+  "confidence": 0.35,
+  "matching_iou": 0.5,
+  "duplicate_iou": 0.97,
+  "dataset_counts": {
+    "train": 183,
+    "val": 42,
+    "historical_test": 4
+  },
+  "approved_manual_training_images": 87,
+  "new_training_images": 51,
+  "source_review_sha256": "e1372ba554397cbffb1cc5f41df5d2c12610ff4b04bad53761b69d7d89014a43",
+  "frozen_dataset_manifest_sha256": "7caa3982300ed23c51616690a266c60cf22e5b548aa220f9969f4869d35631ae",
+  "candidates": {
+    "r04": {
+      "started_at": "2026-09-17T13:31:09.966153+00:00",
+      "completed_at": "2026-09-17T13:43:38.225977+00:00",
+      "elapsed_seconds": 748.2426224588417,
+      "model_sha256": "35843f82e24e1a2667be27f616ff45b4210f01f68a6fde01ffd108c77fab0533",
+      "checkpoint_sha256": "b6831ed8ade4da1f8a1f46b23196dc424c720d3397c6b2fe674b6d4e8d8cb019",
+      "source_weights_sha256": "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+      "selection_method": "fixed_development_macro_f1",
+      "selected_epoch": 26,
+      "selection_macro_f1": 0.8861721611721611,
+      "parameters": {
+        "amp": false,
+        "batch": 4,
+        "close_mosaic": 5,
+        "copy_paste": 0.0,
+        "deterministic": true,
+        "device": "mps",
+        "epochs": 30,
+        "freeze": 10,
+        "imgsz": 640,
+        "lr0": 0.0002,
+        "mixup": 0.0,
+        "mosaic": 0.2,
+        "optimizer": "AdamW",
+        "patience": 0,
+        "seed": 20260909,
+        "warmup_bias_lr": 0.01,
+        "warmup_epochs": 1.0,
+        "workers": 0
+      },
+      "export_compared": 219,
+      "raw_export_passed": true,
+      "postprocessed_export_passed": true
+    },
+    "r05": {
+      "started_at": "2026-09-17T13:46:37.491725+00:00",
+      "completed_at": "2026-09-17T13:55:05.259844+00:00",
+      "elapsed_seconds": 507.7500217498746,
+      "model_sha256": "fbbaa834b563fc5672b652fc5742b5cd305c3a0b0751949777c8f5c43538f25d",
+      "checkpoint_sha256": "23e75a7c064c042c1e0fe62eeae6be27954ff428f185fbcbcec4304adf49b0a4",
+      "source_weights_sha256": "6e646ed2f567dee2a941a63639e0dd3aeb4e5bbb114630cdb54590133cadb094",
+      "selection_method": "fixed_development_macro_f1",
+      "selected_epoch": 15,
+      "selection_macro_f1": 0.8960226366969553,
+      "parameters": {
+        "amp": false,
+        "batch": 4,
+        "close_mosaic": 5,
+        "copy_paste": 0.0,
+        "deterministic": true,
+        "device": "mps",
+        "epochs": 20,
+        "freeze": 10,
+        "imgsz": 640,
+        "lr0": 0.0001,
+        "mixup": 0.0,
+        "mosaic": 0.2,
+        "optimizer": "AdamW",
+        "patience": 0,
+        "seed": 20260909,
+        "warmup_bias_lr": 0.01,
+        "warmup_epochs": 1.0,
+        "workers": 0
+      },
+      "export_compared": 219,
+      "raw_export_passed": true,
+      "postprocessed_export_passed": true
+    },
+    "r05_final": {
+      "started_at": "2026-09-17T13:46:37.491725+00:00",
+      "completed_at": "2026-09-17T13:55:05.259844+00:00",
+      "elapsed_seconds": 507.7500217498746,
+      "model_sha256": "7f93ae7d9c5835f0506cc6de4532192f81669a14b7d543a8fb78803ac8cde763",
+      "checkpoint_sha256": "3f53e3a0bd15e9787f2c86cacfd4083dd9e8d7712a384b90e36c5711e24a4188",
+      "source_weights_sha256": "6e646ed2f567dee2a941a63639e0dd3aeb4e5bbb114630cdb54590133cadb094",
+      "selection_method": "predeclared_fixed_final_epoch",
+      "selected_epoch": 20,
+      "selection_macro_f1": null,
+      "parameters": {
+        "amp": false,
+        "batch": 4,
+        "close_mosaic": 5,
+        "copy_paste": 0.0,
+        "deterministic": true,
+        "device": "mps",
+        "epochs": 20,
+        "freeze": 10,
+        "imgsz": 640,
+        "lr0": 0.0001,
+        "mixup": 0.0,
+        "mosaic": 0.2,
+        "optimizer": "AdamW",
+        "patience": 0,
+        "seed": 20260909,
+        "warmup_bias_lr": 0.01,
+        "warmup_epochs": 1.0,
+        "workers": 0
+      },
+      "export_compared": 219,
+      "raw_export_passed": true,
+      "postprocessed_export_passed": true
+    }
+  },
+  "datasets": {
+    "new_train51": {
+      "input_rows": 51,
+      "role": "training-fit",
+      "models": {
+        "r03": {
+          "single": {
+            "cup": {
+              "tp": 22,
+              "fp": 0,
+              "fn": 5
+            },
+            "cell phone": {
+              "tp": 27,
+              "fp": 1,
+              "fn": 18
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 22,
+              "fp": 0,
+              "fn": 5
+            },
+            "cell phone": {
+              "tp": 27,
+              "fp": 1,
+              "fn": 18
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r04": {
+          "single": {
+            "cup": {
+              "tp": 27,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 40,
+              "fp": 0,
+              "fn": 5
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 27,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 40,
+              "fp": 0,
+              "fn": 5
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r05": {
+          "single": {
+            "cup": {
+              "tp": 26,
+              "fp": 0,
+              "fn": 1
+            },
+            "cell phone": {
+              "tp": 38,
+              "fp": 0,
+              "fn": 7
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 26,
+              "fp": 0,
+              "fn": 1
+            },
+            "cell phone": {
+              "tp": 38,
+              "fp": 0,
+              "fn": 7
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r05_final": {
+          "single": {
+            "cup": {
+              "tp": 26,
+              "fp": 0,
+              "fn": 1
+            },
+            "cell phone": {
+              "tp": 38,
+              "fp": 0,
+              "fn": 7
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 26,
+              "fp": 0,
+              "fn": 1
+            },
+            "cell phone": {
+              "tp": 38,
+              "fp": 0,
+              "fn": 7
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        }
+      }
+    },
+    "scene_val": {
+      "input_rows": 18,
+      "role": "selected-development",
+      "models": {
+        "r03": {
+          "single": {
+            "cup": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r04": {
+          "single": {
+            "cup": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r05": {
+          "single": {
+            "cup": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r05_final": {
+          "single": {
+            "cup": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        }
+      }
+    },
+    "public_val": {
+      "input_rows": 24,
+      "role": "selected-development",
+      "models": {
+        "r03": {
+          "single": {
+            "cup": {
+              "tp": 11,
+              "fp": 5,
+              "fn": 14
+            },
+            "cell phone": {
+              "tp": 5,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 16,
+              "fp": 3,
+              "fn": 19
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 12,
+              "fp": 6,
+              "fn": 13
+            },
+            "cell phone": {
+              "tp": 5,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 16,
+              "fp": 3,
+              "fn": 19
+            }
+          }
+        },
+        "r04": {
+          "single": {
+            "cup": {
+              "tp": 11,
+              "fp": 6,
+              "fn": 14
+            },
+            "cell phone": {
+              "tp": 4,
+              "fp": 3,
+              "fn": 4
+            },
+            "bottle": {
+              "tp": 15,
+              "fp": 2,
+              "fn": 20
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 12,
+              "fp": 7,
+              "fn": 13
+            },
+            "cell phone": {
+              "tp": 4,
+              "fp": 3,
+              "fn": 4
+            },
+            "bottle": {
+              "tp": 15,
+              "fp": 2,
+              "fn": 20
+            }
+          }
+        },
+        "r05": {
+          "single": {
+            "cup": {
+              "tp": 11,
+              "fp": 5,
+              "fn": 14
+            },
+            "cell phone": {
+              "tp": 5,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 14,
+              "fp": 2,
+              "fn": 21
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 12,
+              "fp": 5,
+              "fn": 13
+            },
+            "cell phone": {
+              "tp": 5,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 14,
+              "fp": 2,
+              "fn": 21
+            }
+          }
+        },
+        "r05_final": {
+          "single": {
+            "cup": {
+              "tp": 11,
+              "fp": 5,
+              "fn": 14
+            },
+            "cell phone": {
+              "tp": 4,
+              "fp": 3,
+              "fn": 4
+            },
+            "bottle": {
+              "tp": 15,
+              "fp": 2,
+              "fn": 20
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 13,
+              "fp": 5,
+              "fn": 12
+            },
+            "cell phone": {
+              "tp": 4,
+              "fp": 3,
+              "fn": 4
+            },
+            "bottle": {
+              "tp": 15,
+              "fp": 2,
+              "fn": 20
+            }
+          }
+        }
+      }
+    },
+    "public60": {
+      "input_rows": 60,
+      "role": "historical-development-regression",
+      "models": {
+        "r03": {
+          "single": {
+            "cup": {
+              "tp": 31,
+              "fp": 15,
+              "fn": 17
+            },
+            "cell phone": {
+              "tp": 14,
+              "fp": 8,
+              "fn": 13
+            },
+            "bottle": {
+              "tp": 26,
+              "fp": 13,
+              "fn": 54
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 31,
+              "fp": 15,
+              "fn": 17
+            },
+            "cell phone": {
+              "tp": 14,
+              "fp": 8,
+              "fn": 13
+            },
+            "bottle": {
+              "tp": 26,
+              "fp": 13,
+              "fn": 54
+            }
+          }
+        },
+        "r04": {
+          "single": {
+            "cup": {
+              "tp": 28,
+              "fp": 13,
+              "fn": 20
+            },
+            "cell phone": {
+              "tp": 14,
+              "fp": 7,
+              "fn": 13
+            },
+            "bottle": {
+              "tp": 27,
+              "fp": 9,
+              "fn": 53
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 28,
+              "fp": 14,
+              "fn": 20
+            },
+            "cell phone": {
+              "tp": 14,
+              "fp": 7,
+              "fn": 13
+            },
+            "bottle": {
+              "tp": 27,
+              "fp": 9,
+              "fn": 53
+            }
+          }
+        },
+        "r05": {
+          "single": {
+            "cup": {
+              "tp": 29,
+              "fp": 15,
+              "fn": 19
+            },
+            "cell phone": {
+              "tp": 15,
+              "fp": 8,
+              "fn": 12
+            },
+            "bottle": {
+              "tp": 23,
+              "fp": 10,
+              "fn": 57
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 29,
+              "fp": 15,
+              "fn": 19
+            },
+            "cell phone": {
+              "tp": 15,
+              "fp": 8,
+              "fn": 12
+            },
+            "bottle": {
+              "tp": 23,
+              "fp": 10,
+              "fn": 57
+            }
+          }
+        },
+        "r05_final": {
+          "single": {
+            "cup": {
+              "tp": 28,
+              "fp": 15,
+              "fn": 20
+            },
+            "cell phone": {
+              "tp": 15,
+              "fp": 8,
+              "fn": 12
+            },
+            "bottle": {
+              "tp": 25,
+              "fp": 11,
+              "fn": 55
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 28,
+              "fp": 15,
+              "fn": 20
+            },
+            "cell phone": {
+              "tp": 15,
+              "fp": 8,
+              "fn": 12
+            },
+            "bottle": {
+              "tp": 25,
+              "fp": 11,
+              "fn": 55
+            }
+          }
+        }
+      }
+    },
+    "public30": {
+      "input_rows": 30,
+      "role": "historical-development-regression",
+      "models": {
+        "r03": {
+          "single": {
+            "cup": {
+              "tp": 8,
+              "fp": 3,
+              "fn": 12
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 1,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 9,
+              "fp": 1,
+              "fn": 14
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 8,
+              "fp": 3,
+              "fn": 12
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 1,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 9,
+              "fp": 1,
+              "fn": 14
+            }
+          }
+        },
+        "r04": {
+          "single": {
+            "cup": {
+              "tp": 7,
+              "fp": 3,
+              "fn": 13
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 3,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 9,
+              "fp": 1,
+              "fn": 14
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 7,
+              "fp": 4,
+              "fn": 13
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 3,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 9,
+              "fp": 1,
+              "fn": 14
+            }
+          }
+        },
+        "r05": {
+          "single": {
+            "cup": {
+              "tp": 7,
+              "fp": 5,
+              "fn": 13
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 14
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 7,
+              "fp": 5,
+              "fn": 13
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 14
+            }
+          }
+        },
+        "r05_final": {
+          "single": {
+            "cup": {
+              "tp": 7,
+              "fp": 5,
+              "fn": 13
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 14
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 7,
+              "fp": 5,
+              "fn": 13
+            },
+            "cell phone": {
+              "tp": 6,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 9,
+              "fp": 0,
+              "fn": 14
+            }
+          }
+        }
+      }
+    },
+    "hard30": {
+      "input_rows": 30,
+      "role": "historical-development-regression",
+      "models": {
+        "r03": {
+          "single": {
+            "cup": {
+              "tp": 19,
+              "fp": 22,
+              "fn": 7
+            },
+            "cell phone": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 2
+            },
+            "bottle": {
+              "tp": 18,
+              "fp": 12,
+              "fn": 26
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 19,
+              "fp": 22,
+              "fn": 7
+            },
+            "cell phone": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 2
+            },
+            "bottle": {
+              "tp": 18,
+              "fp": 12,
+              "fn": 26
+            }
+          }
+        },
+        "r04": {
+          "single": {
+            "cup": {
+              "tp": 16,
+              "fp": 21,
+              "fn": 10
+            },
+            "cell phone": {
+              "tp": 3,
+              "fp": 3,
+              "fn": 2
+            },
+            "bottle": {
+              "tp": 19,
+              "fp": 9,
+              "fn": 25
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 16,
+              "fp": 23,
+              "fn": 10
+            },
+            "cell phone": {
+              "tp": 3,
+              "fp": 3,
+              "fn": 2
+            },
+            "bottle": {
+              "tp": 19,
+              "fp": 9,
+              "fn": 25
+            }
+          }
+        },
+        "r05": {
+          "single": {
+            "cup": {
+              "tp": 17,
+              "fp": 23,
+              "fn": 9
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 17,
+              "fp": 9,
+              "fn": 27
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 17,
+              "fp": 23,
+              "fn": 9
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 17,
+              "fp": 9,
+              "fn": 27
+            }
+          }
+        },
+        "r05_final": {
+          "single": {
+            "cup": {
+              "tp": 17,
+              "fp": 23,
+              "fn": 9
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 18,
+              "fp": 10,
+              "fn": 26
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 17,
+              "fp": 23,
+              "fn": 9
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 2,
+              "fn": 3
+            },
+            "bottle": {
+              "tp": 18,
+              "fp": 10,
+              "fn": 26
+            }
+          }
+        }
+      }
+    },
+    "old_scene": {
+      "input_rows": 4,
+      "role": "historical-development-regression",
+      "models": {
+        "r03": {
+          "single": {
+            "cup": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r04": {
+          "single": {
+            "cup": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 4
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 4
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r05": {
+          "single": {
+            "cup": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 2
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 2
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r05_final": {
+          "single": {
+            "cup": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 2
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 2
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        }
+      }
+    },
+    "known_center": {
+      "input_rows": 2,
+      "role": "historical-development-regression",
+      "models": {
+        "r03": {
+          "single": {
+            "cup": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r04": {
+          "single": {
+            "cup": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r05": {
+          "single": {
+            "cup": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        },
+        "r05_final": {
+          "single": {
+            "cup": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          },
+          "two_pass": {
+            "cup": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "cell phone": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0
+            },
+            "bottle": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "replay": {
+    "r04": {
+      "scope": "historical development clips, 1Hz simulated-time regression; no dense GT or independent event accuracy",
+      "videos": [
+        {
+          "segment": 1,
+          "samples": 18,
+          "source_sha256": "324ca1fece0ca9e6ee752a4ef146923a28611f1f63c077c1a0b6fd87d5f0038d",
+          "models": {
+            "r03": {
+              "event_counts": {},
+              "focus_detection_samples": {},
+              "empty_scene_false_appeared_events": 0,
+              "invalid_stop_created_missing": false
+            },
+            "r04": {
+              "event_counts": {},
+              "focus_detection_samples": {},
+              "empty_scene_false_appeared_events": 0,
+              "invalid_stop_created_missing": false
+            }
+          }
+        },
+        {
+          "segment": 2,
+          "samples": 15,
+          "source_sha256": "eea17d61d8c2753ee4a34ab325d128733b9d65c0d557e95ed1ba9605c739d0cb",
+          "models": {
+            "r03": {
+              "event_counts": {
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 9
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            },
+            "r04": {
+              "event_counts": {
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 10
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            }
+          }
+        },
+        {
+          "segment": 3,
+          "samples": 28,
+          "source_sha256": "18119d26e3dd9ade02d0f91b923c2477d13cb78e3d8452f3eab0be3e2af2e663",
+          "models": {
+            "r03": {
+              "event_counts": {
+                "cell phone:appeared": 1,
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 24,
+                "cell phone": 28
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            },
+            "r04": {
+              "event_counts": {
+                "cell phone:appeared": 1,
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 24,
+                "cell phone": 28
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            }
+          }
+        }
+      ]
+    },
+    "r05": {
+      "scope": "historical development clips, 1Hz simulated-time regression; no dense GT or independent event accuracy",
+      "videos": [
+        {
+          "segment": 1,
+          "samples": 18,
+          "source_sha256": "324ca1fece0ca9e6ee752a4ef146923a28611f1f63c077c1a0b6fd87d5f0038d",
+          "models": {
+            "r03": {
+              "event_counts": {},
+              "focus_detection_samples": {},
+              "empty_scene_false_appeared_events": 0,
+              "invalid_stop_created_missing": false
+            },
+            "r05": {
+              "event_counts": {},
+              "focus_detection_samples": {},
+              "empty_scene_false_appeared_events": 0,
+              "invalid_stop_created_missing": false
+            }
+          }
+        },
+        {
+          "segment": 2,
+          "samples": 15,
+          "source_sha256": "eea17d61d8c2753ee4a34ab325d128733b9d65c0d557e95ed1ba9605c739d0cb",
+          "models": {
+            "r03": {
+              "event_counts": {
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 9
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            },
+            "r05": {
+              "event_counts": {
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 9
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            }
+          }
+        },
+        {
+          "segment": 3,
+          "samples": 28,
+          "source_sha256": "18119d26e3dd9ade02d0f91b923c2477d13cb78e3d8452f3eab0be3e2af2e663",
+          "models": {
+            "r03": {
+              "event_counts": {
+                "cell phone:appeared": 1,
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 24,
+                "cell phone": 28
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            },
+            "r05": {
+              "event_counts": {
+                "cell phone:appeared": 1,
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 24,
+                "cell phone": 28
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            }
+          }
+        }
+      ]
+    },
+    "r05_final": {
+      "scope": "historical development clips, 1Hz simulated-time regression; no dense GT or independent event accuracy",
+      "videos": [
+        {
+          "segment": 1,
+          "samples": 18,
+          "source_sha256": "324ca1fece0ca9e6ee752a4ef146923a28611f1f63c077c1a0b6fd87d5f0038d",
+          "models": {
+            "r03": {
+              "event_counts": {},
+              "focus_detection_samples": {},
+              "empty_scene_false_appeared_events": 0,
+              "invalid_stop_created_missing": false
+            },
+            "r05_final": {
+              "event_counts": {},
+              "focus_detection_samples": {},
+              "empty_scene_false_appeared_events": 0,
+              "invalid_stop_created_missing": false
+            }
+          }
+        },
+        {
+          "segment": 2,
+          "samples": 15,
+          "source_sha256": "eea17d61d8c2753ee4a34ab325d128733b9d65c0d557e95ed1ba9605c739d0cb",
+          "models": {
+            "r03": {
+              "event_counts": {
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 9
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            },
+            "r05_final": {
+              "event_counts": {
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 10
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            }
+          }
+        },
+        {
+          "segment": 3,
+          "samples": 28,
+          "source_sha256": "18119d26e3dd9ade02d0f91b923c2477d13cb78e3d8452f3eab0be3e2af2e663",
+          "models": {
+            "r03": {
+              "event_counts": {
+                "cell phone:appeared": 1,
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 24,
+                "cell phone": 28
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            },
+            "r05_final": {
+              "event_counts": {
+                "cell phone:appeared": 1,
+                "cup:appeared": 1
+              },
+              "focus_detection_samples": {
+                "cup": 24,
+                "cell phone": 28
+              },
+              "empty_scene_false_appeared_events": null,
+              "invalid_stop_created_missing": false
+            }
+          }
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "New51 is training fit, not independent accuracy.",
+    "Scene val18 and public val24 influence epoch selection.",
+    "Other historical groups overlap and are repeatedly examined development regressions; do not sum as independent samples.",
+    "R05 was motivated by R04 old-phone regression, but those four images never entered training or epoch selection.",
+    "No final-test images, real camera, live API, or Windows test was run.",
+    "No production weights or local application configuration were replaced."
+  ],
+  "current_view_development_preference": "r04",
+  "production_approved": false
+}
