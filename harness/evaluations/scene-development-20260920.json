@@ -1,0 +1,1101 @@
+{
+  "date": "2026-09-20",
+  "scope": "development replay only; no training, no independent final acceptance, no production change",
+  "sampling_hz": 1,
+  "input_count_per_model": 401,
+  "confidence": 0.35,
+  "models": {
+    "r03": [
+      "harness/artifacts/finetune-20260909-r03/runs/scene-yolo26n-r03/weights/deployment-best.onnx",
+      "f71abc2197aeb433fb6ba21f97113b5797c2bdbbaeded3fe37466e5ee1a4d004"
+    ],
+    "r04": [
+      "data/scene-r04-20260917/runs/scene-yolo26n-r04/weights/deployment-best.onnx",
+      "35843f82e24e1a2667be27f616ff45b4210f01f68a6fde01ffd108c77fab0533"
+    ],
+    "r05": [
+      "data/scene-r04-20260917/runs/scene-yolo26n-r05/weights/deployment-best.onnx",
+      "fbbaa834b563fc5672b652fc5742b5cd305c3a0b0751949777c8f5c43538f25d"
+    ]
+  },
+  "videos": {
+    "18-31-52": {
+      "sha256": "931278f04d43289d75d180146f75692df3812879b7d570beff7c96445d9d5217"
+    },
+    "18-33-50": {
+      "sha256": "e5cbaa55a921109f9eda975f5c04625ded7ad025b2c19b0b6cb3ea77eae8f902"
+    },
+    "18-34-32": {
+      "sha256": "c67713b62489e120fa133a6cf11ad0d7b44b4ebb4e795490be3674c57f76faeb"
+    },
+    "18-35-06": {
+      "sha256": "46af5ce6856b75a7ea40cc10b71f56eddecca1c278ab5938f539dacf368d7f45"
+    },
+    "18-49-25": {
+      "sha256": "0cdc565b60e43f0824b8533c18a22432b6d994b7a4d1786f0b4e94a7f464e656"
+    },
+    "18-51-14": {
+      "sha256": "50604a1d4743b9bf62524f894dc7506cf4f3dac8f063213cc1ba362c9c66047a"
+    }
+  },
+  "truth_audit": {
+    "scope": "Independent visual audit without access to predictions; original frozen scoring intervals unchanged",
+    "phone_excluded_episode": [
+      64,
+      98
+    ],
+    "phone_stable_excluded_presence": [
+      66,
+      96
+    ],
+    "cup_complete_removals": 4,
+    "phone_complete_removals": 3,
+    "phone_in_scope_complete_removals": 2,
+    "phone_excluded_complete_removals": 1
+  },
+  "original_pipeline_results": {
+    "18-31-52": {
+      "samples": 71,
+      "events": {
+        "r03": [],
+        "r04": [
+          {
+            "seconds": 16.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 40.0,
+            "kind": "missing",
+            "category": "cell phone"
+          }
+        ],
+        "r05": []
+      },
+      "stable_presence": {},
+      "class_hit_samples": {
+        "r03": {
+          "cup": 0,
+          "cell phone": 0,
+          "bottle": 0
+        },
+        "r04": {
+          "cup": 0,
+          "cell phone": 12,
+          "bottle": 0
+        },
+        "r05": {
+          "cup": 0,
+          "cell phone": 3,
+          "bottle": 0
+        }
+      }
+    },
+    "18-33-50": {
+      "samples": 41,
+      "events": {
+        "r03": [
+          {
+            "seconds": 8.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 40.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 40.0,
+            "kind": "missing",
+            "category": "cup"
+          }
+        ],
+        "r04": [
+          {
+            "seconds": 7.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 7.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 13.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 28.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 34.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 38.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          }
+        ],
+        "r05": [
+          {
+            "seconds": 7.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 7.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 13.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 28.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 34.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 38.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          }
+        ]
+      },
+      "stable_presence": {},
+      "class_hit_samples": {
+        "r03": {
+          "cup": 23,
+          "cell phone": 6,
+          "bottle": 0
+        },
+        "r04": {
+          "cup": 27,
+          "cell phone": 13,
+          "bottle": 0
+        },
+        "r05": {
+          "cup": 27,
+          "cell phone": 14,
+          "bottle": 0
+        }
+      }
+    },
+    "18-34-32": {
+      "samples": 32,
+      "events": {
+        "r03": [
+          {
+            "seconds": 5.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          }
+        ],
+        "r04": [
+          {
+            "seconds": 2.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          }
+        ],
+        "r05": [
+          {
+            "seconds": 2.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          }
+        ]
+      },
+      "stable_presence": {},
+      "class_hit_samples": {
+        "r03": {
+          "cup": 0,
+          "cell phone": 27,
+          "bottle": 0
+        },
+        "r04": {
+          "cup": 0,
+          "cell phone": 29,
+          "bottle": 0
+        },
+        "r05": {
+          "cup": 0,
+          "cell phone": 29,
+          "bottle": 0
+        }
+      }
+    },
+    "18-35-06": {
+      "samples": 21,
+      "events": {
+        "r03": [
+          {
+            "seconds": 4.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 8.0,
+            "kind": "appeared",
+            "category": "cup"
+          }
+        ],
+        "r04": [
+          {
+            "seconds": 4.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 8.0,
+            "kind": "appeared",
+            "category": "cup"
+          }
+        ],
+        "r05": [
+          {
+            "seconds": 4.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 8.0,
+            "kind": "appeared",
+            "category": "cup"
+          }
+        ]
+      },
+      "stable_presence": {},
+      "class_hit_samples": {
+        "r03": {
+          "cup": 14,
+          "cell phone": 19,
+          "bottle": 0
+        },
+        "r04": {
+          "cup": 15,
+          "cell phone": 19,
+          "bottle": 0
+        },
+        "r05": {
+          "cup": 15,
+          "cell phone": 19,
+          "bottle": 0
+        }
+      }
+    },
+    "18-49-25": {
+      "samples": 103,
+      "events": {
+        "r03": [
+          {
+            "seconds": 2.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 18.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 20.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 27.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 40.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 43.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 50.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 53.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 64.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 67.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 75.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 90.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 91.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 96.0,
+            "kind": "appeared",
+            "category": "cup"
+          }
+        ],
+        "r04": [
+          {
+            "seconds": 2.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 12.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 18.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 27.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 40.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 47.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 50.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 52.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 64.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 67.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 75.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 80.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 91.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 96.0,
+            "kind": "appeared",
+            "category": "cup"
+          }
+        ],
+        "r05": [
+          {
+            "seconds": 2.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 12.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 18.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 27.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 40.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 45.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 50.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 50.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 64.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 67.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 75.0,
+            "kind": "appeared",
+            "category": "cup"
+          },
+          {
+            "seconds": 78.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 91.0,
+            "kind": "missing",
+            "category": "cup"
+          },
+          {
+            "seconds": 96.0,
+            "kind": "appeared",
+            "category": "cup"
+          }
+        ]
+      },
+      "stable_presence": {
+        "r03": {
+          "positive": {
+            "samples": 46,
+            "detected": 46
+          },
+          "negative": {
+            "samples": 36,
+            "detected": 0
+          }
+        },
+        "r04": {
+          "positive": {
+            "samples": 46,
+            "detected": 46
+          },
+          "negative": {
+            "samples": 36,
+            "detected": 0
+          }
+        },
+        "r05": {
+          "positive": {
+            "samples": 46,
+            "detected": 46
+          },
+          "negative": {
+            "samples": 36,
+            "detected": 0
+          }
+        }
+      },
+      "class_hit_samples": {
+        "r03": {
+          "cup": 59,
+          "cell phone": 39,
+          "bottle": 0
+        },
+        "r04": {
+          "cup": 59,
+          "cell phone": 61,
+          "bottle": 0
+        },
+        "r05": {
+          "cup": 59,
+          "cell phone": 65,
+          "bottle": 0
+        }
+      }
+    },
+    "18-51-14": {
+      "samples": 133,
+      "events": {
+        "r03": [
+          {
+            "seconds": 6.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 23.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 33.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 105.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 112.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 119.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 131.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          }
+        ],
+        "r04": [
+          {
+            "seconds": 6.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 23.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 33.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          }
+        ],
+        "r05": [
+          {
+            "seconds": 6.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 23.0,
+            "kind": "missing",
+            "category": "cell phone"
+          },
+          {
+            "seconds": 33.0,
+            "kind": "appeared",
+            "category": "cell phone"
+          }
+        ]
+      },
+      "stable_presence": {
+        "r03": {
+          "positive": {
+            "samples": 31,
+            "detected": 30
+          },
+          "negative": {
+            "samples": 57,
+            "detected": 22
+          }
+        },
+        "r04": {
+          "positive": {
+            "samples": 31,
+            "detected": 30
+          },
+          "negative": {
+            "samples": 57,
+            "detected": 45
+          }
+        },
+        "r05": {
+          "positive": {
+            "samples": 31,
+            "detected": 30
+          },
+          "negative": {
+            "samples": 57,
+            "detected": 44
+          }
+        }
+      },
+      "class_hit_samples": {
+        "r03": {
+          "cup": 0,
+          "cell phone": 90,
+          "bottle": 0
+        },
+        "r04": {
+          "cup": 1,
+          "cell phone": 116,
+          "bottle": 0
+        },
+        "r05": {
+          "cup": 0,
+          "cell phone": 115,
+          "bottle": 0
+        }
+      }
+    }
+  },
+  "posthoc_border_phone_diagnostic": {
+    "scope": "post-hoc diagnostic only, not production change or independent validation; removes phone boxes within 1 pixel of any image border, motivated by user exemption for partial out-of-frame phones",
+    "videos": {
+      "18-31-52-predictions": {
+        "removed_phone_boxes": {
+          "r03": 0,
+          "r04": 12,
+          "r05": 3
+        },
+        "events": {
+          "r03": [],
+          "r04": [],
+          "r05": []
+        }
+      },
+      "18-33-50-predictions": {
+        "removed_phone_boxes": {
+          "r03": 6,
+          "r04": 13,
+          "r05": 14
+        },
+        "events": {
+          "r03": [
+            {
+              "seconds": 8.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 40.0,
+              "category": "cup",
+              "kind": "missing"
+            }
+          ],
+          "r04": [
+            {
+              "seconds": 7.0,
+              "category": "cup",
+              "kind": "appeared"
+            }
+          ],
+          "r05": [
+            {
+              "seconds": 7.0,
+              "category": "cup",
+              "kind": "appeared"
+            }
+          ]
+        }
+      },
+      "18-34-32-predictions": {
+        "removed_phone_boxes": {
+          "r03": 25,
+          "r04": 28,
+          "r05": 29
+        },
+        "events": {
+          "r03": [
+            {
+              "seconds": 5.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            }
+          ],
+          "r04": [
+            {
+              "seconds": 5.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            }
+          ],
+          "r05": [
+            {
+              "seconds": 5.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            }
+          ]
+        }
+      },
+      "18-35-06-predictions": {
+        "removed_phone_boxes": {
+          "r03": 19,
+          "r04": 22,
+          "r05": 25
+        },
+        "events": {
+          "r03": [
+            {
+              "seconds": 4.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 8.0,
+              "category": "cup",
+              "kind": "appeared"
+            }
+          ],
+          "r04": [
+            {
+              "seconds": 5.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 8.0,
+              "category": "cup",
+              "kind": "appeared"
+            }
+          ],
+          "r05": [
+            {
+              "seconds": 5.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 8.0,
+              "category": "cup",
+              "kind": "appeared"
+            }
+          ]
+        }
+      },
+      "18-49-25-predictions": {
+        "removed_phone_boxes": {
+          "r03": 39,
+          "r04": 67,
+          "r05": 72
+        },
+        "events": {
+          "r03": [
+            {
+              "seconds": 2.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 18.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 27.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 40.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 50.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 67.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 75.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 91.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 96.0,
+              "category": "cup",
+              "kind": "appeared"
+            }
+          ],
+          "r04": [
+            {
+              "seconds": 2.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 18.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 27.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 40.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 50.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 67.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 75.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 91.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 96.0,
+              "category": "cup",
+              "kind": "appeared"
+            }
+          ],
+          "r05": [
+            {
+              "seconds": 2.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 18.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 27.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 40.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 50.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 67.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 75.0,
+              "category": "cup",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 91.0,
+              "category": "cup",
+              "kind": "missing"
+            },
+            {
+              "seconds": 96.0,
+              "category": "cup",
+              "kind": "appeared"
+            }
+          ]
+        }
+      },
+      "18-51-14-predictions": {
+        "removed_phone_boxes": {
+          "r03": 79,
+          "r04": 115,
+          "r05": 114
+        },
+        "events": {
+          "r03": [
+            {
+              "seconds": 6.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 23.0,
+              "category": "cell phone",
+              "kind": "missing"
+            },
+            {
+              "seconds": 33.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 52.0,
+              "category": "cell phone",
+              "kind": "missing"
+            },
+            {
+              "seconds": 67.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 102.0,
+              "category": "cell phone",
+              "kind": "missing"
+            },
+            {
+              "seconds": 131.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            }
+          ],
+          "r04": [
+            {
+              "seconds": 6.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 23.0,
+              "category": "cell phone",
+              "kind": "missing"
+            },
+            {
+              "seconds": 33.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 52.0,
+              "category": "cell phone",
+              "kind": "missing"
+            },
+            {
+              "seconds": 66.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 103.0,
+              "category": "cell phone",
+              "kind": "missing"
+            },
+            {
+              "seconds": 131.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            }
+          ],
+          "r05": [
+            {
+              "seconds": 6.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 23.0,
+              "category": "cell phone",
+              "kind": "missing"
+            },
+            {
+              "seconds": 33.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 52.0,
+              "category": "cell phone",
+              "kind": "missing"
+            },
+            {
+              "seconds": 66.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            },
+            {
+              "seconds": 102.0,
+              "category": "cell phone",
+              "kind": "missing"
+            },
+            {
+              "seconds": 131.0,
+              "category": "cell phone",
+              "kind": "appeared"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Stable presence is category detection, not per-frame box IoU accuracy; bottom phone boxes can mask target misses.",
+    "Silver-white corner physical class pending user confirmation; suspicious phone candidates retained in raw results.",
+    "Posthoc filtering is diagnostic on the same development data, not independently validated production fix.",
+    "Phone edge/partial/hand-occluded/multiple-phone misses exempt per user; excluded events not counted as correct.",
+    "No live camera, API, Windows, or unseen final-test run."
+  ]
+}

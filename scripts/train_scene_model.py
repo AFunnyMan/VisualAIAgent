@@ -149,6 +149,22 @@ def _validate_annotation(sample_id: str, annotation: Any, width: int, height: in
         raise ValueError(f"Selection sample has invalid annotation box: {sample_id}")
 
 
+def _scoring_annotations(annotations: Any) -> list[tuple[str, tuple[float, ...], bool]]:
+    """Canonicalize only fields consumed by ``score_dataset`` for business classes."""
+    if not isinstance(annotations, list):
+        return []
+    canonical = [
+        (
+            annotation["category"],
+            tuple(float(value) for value in annotation["bbox"]),
+            annotation["iscrowd"],
+        )
+        for annotation in annotations
+        if isinstance(annotation, dict) and annotation.get("category") in REQUIRED_CLASSES
+    ]
+    return sorted(canonical)
+
+
 def load_selection_manifest(dataset_yaml: Path, manifest_path: Path) -> dict[str, Any]:
     """Validate selection images and capture groups against frozen dataset splits."""
     import cv2
@@ -242,6 +258,20 @@ def load_selection_manifest(dataset_yaml: Path, manifest_path: Path) -> dict[str
             if frozen_path != path or frozen.get("sha256") != checksum:
                 raise ValueError(
                     f"Selection path/checksum differs from dataset manifest: {sample_id}"
+                )
+            frozen_annotations = frozen.get("annotations")
+            if not isinstance(frozen_annotations, list):
+                raise ValueError(f"Dataset manifest sample has invalid annotations: {sample_id}")
+            frozen_business = [
+                annotation
+                for annotation in frozen_annotations
+                if isinstance(annotation, dict) and annotation.get("category") in REQUIRED_CLASSES
+            ]
+            for annotation in frozen_business:
+                _validate_annotation(sample_id, annotation, width, height)
+            if _scoring_annotations(annotations) != _scoring_annotations(frozen_annotations):
+                raise ValueError(
+                    f"Selection scoring annotations differ from dataset manifest: {sample_id}"
                 )
         if path in seen_paths or checksum in seen_hashes:
             raise ValueError("Selection images must be unique by path and content")

@@ -244,6 +244,58 @@ def test_selection_rejects_capture_group_leaking_across_dataset_splits(tmp_path:
         load_selection_manifest(dataset, manifest)
 
 
+def test_selection_annotations_match_frozen_business_truth_and_ignore_other_classes(
+    tmp_path: Path,
+) -> None:
+    dataset, manifest, sample = make_selection_dataset(tmp_path)
+    frozen = {
+        **sample,
+        "annotations": [
+            {
+                "category": "microwave",
+                "bbox": [2, 2, 12, 12],
+                "iscrowd": False,
+                "class_id": 68,
+            },
+            {
+                "category": "cup",
+                "bbox": [1.0, 1.0, 10.0, 10.0],
+                "iscrowd": False,
+                "class_id": 41,
+            },
+        ],
+    }
+    (tmp_path / "manifest.json").write_text(json.dumps({"samples": [frozen]}), encoding="utf-8")
+
+    loaded = load_selection_manifest(dataset, manifest)
+
+    assert loaded["samples"][0]["annotations"] == sample["annotations"]
+
+
+@pytest.mark.parametrize(
+    "annotations",
+    [
+        [{"category": "bottle", "bbox": [1, 1, 10, 10], "iscrowd": False}],
+        [{"category": "cup", "bbox": [2, 1, 10, 10], "iscrowd": False}],
+        [{"category": "cup", "bbox": [1, 1, 10, 10], "iscrowd": True}],
+        [],
+        [
+            {"category": "cup", "bbox": [1, 1, 10, 10], "iscrowd": False},
+            {"category": "cup", "bbox": [1, 1, 10, 10], "iscrowd": False},
+        ],
+    ],
+)
+def test_selection_rejects_scoring_truth_changed_from_frozen_dataset(
+    tmp_path: Path, annotations: list[dict]
+) -> None:
+    dataset, manifest, sample = make_selection_dataset(tmp_path)
+    frozen = {**sample, "annotations": annotations}
+    (tmp_path / "manifest.json").write_text(json.dumps({"samples": [frozen]}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="scoring annotations differ"):
+        load_selection_manifest(dataset, manifest)
+
+
 def test_grouped_macro_f1_weights_selection_groups_equally_and_scores_negatives() -> None:
     manifest = {
         "samples": [
