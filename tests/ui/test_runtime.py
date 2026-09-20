@@ -1,5 +1,7 @@
+import hashlib
 from dataclasses import dataclass
 from datetime import timedelta
+from pathlib import Path
 from threading import Event
 
 import pytest
@@ -339,6 +341,142 @@ def test_camera_settings_are_forwarded_and_running_changes_are_rejected(tmp_path
         assert not changed.ok
         assert "先停止" in changed.error
         assert len(sources) == 1
+    finally:
+        runtime.close()
+
+
+def test_object_model_selection_is_verified_reported_and_requires_restart(tmp_path, monkeypatch):
+    import visual_ai_agent.runtime as module
+    from visual_ai_agent.object_models import ObjectModelPreset
+
+    detector_calls = []
+    model_files = {}
+    for model_id in ("r04", "r05"):
+        path = tmp_path / f"{model_id}.onnx"
+        path.write_bytes(f"fake-{model_id}".encode())
+        model_files[model_id] = path
+
+    def resolve_preset(model_id):
+        path = model_files[model_id]
+        return ObjectModelPreset(
+            id=model_id,
+            label=f"test {model_id}",
+            path=path,
+            sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+            experimental=True,
+        )
+
+    class FakeWorker:
+        running = False
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def start(self):
+            self.running = True
+
+        def stop(self):
+            self.running = False
+
+        def snapshot(self):
+            return None, None
+
+    def detector(path, **kwargs):
+        detector_calls.append((Path(path), kwargs))
+        return object()
+
+    monkeypatch.setattr(module, "CameraSource", lambda **_kwargs: object())
+    monkeypatch.setattr(module, "get_object_model_preset", resolve_preset)
+    monkeypatch.setattr(module, "YoloOnnxDetector", detector)
+    monkeypatch.setattr(module, "VisionWorker", FakeWorker)
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path))
+    try:
+        assert runtime.diagnostics()["active_object_model"] is None
+        assert runtime.start_camera(object_model_id="r04").ok
+        identity = runtime.diagnostics()["active_object_model"]
+        assert identity["id"] == "r04"
+        assert identity["experimental"] is True
+        assert identity["sha256"] == hashlib.sha256(model_files["r04"].read_bytes()).hexdigest()
+        assert Path(identity["path"]).is_absolute()
+        assert detector_calls[-1][1]["verify_manifest"] is False
+        assert detector_calls[-1][1]["expected_sha256"] == identity["sha256"]
+
+        assert runtime.start_camera(object_model_id="r04").data["status"] == "already_running"
+        changed = runtime.start_camera(object_model_id="r05")
+        assert not changed.ok
+        assert "先停止" in changed.error
+        assert runtime.diagnostics()["active_object_model"]["id"] == "r04"
+
+        assert runtime.stop_camera().ok
+        assert runtime.diagnostics()["active_object_model"] is None
+        assert runtime.start_camera(object_model_id="r05").ok
+        assert runtime.diagnostics()["active_object_model"]["id"] == "r05"
+        assert len(detector_calls) == 2
+    finally:
+        runtime.close()
+
+
+def test_unknown_or_failed_object_model_does_not_publish_identity(tmp_path, monkeypatch):
+    import visual_ai_agent.runtime as module
+
+    monkeypatch.setattr(module, "YoloOnnxDetector", lambda *_args, **_kwargs: object())
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path))
+    try:
+        result = runtime.start_camera(object_model_id="not-a-model")
+        assert not result.ok
+        assert runtime.diagnostics()["active_object_model"] is None
+        assert runtime._vision is None
+    finally:
+        runtime.close()
+
+
+def test_explicit_preset_hash_is_checked_before_reusing_configured_detector(
+    tmp_path, monkeypatch
+):
+    import visual_ai_agent.runtime as module
+    from visual_ai_agent.object_models import ObjectModelPreset
+
+    model_path = tmp_path / "custom.onnx"
+    model_path.write_bytes(b"configured model")
+
+    class FakeWorker:
+        running = False
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def start(self):
+            self.running = True
+
+        def stop(self):
+            self.running = False
+
+        def snapshot(self):
+            return None, None
+
+    monkeypatch.setattr(module, "CameraSource", lambda **_kwargs: object())
+    monkeypatch.setattr(module, "YoloOnnxDetector", lambda *_args, **_kwargs: object())
+    monkeypatch.setattr(module, "VisionWorker", FakeWorker)
+    monkeypatch.setattr(
+        module,
+        "get_object_model_preset",
+        lambda _model_id: ObjectModelPreset(
+            id="bad",
+            label="bad",
+            path=model_path,
+            sha256="0" * 64,
+            experimental=True,
+        ),
+    )
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path, model_path=model_path))
+    try:
+        assert runtime.start_camera().ok
+        cached = runtime._detector
+        assert runtime.stop_camera().ok
+        result = runtime.start_camera(object_model_id="bad")
+        assert not result.ok
+        assert runtime._detector is cached
+        assert runtime.diagnostics()["active_object_model"] is None
     finally:
         runtime.close()
 

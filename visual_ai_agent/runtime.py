@@ -2,6 +2,8 @@
 
 import asyncio
 import atexit
+import hashlib
+import hmac
 from concurrent.futures import Future
 from dataclasses import replace
 from pathlib import Path
@@ -32,6 +34,7 @@ from visual_ai_agent.laptop import (
 from visual_ai_agent.laptop_store import LaptopStore
 from visual_ai_agent.memory import MemoryStore
 from visual_ai_agent.models import SceneObservation, ToolResult, utcnow
+from visual_ai_agent.object_models import OBJECT_MODEL_PRESETS, get_object_model_preset
 from visual_ai_agent.vision import (
     CameraSource,
     CupScaleRecheckDetector,
@@ -58,6 +61,9 @@ class ApplicationRuntime:
         self._laptop_worker = None
         self._shared_camera = None
         self._detector = None
+        self._detector_model_key: tuple[str, str] | None = None
+        self._active_object_model: dict[str, Any] | None = None
+        self._last_object_model_key: tuple[str, str] | None = None
         self._active_camera_settings: (
             tuple[int, int, int, tuple[float, float, float, float] | None, float, bool, bool] | None
         ) = None
@@ -259,6 +265,7 @@ class ApplicationRuntime:
         behavior_drinking_manifest=None,
         laptop_enabled: bool | None = None,
         laptop_capability_manifest=None,
+        object_model_id: str | None = None,
     ):
         with self._camera_lock:
             return self._start_camera(
@@ -273,6 +280,7 @@ class ApplicationRuntime:
                 behavior_drinking_manifest,
                 laptop_enabled,
                 laptop_capability_manifest,
+                object_model_id,
             )
 
     def _start_camera(
@@ -288,6 +296,7 @@ class ApplicationRuntime:
         behavior_drinking_manifest,
         laptop_enabled,
         laptop_capability_manifest,
+        object_model_id,
     ):
         with self._lock:
             if self._closed:
@@ -348,6 +357,35 @@ class ApplicationRuntime:
                         else Path(laptop_capability_manifest)
                     ),
                 )
+                if object_model_id is None:
+                    model_path = config.model_path.resolve()
+                    model_expected_sha256 = config.model_sha256 or None
+                    model_verify_manifest = True
+                    model_identity_id = "configured"
+                    model_label = "配置文件指定的模型"
+                    model_experimental = False
+                else:
+                    preset = get_object_model_preset(object_model_id)
+                    model_path = preset.path
+                    if not model_path.is_file():
+                        return ToolResult(
+                            ok=False,
+                            error=f"所选物品模型文件不存在：{model_path}",
+                        )
+                    model_expected_sha256 = preset.sha256
+                    model_verify_manifest = not preset.experimental
+                    model_identity_id = preset.id
+                    model_label = preset.label
+                    model_experimental = preset.experimental
+                model_file_sha256 = hashlib.sha256(model_path.read_bytes()).hexdigest()
+                if object_model_id is not None and not hmac.compare_digest(
+                    model_file_sha256, model_expected_sha256.lower()
+                ):
+                    raise ValueError(
+                        "ONNX SHA-256 mismatch: "
+                        f"expected {model_expected_sha256.lower()}, got {model_file_sha256}"
+                    )
+                model_key = (str(model_path), model_file_sha256)
                 settings = (
                     config.camera_index,
                     config.camera_width,
@@ -377,6 +415,7 @@ class ApplicationRuntime:
                             settings == self._active_camera_settings
                             and behavior_settings == self._active_behavior_settings
                             and laptop_settings == self._active_laptop_settings
+                            and model_key == self._detector_model_key
                         ):
                             return ToolResult(
                                 ok=True,
@@ -398,15 +437,33 @@ class ApplicationRuntime:
                             "请关闭裁剪并使用该分辨率。"
                         ),
                     )
-                if self._detector is None:
-                    self._detector = YoloOnnxDetector(
-                        config.model_path,
+                if self._detector is None or self._detector_model_key != model_key:
+                    candidate_detector = YoloOnnxDetector(
+                        model_path,
                         confidence=config.confidence,
-                        expected_sha256=config.model_sha256 or None,
+                        expected_sha256=model_expected_sha256,
+                        verify_manifest=model_verify_manifest,
                     )
+                    self._detector = candidate_detector
+                    self._detector_model_key = model_key
+                if object_model_id is None:
+                    for known in OBJECT_MODEL_PRESETS:
+                        if (
+                            get_object_model_preset(known.id).path == model_path
+                            and known.sha256 == model_file_sha256
+                        ):
+                            model_identity_id = known.id
+                            model_label = known.label
+                            model_experimental = known.experimental
+                            break
                 self.memory.set_max_gap_seconds(config.sample_interval * 2.5)
                 view_key = (*settings[:4], settings[5], settings[6])
-                if self._last_view_key is not None and view_key != self._last_view_key:
+                if (
+                    self._last_view_key is not None
+                    and view_key != self._last_view_key
+                    or self._last_object_model_key is not None
+                    and model_key != self._last_object_model_key
+                ):
                     self.memory.reset_event_baseline()
                 source = CameraSource(
                     device_index=config.camera_index,
@@ -541,9 +598,17 @@ class ApplicationRuntime:
                         reason="笔记本开合实验未启用。",
                     )
                 self._active_camera_settings = settings
+                self._active_object_model = {
+                    "id": model_identity_id,
+                    "label": model_label,
+                    "path": str(model_path),
+                    "sha256": model_file_sha256,
+                    "experimental": model_experimental,
+                }
                 self._active_behavior_settings = behavior_settings
                 self._active_laptop_settings = laptop_settings
                 self._last_view_key = view_key
+                self._last_object_model_key = model_key
                 return ToolResult(ok=True, data={"status": "starting", "settings": settings})
             except Exception as exc:
                 self.last_error = (
@@ -637,6 +702,7 @@ class ApplicationRuntime:
                 self._vision = None
                 self._shared_camera = None
                 self._active_camera_settings = None
+                self._active_object_model = None
                 self._active_behavior_settings = None
                 self._active_laptop_settings = None
                 if self._behavior_worker is None and self._laptop_worker is None:
@@ -729,6 +795,7 @@ class ApplicationRuntime:
             "agent_configured": self.config.agent_connected,
             "error": self.last_error,
             "camera_settings": self._active_camera_settings,
+            "active_object_model": self._active_object_model,
             "behavior_enabled": (
                 self._active_behavior_settings[0]
                 if self._active_behavior_settings is not None

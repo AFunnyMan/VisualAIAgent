@@ -11,6 +11,7 @@ import streamlit as st
 from visual_ai_agent.behavior_ui import behavior_panel, laptop_panel, rules_panel
 from visual_ai_agent.config import Config
 from visual_ai_agent.models import utcnow
+from visual_ai_agent.object_models import OBJECT_MODEL_PRESETS, get_object_model_preset
 from visual_ai_agent.runtime import ApplicationRuntime
 
 st.set_page_config(page_title="视觉记忆 · VisualAIAgent", page_icon="◉", layout="wide")
@@ -91,6 +92,36 @@ with st.sidebar:
         index=resolutions.index(configured_resolution),
         format_func=lambda value: f"{value[0]} × {value[1]}",
     )
+    model_options = ["configured", *(preset.id for preset in OBJECT_MODEL_PRESETS)]
+    configured_path = runtime.config.model_path.expanduser().resolve()
+    configured_model_id = next(
+        (
+            preset.id
+            for preset in OBJECT_MODEL_PRESETS
+            if get_object_model_preset(preset.id).path == configured_path
+        ),
+        "configured",
+    )
+    model_labels = {"configured": "沿用配置文件中的模型"}
+    model_labels.update({preset.id: preset.label for preset in OBJECT_MODEL_PRESETS})
+    selected_object_model_id = st.selectbox(
+        "物品识别模型",
+        model_options,
+        index=model_options.index(configured_model_id),
+        format_func=model_labels.get,
+        help="选择后点击开始观察才会生效。切换会停止旧观察并重建模型；微调候选尚未完成独立验收。",
+    )
+    selected_object_model = (
+        get_object_model_preset(selected_object_model_id)
+        if selected_object_model_id != "configured"
+        else None
+    )
+    selected_model_path = selected_object_model.path if selected_object_model else configured_path
+    if not selected_model_path.is_file():
+        st.warning("所选物品模型文件不在本机，请先准备该模型后再开始观察。")
+    if selected_object_model and selected_object_model.experimental:
+        st.caption("所选为固定场景微调候选；用于测试，不代表质量验收已通过。")
+    st.caption(f"待启用模型：{model_labels[selected_object_model_id]}")
     cup_scale_recheck = st.checkbox(
         "增强杯子检测（本地复查）",
         value=runtime.config.cup_scale_recheck,
@@ -222,6 +253,11 @@ with st.sidebar:
                 silver_object_ignore,
             )
             active_settings = runtime.diagnostics()["camera_settings"]
+            active_object_model = runtime.diagnostics().get("active_object_model")
+            object_model_changed = bool(
+                active_object_model
+                and Path(active_object_model["path"]).resolve() != selected_model_path
+            )
             active_observation, _ = runtime.snapshot()
             needs_reconnect = active_observation is not None and active_observation.status in {
                 "disconnected",
@@ -246,7 +282,12 @@ with st.sidebar:
             )
             if needs_reconnect or (
                 runtime.camera_running
-                and (active_settings != requested_settings or behavior_changed or laptop_changed)
+                and (
+                    active_settings != requested_settings
+                    or behavior_changed
+                    or laptop_changed
+                    or object_model_changed
+                )
             ):
                 stopped = runtime.stop_camera()
                 if not stopped.ok:
@@ -260,6 +301,11 @@ with st.sidebar:
                             observation_region=selected_region,
                             cup_scale_recheck=cup_scale_recheck,
                             silver_object_ignore=silver_object_ignore,
+                            object_model_id=(
+                                selected_object_model_id
+                                if selected_object_model_id != "configured"
+                                else None
+                            ),
                             **behavior_kwargs,
                             **laptop_kwargs,
                         )
@@ -273,12 +319,23 @@ with st.sidebar:
                         observation_region=selected_region,
                         cup_scale_recheck=cup_scale_recheck,
                         silver_object_ignore=silver_object_ignore,
+                        object_model_id=(
+                            selected_object_model_id
+                            if selected_object_model_id != "configured"
+                            else None
+                        ),
                         **behavior_kwargs,
                         **laptop_kwargs,
                     )
                 )
     if right.button("停止观察", width="stretch"):
         show_result(runtime.stop_camera())
+    active_object_model = runtime.diagnostics().get("active_object_model")
+    if active_object_model:
+        st.info(f"当前实际启用：{active_object_model['label']}")
+        st.caption(f"模型校验标识：{active_object_model['sha256'][:12]}")
+    else:
+        st.caption("当前实际启用：无（尚未开始或已停止观察）")
     st.caption("启动后使用非镜像坐标。停止、断连或过期画面均表示当前未知。")
     active_settings = runtime.diagnostics()["camera_settings"]
     if active_settings:

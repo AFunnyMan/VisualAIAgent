@@ -77,6 +77,7 @@ def _configured_app(tmp_path, monkeypatch, *, region="", fake_camera=False):
     calls = []
 
     if fake_camera:
+        (tmp_path / "missing.onnx").write_bytes(b"test detector")
 
         class FakeWorker:
             running = False
@@ -298,6 +299,48 @@ def test_silver_ignore_checkbox_forwards_and_displays_correct_setting(tmp_path, 
         next(button for button in tested_app.button if button.label == "开始观察").click().run()
         assert [call[0] for call in calls] == ["stop", "start"]
         assert calls[-1][2]["silver_object_ignore"] is False
+    finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()
+
+
+def test_object_model_selection_only_applies_on_start(tmp_path, monkeypatch):
+    import hashlib
+
+    import visual_ai_agent.object_models as models
+
+    model_path = tmp_path / "r04.onnx"
+    model_path.write_bytes(b"r04 test detector")
+    preset = models.ObjectModelPreset(
+        "r04",
+        "固定场景 R04（实验）",
+        model_path,
+        hashlib.sha256(model_path.read_bytes()).hexdigest(),
+        True,
+    )
+    monkeypatch.setattr(models, "OBJECT_MODEL_PRESETS", (preset,))
+    monkeypatch.setattr("visual_ai_agent.runtime.OBJECT_MODEL_PRESETS", (preset,))
+    tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
+    try:
+        def start():
+            next(b for b in tested_app.button if b.label == "开始观察").click().run()
+
+        start()
+        assert created[0].diagnostics()["active_object_model"]["id"] == "configured"
+        next(s for s in tested_app.selectbox if s.label == "物品识别模型").set_value("r04").run()
+        assert created[0].diagnostics()["active_object_model"]["id"] == "configured"
+        calls.clear()
+        start()
+        assert not tested_app.exception
+        assert [call[0] for call in calls] == ["stop", "start"]
+        assert created[0].diagnostics()["active_object_model"]["id"] == "r04"
+        assert any("当前实际启用：固定场景 R04（实验）" in item.value for item in tested_app.info)
+        next(b for b in tested_app.button if b.label == "停止观察").click().run()
+        model_path.unlink()
+        start()
+        assert any("不存在" in item.value for item in tested_app.error)
+        assert created[0].diagnostics()["active_object_model"] is None
     finally:
         for instance in created:
             instance.close()
