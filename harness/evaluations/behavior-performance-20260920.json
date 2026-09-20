@@ -1,0 +1,209 @@
+{
+  "date": "2026-09-20",
+  "timezone": "Asia/Shanghai",
+  "scope": "Local real USB and actual Streamlit browser performance; not independent action accuracy or Windows/API acceptance",
+  "headless": {
+    "elapsed_seconds": 600.4459454999305,
+    "samples": 5986,
+    "statuses": {
+      "stale": 4,
+      "running": 5982
+    },
+    "steady_samples": 5889,
+    "steady_fresh_fraction": 0.999490575649516,
+    "steady_gap_over250ms": 4,
+    "steady_saved_age_ms": {
+      "p50": 62.75633303448558,
+      "p95": 86.79049997590482,
+      "p99": 137.15000008232892,
+      "max": 520.1334159355611
+    },
+    "ui_errors": [],
+    "stop_ok": true
+  },
+  "browser_segments": [
+    {
+      "segment": 0,
+      "start": "2026-09-20T15:11:52.557667+00:00",
+      "end": "2026-09-20T15:20:28.071438+00:00",
+      "duration_s": 515.839527959004,
+      "all": {
+        "samples": 5117,
+        "statuses": {
+          "stale": 27,
+          "running": 5090
+        },
+        "postures": {
+          "unknown": 32,
+          "empty": 5085
+        },
+        "gap_over_250ms": 0,
+        "inference_ms": {
+          "p50": 39.802,
+          "p95": 48.435,
+          "p99": 62.378,
+          "max": 166.728
+        },
+        "callback_ms": {
+          "p50": 1.371,
+          "p95": 1.746,
+          "p99": 4.501,
+          "max": 18.627
+        },
+        "saved_age_ms": {
+          "p50": 50.27,
+          "p95": 66.361,
+          "p99": 83.67,
+          "max": 189.63
+        },
+        "sample_gap_ms": {
+          "p50": 96.415,
+          "p95": 112.999,
+          "p99": 127.468,
+          "max": 187.896
+        }
+      },
+      "steady_excluding_startup_and_explicit_stop": {
+        "samples": 5059,
+        "statuses": {
+          "running": 5059
+        },
+        "postures": {
+          "empty": 5059
+        },
+        "gap_over_250ms": 0,
+        "inference_ms": {
+          "p50": 39.77,
+          "p95": 48.385,
+          "p99": 62.01,
+          "max": 166.728
+        },
+        "callback_ms": {
+          "p50": 1.37,
+          "p95": 1.722,
+          "p99": 4.363,
+          "max": 18.627
+        },
+        "saved_age_ms": {
+          "p50": 50.286,
+          "p95": 66.361,
+          "p99": 83.699,
+          "max": 189.63
+        },
+        "sample_gap_ms": {
+          "p50": 96.413,
+          "p95": 112.999,
+          "p99": 127.468,
+          "max": 187.896
+        }
+      }
+    },
+    {
+      "segment": 1,
+      "start": "2026-09-20T15:20:28.969110+00:00",
+      "end": "2026-09-20T15:25:28.627817+00:00",
+      "duration_s": 299.9259268329479,
+      "all": {
+        "samples": 2980,
+        "statuses": {
+          "stale": 13,
+          "running": 2967
+        },
+        "postures": {
+          "unknown": 27,
+          "empty": 1060,
+          "standing": 87,
+          "seated": 1806
+        },
+        "gap_over_250ms": 0,
+        "inference_ms": {
+          "p50": 40.598,
+          "p95": 55.454,
+          "p99": 88.855,
+          "max": 187.458
+        },
+        "callback_ms": {
+          "p50": 1.331,
+          "p95": 2.052,
+          "p99": 5.356,
+          "max": 63.402
+        },
+        "saved_age_ms": {
+          "p50": 52.013,
+          "p95": 71.382,
+          "p99": 109.998,
+          "max": 244.772
+        },
+        "sample_gap_ms": {
+          "p50": 96.33,
+          "p95": 112.891,
+          "p99": 127.888,
+          "max": 235.354
+        }
+      },
+      "steady_excluding_startup_and_explicit_stop": {
+        "samples": 2899,
+        "statuses": {
+          "running": 2899
+        },
+        "postures": {
+          "empty": 997,
+          "unknown": 9,
+          "standing": 87,
+          "seated": 1806
+        },
+        "gap_over_250ms": 0,
+        "inference_ms": {
+          "p50": 40.56,
+          "p95": 55.23,
+          "p99": 90.119,
+          "max": 187.458
+        },
+        "callback_ms": {
+          "p50": 1.334,
+          "p95": 1.983,
+          "p99": 5.399,
+          "max": 63.402
+        },
+        "saved_age_ms": {
+          "p50": 51.993,
+          "p95": 71.332,
+          "p99": 109.998,
+          "max": 244.772
+        },
+        "sample_gap_ms": {
+          "p50": 96.332,
+          "p95": 112.916,
+          "p99": 127.927,
+          "max": 235.354
+        }
+      }
+    }
+  ],
+  "segment_actual_dimensions": [
+    [
+      1280,
+      720
+    ],
+    [
+      1920,
+      1080
+    ]
+  ],
+  "browser_overlap": "Two automated behavior pages overlap approximately 85 seconds during the 1080p segment; existing in-app page also available. Not a controlled A/B.",
+  "memory_monitor": {
+    "duration_seconds": 480,
+    "rss_MiB_min": 292.969,
+    "rss_MiB_max": 538.453,
+    "rss_MiB_start": 462.844,
+    "rss_MiB_end": 478.156,
+    "limit": "No monotonic growth during this window; not a long-term leak guarantee."
+  },
+  "offline_tests": {
+    "passed": 443,
+    "skipped": 1,
+    "deselected": 5,
+    "seconds": 17.7
+  },
+  "private_evidence_directory": "data/behavior-perf-20260920-soak"
+}

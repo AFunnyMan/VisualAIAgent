@@ -12,3 +12,8 @@ primaryColor = "#147D73"
 backgroundColor = "#F5F7F5"
 secondaryBackgroundColor = "#FFFFFF"
 textColor = "#182C2A"
+
+[runner]
+# Frequent fragments share a process with real-time vision. Keep Python's
+# automatic GC, but avoid a forced full-heap collection after every UI rerun.
+postScriptGC = false

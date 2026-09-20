@@ -7,6 +7,7 @@ import json
 import os
 import sqlite3
 import threading
+import weakref
 from collections.abc import Callable, Sequence
 from contextlib import contextmanager
 from datetime import UTC, date, datetime, timedelta
@@ -55,14 +56,32 @@ class MemoryStore:
         self._lock = threading.RLock()
         self._machine = EventStateMachine(max_gap_seconds=max_gap_seconds)
         self._has_session_observation = False
+        self._keepalive_connection: sqlite3.Connection | None = None
+        self._keepalive_finalizer: weakref.finalize | None = None
         self._initialize()
+        self._keepalive_connection = self._connect(check_same_thread=False)
+        self._keepalive_connection.execute("SELECT 1 FROM schema_meta LIMIT 1").fetchone()
+        self._keepalive_finalizer = weakref.finalize(self, self._keepalive_connection.close)
 
-    def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.db_path, timeout=10, isolation_level=None)
+    def _connect(self, *, check_same_thread: bool = True) -> sqlite3.Connection:
+        connection = sqlite3.connect(
+            self.db_path,
+            timeout=10,
+            isolation_level=None,
+            check_same_thread=check_same_thread,
+        )
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("PRAGMA busy_timeout = 10000")
+        connection.execute("PRAGMA synchronous = FULL")
         return connection
+
+    def close(self) -> None:
+        """Close the WAL keepalive connection and allow a final checkpoint."""
+        finalizer = self._keepalive_finalizer
+        if finalizer is not None and finalizer.alive:
+            finalizer()
+        self._keepalive_connection = None
 
     @contextmanager
     def _transaction(self, *, immediate: bool = False):
@@ -116,6 +135,27 @@ class MemoryStore:
             raise RuntimeError("Database migration backup failed") from error
         return backup_path
 
+    def _enable_wal(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        existing_database: bool,
+        existing_backup: Path | None = None,
+    ) -> None:
+        try:
+            current_mode = connection.execute("PRAGMA journal_mode").fetchone()[0]
+            if current_mode.lower() == "wal":
+                return
+            if existing_database and existing_backup is None:
+                self._backup_before_migration(connection, from_version="4", to_version="4-wal")
+            enabled_mode = connection.execute("PRAGMA journal_mode = WAL").fetchone()[0]
+            if enabled_mode.lower() != "wal":
+                raise sqlite3.OperationalError(
+                    f"SQLite returned journal mode {enabled_mode!r} instead of WAL"
+                )
+        except (OSError, RuntimeError, sqlite3.Error) as error:
+            raise RuntimeError("Database WAL initialization failed") from error
+
     def _initialize(self) -> None:
         connection = self._connect()
         try:
@@ -127,6 +167,7 @@ class MemoryStore:
                 ).fetchall()
             }
             existing_version: str | None = None
+            migration_backup: Path | None = None
             if existing_tables:
                 if "schema_meta" not in existing_tables:
                     raise RuntimeError("Existing database has no supported schema metadata")
@@ -212,8 +253,9 @@ class MemoryStore:
                         "state_reason",
                     }.issubset(laptop_columns):
                         raise RuntimeError("Current database schema is missing required columns")
+                    self._enable_wal(connection, existing_database=True)
                     return
-                self._backup_before_migration(
+                migration_backup = self._backup_before_migration(
                     connection, from_version=existing_version, to_version="4"
                 )
             connection.executescript(
@@ -449,6 +491,11 @@ class MemoryStore:
             except BaseException:
                 connection.rollback()
                 raise
+            self._enable_wal(
+                connection,
+                existing_database=bool(existing_tables),
+                existing_backup=migration_backup,
+            )
         except BaseException:
             if connection.in_transaction:
                 connection.rollback()

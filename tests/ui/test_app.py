@@ -7,6 +7,18 @@ from streamlit.testing.v1 import AppTest
 from visual_ai_agent.models import SceneObservation, ToolResult, utcnow
 
 
+def _switch_page(app, label):
+    # AppTest 1.63 doesn't expose the browser's tab-selection action. Resetting
+    # the keyed tab widget reproduces the value sent by the frontend.
+    app.session_state.reset_state_value("main-page", label)
+    app.run()
+
+
+def _run_on_page(app, label):
+    app.session_state.reset_state_value("main-page", label)
+    app.run()
+
+
 @pytest.fixture
 def app(tmp_path, monkeypatch):
     monkeypatch.setenv("VAA_DATA_DIR", str(tmp_path))
@@ -39,19 +51,74 @@ def test_disconnected_page_and_no_history(app):
     assert not app.exception
     assert any("Agent 未连接" in item.value for item in app.warning)
     assert app.chat_input[0].disabled
+    _switch_page(app, "历史与证据")
     assert any("没有这个类别的历史记录" in item.value for item in app.info)
+
+
+def test_historical_evidence_image_loads_only_after_explicit_checkbox(tmp_path, monkeypatch):
+    tested_app, created, _calls, st = _configured_app(tmp_path, monkeypatch)
+    image_calls = []
+    original_image = st.image
+
+    def tracked_image(*args, **kwargs):
+        image_calls.append((args, kwargs))
+        return original_image(*args, **kwargs)
+
+    try:
+        runtime = created[0]
+        evidence = runtime.memory._write_evidence(
+            b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+            b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xcf\xc0\x00"
+            b"\x00\x03\x01\x01\x00\x18\xdd\x8d\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+        )
+        assert evidence is not None
+        evidence_id, relative_path, digest, size = evidence
+        with runtime.memory._transaction(immediate=True) as connection:
+            connection.execute(
+                "INSERT INTO evidence VALUES (?, ?, ?, ?, ?)",
+                (evidence_id, relative_path, utcnow().isoformat(), digest, size),
+            )
+            connection.execute(
+                "INSERT INTO last_seen VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    "cell phone",
+                    utcnow().isoformat(),
+                    '["center"]',
+                    '[{"region":"center","confidence":0.9,"bbox":[0,0,1,1]}]',
+                    evidence_id,
+                    "test",
+                ),
+            )
+        monkeypatch.setattr(st, "image", tracked_image)
+        _switch_page(tested_app, "历史与证据")
+        assert not tested_app.exception
+        assert image_calls == []
+        checkbox = next(item for item in tested_app.checkbox if item.label == "加载本地证据图")
+        checkbox.check()
+        _run_on_page(tested_app, "历史与证据")
+        assert not tested_app.exception
+        assert len(image_calls) == 1
+        assert evidence_id in image_calls[0][1]["caption"]
+    finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()
 
 
 def test_manual_watch_create_cancel_survives_reruns(app):
     assert not app.exception
-    app.button(key="FormSubmitter:create_watch-创建关注").click().run()
+    _switch_page(app, "关注与提醒")
+    app.button(key="FormSubmitter:create_watch-创建关注").click()
+    _run_on_page(app, "关注与提醒")
     assert not app.exception
     cancel = [button for button in app.button if button.label == "取消"]
     assert len(cancel) == 1
-    app.run()
+    _switch_page(app, "历史与证据")
+    _switch_page(app, "关注与提醒")
     assert len([button for button in app.button if button.label == "取消"]) == 1
     cancel = [button for button in app.button if button.label == "取消"][0]
-    cancel.click().run()
+    cancel.click()
+    _run_on_page(app, "关注与提醒")
     assert not app.exception
     assert not [button for button in app.button if button.label == "取消"]
     assert any("已取消" in item.value for item in app.markdown)
@@ -258,17 +325,25 @@ def test_behavior_and_rule_panels_preserve_single_runtime(app):
     assert any(item.label == "行为与统计" for item in app.tabs)
     assert any(item.label == "情境规则" for item in app.tabs)
     assert any(item.label == "笔记本开合" for item in app.tabs)
-    assert any("休息提醒未启用" in item.value for item in app.info)
+    assert not [item for item in app.info if "当前行为不可确认" in item.value]
+    _switch_page(app, "行为与统计")
+    assert any("当前行为不可确认" in item.value for item in app.info)
     assert not next(item for item in app.checkbox if item.label == "启用在座与疑似饮水识别").value
+    _switch_page(app, "笔记本开合")
     assert not next(item for item in app.checkbox if item.label == "启用笔记本开合识别").value
     assert any("笔记本开合实验未启用" in item.value for item in app.info)
-    app.button(key="FormSubmitter:create_context_rule-创建情境规则").click().run()
+    _switch_page(app, "情境规则")
+    assert any("休息提醒未启用" in item.value for item in app.info)
+    app.button(key="FormSubmitter:create_context_rule-创建情境规则").click()
+    _run_on_page(app, "情境规则")
     assert not app.exception
     assert len([button for button in app.button if button.label == "取消规则"]) == 1
-    app.run()
+    _switch_page(app, "行为与统计")
+    _switch_page(app, "情境规则")
     assert not app.exception
     assert len([button for button in app.button if button.label == "取消规则"]) == 1
-    next(button for button in app.button if button.label == "取消规则").click().run()
+    next(button for button in app.button if button.label == "取消规则").click()
+    _run_on_page(app, "情境规则")
     assert not app.exception
     assert not [button for button in app.button if button.label == "取消规则"]
 
@@ -323,6 +398,7 @@ def test_object_model_selection_only_applies_on_start(tmp_path, monkeypatch):
     monkeypatch.setattr("visual_ai_agent.runtime.OBJECT_MODEL_PRESETS", (preset,))
     tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
     try:
+
         def start():
             next(b for b in tested_app.button if b.label == "开始观察").click().run()
 

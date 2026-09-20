@@ -772,3 +772,13 @@ r01开发验证：起身/坐下各1/1、离座0/1、饮水2/4。新增开发视�
 - 只读审计DB约2.8万behavior_intervals、DELETE journal、0情境规则。去除无active seated_duration时多余写事务，存在规则仍事务内重查；UI累计统计/历史改5秒刷新，当前姿态仍1秒刷新；已运行但过期的提示不再误导为未启用模型。未放宽250ms门限，不自动把unknown计为在座。
 - `.venv/bin/pytest -q`：430 passed、1 skipped、5 deselected/18.22秒；Ruff/check格式/diff通过。包含无规则不写事务及并发取消不推进状态回归。恢复R05、原行为模型及原观察设置，截图确认实际R05。
 - 修复后13:21:39.451—13:21:56.238 UTC轮询取得52条不同观察：27 running/unknown，22推理超时stale/unknown，2 running/seated，1采集帧过期stale/unknown。轮询不等于完整流/漏检率；低风险减负仍不足，当前问题未解决。后续需继续分离数据库等待与推理/系统调度长尾，验证性能修复后才重新用户动作验收；本轮未做WAL迁移/重训或关闭其他应用。
+
+
+## 2026-09-20 21:22—23:29 +08 — 行为延迟优化与真实网页复测
+
+- 用户授权优化并测试。实现WAL＋FULL、一致备份与keepalive连接生命周期、相同契约共享同帧预处理，以及1200条上限的同帧诊断；模型权重/置信阈值/250ms保护未变。实现和回退见[性能专项](../docs/behavior-performance-20260920.md)。
+- 先运行真实USB短测60秒、隔离Runtime 600秒（`scripts/behavior_runtime_soak.py --output data/behavior-perf-20260920-soak --history data/memory.sqlite3 --duration 600`）；稳定期fresh 99.949%。恢复真实网页后仍失败，没有据独立长测宣布完成。线程栈命中每次片段刷新gc.collect(2)与隐藏页统计；关闭重复强制GC、保留自动GC，并将标签按需执行、证据显式加载。单改GC的网页600秒仍123/4937 stale，原记录保留。
+- 最终Playwright/Chrome访问真实8501：实际720p约516秒，稳定期5059次全running，保存后帧龄P95 66.361ms；显式1080p 300秒，稳定期2899次全running，P95 71.332ms，两段均无>250ms采样断档。1080p有9次动作确认unknown，保留；截图确认人在座，页面连续在座达到3分钟。双行为页重叠约85秒，不宣称全程双页。摄像头重启后实际分辨率改变，因此不是严格A/B。
+- 启动期27/13次stale和主动重启stopped单列保留。480秒RSS约293—538MiB、有回落，不替代长期内存验收。数据库integrity_check=ok、WAL。完整私人日志/截图仅data，提交[脱敏汇总](evaluations/behavior-performance-20260920.json)。
+- 最终`.venv/bin/pytest -q`：443 passed、1 skipped、5 deselected/17.70秒；Ruff/格式/diff通过。测试覆盖并发读写、备份失败、同帧预处理、过期拒绝、生命周期、页面切换和证据按需加载。中断恢复时旧进程不响应INT/TERM，先网页正常停摄像头确认stopped，再终止旧实例；未删除库或历史。
+- 测试关闭API调用但不改.env；结束恢复普通服务。未训练/替换默认权重，不声称饮水/离座独立精度、真实API或Windows验收完成，后续仍需用户动作确认。

@@ -7,6 +7,7 @@ import hashlib
 import json
 import threading
 import time
+from collections import deque
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -158,14 +159,29 @@ class OnnxClassifier:
             raise ValueError("Behavior ONNX class metadata differs from manifest")
         self.input_name, self.output_name = inputs[0].name, outputs[0].name
 
-    def predict(self, frame: Frame) -> dict[str, Any]:
+    @property
+    def preprocessing_contract(self) -> tuple[Any, ...]:
+        """Return the complete contract that makes a prepared tensor reusable."""
+        return (
+            self.size,
+            self.roi,
+            tuple(self.expected_source_size) if self.expected_source_size is not None else None,
+        )
+
+    def preprocess(self, frame: Frame) -> tuple[np.ndarray, float]:
+        """Validate and prepare one frame according to the manifest contract."""
         if self.expected_source_size is not None and list(frame.shape[1::-1]) != list(
             self.expected_source_size
         ):
             raise ValueError("Source frame size changed; ROI recalibration required")
-        preprocess_started = time.perf_counter()
+        started = time.perf_counter()
         tensor = preprocess_bgr(frame, self.size, self.roi)
-        preprocess_ms = 1000 * (time.perf_counter() - preprocess_started)
+        return tensor, 1000 * (time.perf_counter() - started)
+
+    def predict_preprocessed(self, tensor: np.ndarray, *, preprocess_ms: float) -> dict[str, Any]:
+        """Run classification on a tensor prepared under this classifier's contract."""
+        if tensor.shape != (1, 3, self.size, self.size) or tensor.dtype != np.float32:
+            raise ValueError("Prepared behavior tensor differs from manifest input")
         inference_started = time.perf_counter()
         values = self.session.run([self.output_name], {self.input_name: tensor})[0]
         inference_ms = 1000 * (time.perf_counter() - inference_started)
@@ -179,6 +195,10 @@ class OnnxClassifier:
             "inference_ms": inference_ms,
             "preprocess_ms": preprocess_ms,
         }
+
+    def predict(self, frame: Frame) -> dict[str, Any]:
+        tensor, preprocess_ms = self.preprocess(frame)
+        return self.predict_preprocessed(tensor, preprocess_ms=preprocess_ms)
 
 
 class BehaviorDetector:
@@ -233,12 +253,23 @@ class BehaviorDetector:
         self.auxiliary = (
             BoundedAuxiliaryRunner(self._predict_person) if auxiliary_mode == "bounded" else None
         )
+        self.shared_classifier_preprocessing = (
+            isinstance(posture, OnnxClassifier)
+            and isinstance(drinking, OnnxClassifier)
+            and posture.preprocessing_contract == drinking.preprocessing_contract
+        )
         self.drinking_auxiliary = (
-            BoundedAuxiliaryRunner(self.drinking.predict) if auxiliary_mode == "bounded" else None
+            BoundedAuxiliaryRunner(self._predict_drinking) if auxiliary_mode == "bounded" else None
         )
         self.lock = threading.Lock()
         self.sequence = 0
         self.latest: dict[str, Any] | None = None
+
+    def _predict_drinking(self, value: Frame | tuple[np.ndarray, float]) -> dict[str, Any]:
+        if self.shared_classifier_preprocessing:
+            tensor, preprocess_ms = value
+            return self.drinking.predict_preprocessed(tensor, preprocess_ms=preprocess_ms)
+        return self.drinking.predict(value)
 
     def _predict_person(self, frame: Frame) -> dict[str, Any]:
         started = time.perf_counter()
@@ -261,11 +292,22 @@ class BehaviorDetector:
     def detect(self, frame: Frame) -> list[Any]:
         started = time.perf_counter()
         person_job = self.auxiliary.submit(frame) if self.auxiliary else None
-        drinking_job = self.drinking_auxiliary.submit(frame) if self.drinking_auxiliary else None
-        posture = self.posture.predict(frame)
+        if self.shared_classifier_preprocessing:
+            tensor, preprocess_ms = self.posture.preprocess(frame)
+            drinking_input = (tensor, preprocess_ms)
+            drinking_job = (
+                self.drinking_auxiliary.submit(drinking_input) if self.drinking_auxiliary else None
+            )
+            posture = self.posture.predict_preprocessed(tensor, preprocess_ms=preprocess_ms)
+        else:
+            drinking_job = (
+                self.drinking_auxiliary.submit(frame) if self.drinking_auxiliary else None
+            )
+            posture = self.posture.predict(frame)
         if self.drinking_auxiliary is None:
             drinking_status, drinking_error = "ready", None
-            drinking = self.drinking.predict(frame)
+            drinking_input = drinking_input if self.shared_classifier_preprocessing else frame
+            drinking = self._predict_drinking(drinking_input)
         else:
             outcome = (
                 self.drinking_auxiliary.get(
@@ -321,7 +363,11 @@ class BehaviorDetector:
                     "posture_onnx": posture["inference_ms"],
                     **(
                         {
-                            "drinking_preprocess": drinking["preprocess_ms"],
+                            "drinking_preprocess": (
+                                0.0
+                                if self.shared_classifier_preprocessing
+                                else drinking["preprocess_ms"]
+                            ),
                             "drinking_onnx": drinking["inference_ms"],
                         }
                         if drinking_status == "ready"
@@ -343,6 +389,9 @@ class BehaviorDetector:
             posture = self.latest["posture"]
             drinking = self.latest["drinking"]
             candidates = self.latest["person_candidates"]
+            auxiliary_status = self.latest.get("auxiliary_status")
+            drinking_auxiliary_status = self.latest.get("drinking_auxiliary_status")
+            stage_times_ms = dict(self.latest.get("stage_times_ms", {}))
         gate = self.gate.observe(timestamp, candidates, (frame.shape[1], frame.shape[0]))
         result = self.timeline.observe(
             timestamp,
@@ -352,7 +401,15 @@ class BehaviorDetector:
             continuous_visible=gate["person_track_supported"] is True,
             exit_evidence=gate.get("exit_evidence", False) is True,
         )
-        return {**result, "raw_posture": posture, "raw_drinking": drinking, "person_gate": gate}
+        return {
+            **result,
+            "raw_posture": posture,
+            "raw_drinking": drinking,
+            "person_gate": gate,
+            "auxiliary_status": auxiliary_status,
+            "drinking_auxiliary_status": drinking_auxiliary_status,
+            "stage_times_ms": stage_times_ms,
+        }
 
     def close(self, timeout: float = 5.0) -> bool:
         deadline = time.monotonic() + timeout
@@ -397,6 +454,42 @@ class BehaviorWorker:
         self._cleanup_failed = False
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
+        self._diagnostic_lock = threading.Lock()
+        self._diagnostic_rows = deque(maxlen=1200)
+        self._diagnostic_sequence = 0
+        self._cycle: dict[str, Any] = {}
+
+    def diagnostic_samples(self, after_sequence: int = 0) -> list[dict[str, Any]]:
+        """Bounded, image-free same-cycle timing; callers may persist it explicitly."""
+        with self._diagnostic_lock:
+            return [dict(row) for row in self._diagnostic_rows if row["sequence"] > after_sequence]
+
+    def _publish(self, observation, jpeg) -> None:
+        callback_started = time.monotonic()
+        saved = False
+        try:
+            self.callback(observation, jpeg)
+            saved = True
+        finally:
+            finished = time.monotonic()
+            row = {
+                **self._cycle,
+                "observed_at": observation.observed_at.isoformat(),
+                "status": observation.status,
+                "fresh": observation.fresh,
+                "posture": observation.posture,
+                "drinking": observation.drinking,
+                "error": observation.error,
+                "callback_completed": saved,
+                "callback_ms": (finished - callback_started) * 1000,
+                "publish_age_ms": (callback_started - observation.monotonic_at) * 1000,
+                "saved_age_ms": (finished - observation.monotonic_at) * 1000,
+                "cycle_ms": (finished - self._cycle.get("cycle_started", callback_started)) * 1000,
+            }
+            with self._diagnostic_lock:
+                self._diagnostic_sequence += 1
+                row["sequence"] = self._diagnostic_sequence
+                self._diagnostic_rows.append(row)
 
     @property
     def running(self) -> bool:
@@ -436,6 +529,7 @@ class BehaviorWorker:
 
     def _run(self) -> None:
         next_run = time.monotonic()
+        previous_sample_at = None
         try:
             self.source.open()
             while not self._stop.is_set():
@@ -443,7 +537,18 @@ class BehaviorWorker:
                 if delay > 0 and self._stop.wait(delay):
                     return
                 next_run = max(next_run + BEHAVIOR_INTERVAL, time.monotonic())
+                cycle_started = time.monotonic()
+                self._cycle = {"cycle_started": cycle_started}
                 sample = self.source.read_sample()
+                self._cycle["capture_wait_ms"] = (time.monotonic() - cycle_started) * 1000
+                if sample is not None:
+                    self._cycle["frame_sequence"] = sample.sequence
+                    self._cycle["sample_gap_ms"] = (
+                        None
+                        if previous_sample_at is None
+                        else (sample.monotonic_at - previous_sample_at) * 1000
+                    )
+                    previous_sample_at = sample.monotonic_at
                 if sample is None:
                     fault_at = time.monotonic()
                     self.detector.observe(
@@ -452,7 +557,7 @@ class BehaviorWorker:
                     status = self.source.status
                     if status not in {"stopped", "paused", "disconnected", "error"}:
                         status = "stale"
-                    self.callback(
+                    self._publish(
                         self._observation(
                             None,
                             status=status,
@@ -465,7 +570,7 @@ class BehaviorWorker:
                 age = time.monotonic() - sample.monotonic_at
                 if age > BEHAVIOR_STALE_AFTER:
                     self.detector.observe(sample.frame, sample.monotonic_at, fresh=False)
-                    self.callback(
+                    self._publish(
                         self._observation(
                             sample, status="stale", fresh=False, error="Latest frame is stale"
                         ),
@@ -473,10 +578,18 @@ class BehaviorWorker:
                     )
                     continue
                 try:
+                    inference_started = time.monotonic()
                     result = self.detector.observe(sample.frame, sample.monotonic_at)
+                    self._cycle["inference_ms"] = (time.monotonic() - inference_started) * 1000
+                    self._cycle["raw_posture"] = result.get("raw_posture")
+                    self._cycle["raw_drinking"] = result.get("raw_drinking")
+                    self._cycle["unknown_reasons"] = result.get("unknown_reasons", {})
+                    self._cycle["person_gate"] = result.get("person_gate")
+                    for key in ("auxiliary_status", "drinking_auxiliary_status", "stage_times_ms"):
+                        self._cycle[key] = result.get(key)
                     if time.monotonic() - sample.monotonic_at > BEHAVIOR_STALE_AFTER:
                         self.detector.observe(sample.frame, sample.monotonic_at, fresh=False)
-                        self.callback(
+                        self._publish(
                             self._observation(
                                 sample,
                                 status="stale",
@@ -506,7 +619,7 @@ class BehaviorWorker:
                         jpeg = encoded.tobytes() if ok else None
                     if time.monotonic() - sample.monotonic_at > BEHAVIOR_STALE_AFTER:
                         self.detector.observe(sample.frame, sample.monotonic_at, fresh=False)
-                        self.callback(
+                        self._publish(
                             self._observation(
                                 sample,
                                 status="stale",
@@ -518,7 +631,7 @@ class BehaviorWorker:
                         continue
                     posture = result["posture"]
                     drinking = {"drinking": True, "not_drinking": False}.get(result["drinking"])
-                    self.callback(
+                    self._publish(
                         self._observation(
                             sample, posture=posture, drinking=drinking, events=events
                         ),
@@ -528,7 +641,7 @@ class BehaviorWorker:
                 except Exception as exc:
                     self.detector.observe(sample.frame, sample.monotonic_at, fresh=False)
                     self.last_error = f"Behavior inference failed ({type(exc).__name__})"
-                    self.callback(
+                    self._publish(
                         self._observation(
                             sample, status="error", fresh=False, error=self.last_error
                         ),
@@ -536,7 +649,7 @@ class BehaviorWorker:
                     )
         except Exception as exc:
             self.last_error = f"Behavior worker failed ({type(exc).__name__})"
-            self.callback(
+            self._publish(
                 self._observation(None, status="error", fresh=False, error=self.last_error), None
             )
         finally:

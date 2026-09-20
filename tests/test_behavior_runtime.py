@@ -116,3 +116,38 @@ def test_behavior_worker_reports_source_open_failure():
 
     assert observations[0].status == "error"
     assert observations[0].fresh is False
+
+
+def test_worker_diagnostics_pair_callback_and_inference_without_changing_freshness():
+    source = OneSampleSource()
+
+    class FastDetector(SlowDetector):
+        def observe(self, _frame, _timestamp, *, fresh=True):
+            return {
+                "posture": "seated",
+                "drinking": "not_drinking",
+                "events": [],
+                "raw_posture": {"label": "seated", "confidence": 0.99},
+            }
+
+    published = threading.Event()
+
+    def callback(observation, _jpeg):
+        assert observation.fresh
+        time.sleep(0.03)
+        worker._stop.set()
+        published.set()
+
+    worker = BehaviorWorker(FastDetector(), source, callback, model_version="test", scene_id="test")
+    worker.start()
+    assert published.wait(1)
+    worker.stop()
+    first = worker.diagnostic_samples()[0]
+    assert first["frame_sequence"] == 1
+    assert first["raw_posture"]["label"] == "seated"
+    assert first["callback_ms"] >= 25
+    assert first["saved_age_ms"] >= first["publish_age_ms"] + 25
+    assert first["callback_completed"]
+    assert first["fresh"]
+    assert all(row["sequence"] > 1 for row in worker.diagnostic_samples(1))
+    assert "frame" not in first

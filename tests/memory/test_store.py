@@ -61,6 +61,83 @@ def test_persists_last_seen_evidence_and_restart_is_not_current(tmp_path) -> Non
     assert restarted.find_object("cup").data["found"] is True
 
 
+def test_database_uses_wal_with_full_durability_after_reopen(tmp_path) -> None:
+    store = MemoryStore(tmp_path, clock=lambda: BASE)
+    store.append_chat_interaction("before-reopen", "user", "assistant")
+    assert (tmp_path / "memory.sqlite3-wal").is_file()
+    store.close()
+
+    reopened = MemoryStore(tmp_path, clock=lambda: BASE)
+    with reopened._read_connection() as connection:
+        assert connection.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+        assert connection.execute("PRAGMA synchronous").fetchone()[0] == 2
+    assert reopened.list_chat_interactions()[0]["request_id"] == "before-reopen"
+    reopened.close()
+
+
+def test_wal_allows_write_while_an_existing_read_transaction_is_open(tmp_path) -> None:
+    store = MemoryStore(tmp_path, clock=lambda: BASE)
+    reader = sqlite3.connect(store.db_path, isolation_level=None)
+    try:
+        reader.execute("BEGIN")
+        reader.execute("SELECT * FROM schema_meta").fetchall()
+
+        store.append_chat_interaction("concurrent-write", "user", "assistant")
+
+        assert reader.execute("SELECT * FROM schema_meta").fetchall()
+    finally:
+        reader.rollback()
+        reader.close()
+    assert store.list_chat_interactions()[0]["request_id"] == "concurrent-write"
+
+
+def test_existing_database_is_backed_up_once_before_wal_switch(tmp_path) -> None:
+    store = MemoryStore(tmp_path, clock=lambda: BASE)
+    store.append_chat_interaction("preserved", "user", "assistant")
+    store.close()
+    with sqlite3.connect(store.db_path) as connection:
+        assert connection.execute("PRAGMA journal_mode = DELETE").fetchone()[0] == "delete"
+
+    migrated = MemoryStore(tmp_path, clock=lambda: BASE)
+    backups = list((tmp_path / "backups").glob("*.sqlite3"))
+    assert len(backups) == 1
+    with sqlite3.connect(backups[0]) as archived:
+        assert archived.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
+        assert (
+            archived.execute(
+                "SELECT request_id FROM chat_interactions WHERE request_id = 'preserved'"
+            ).fetchone()[0]
+            == "preserved"
+        )
+    assert migrated.list_chat_interactions()[0]["request_id"] == "preserved"
+    migrated.close()
+
+    reopened = MemoryStore(tmp_path, clock=lambda: BASE)
+    reopened.close()
+    assert list((tmp_path / "backups").glob("*.sqlite3")) == backups
+
+
+def test_failed_wal_backup_leaves_existing_database_unchanged(tmp_path) -> None:
+    store = MemoryStore(tmp_path, clock=lambda: BASE)
+    store.append_chat_interaction("preserved", "user", "assistant")
+    store.close()
+    with sqlite3.connect(store.db_path) as connection:
+        assert connection.execute("PRAGMA journal_mode = DELETE").fetchone()[0] == "delete"
+    (tmp_path / "backups").write_text("blocks backup directory", encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="WAL initialization failed"):
+        MemoryStore(tmp_path, clock=lambda: BASE)
+
+    with sqlite3.connect(store.db_path) as unchanged:
+        assert unchanged.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
+        assert (
+            unchanged.execute(
+                "SELECT request_id FROM chat_interactions WHERE request_id = 'preserved'"
+            ).fetchone()[0]
+            == "preserved"
+        )
+
+
 def test_find_object_returns_all_same_category_candidates_without_identity_claim(tmp_path) -> None:
     store = MemoryStore(tmp_path, clock=lambda: BASE)
     scene = observation(0).model_copy(

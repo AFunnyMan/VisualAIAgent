@@ -99,7 +99,11 @@ class ApplicationRuntime:
             )
             self.memory.cleanup()
         except Exception:
-            self._instance.close()
+            try:
+                if hasattr(self, "memory"):
+                    self.memory.close()
+            finally:
+                self._instance.close()
             raise
         self._ensure_worker()
         for watch in recovered:
@@ -785,6 +789,7 @@ class ApplicationRuntime:
                     "工作线程尚未停止；保留实例锁，避免重复访问设备。"
                 )
             else:
+                self.memory.close()
                 self._instance.close()
                 atexit.unregister(self.close)
 

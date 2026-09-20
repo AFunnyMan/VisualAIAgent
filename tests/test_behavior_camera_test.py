@@ -65,6 +65,145 @@ def test_classifier_rejects_camera_size_that_invalidates_roi_calibration(
         target.OnnxClassifier(record).predict(np.zeros((720, 1280, 3), dtype=np.uint8))
 
 
+def test_matching_classifier_contracts_preprocess_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(target.ort, "InferenceSession", FakeSession)
+    calls = []
+
+    def preprocess(frame, size, roi):
+        calls.append((id(frame), size, roi))
+        return np.zeros((1, 3, size, size), np.float32)
+
+    monkeypatch.setattr("visual_ai_agent.behavior.preprocess_bgr", preprocess)
+    monkeypatch.setattr(
+        target.BehaviorDetector,
+        "_predict_person",
+        lambda *_: {"candidates": [], "elapsed_ms": 0, "timings": {}},
+    )
+    record = {
+        "_onnx": Path("model.onnx"),
+        "_names": {0: "drinking", 1: "not_drinking"},
+        "preprocessing": {"imgsz": 4},
+    }
+    posture = target.OnnxClassifier(record)
+    posture.names = {0: "seated", 1: "standing"}
+    drinking = target.OnnxClassifier(record)
+    detector = target.BehaviorDetector(
+        posture, drinking, Path("fake.onnx"), auxiliary_mode="serial"
+    )
+    try:
+        frame = np.zeros((8, 8, 3), dtype=np.uint8)
+        detector.detect(frame)
+        assert calls == [(id(frame), 4, None)]
+        snapshot = detector.snapshot()
+        assert snapshot["posture"]["label"] == "seated"
+        assert snapshot["drinking"]["label"] == "drinking"
+        assert snapshot["stage_times_ms"]["drinking_preprocess"] == 0
+    finally:
+        detector.close()
+
+
+def test_matching_contract_bounded_drinking_uses_same_prepared_frame(monkeypatch) -> None:
+    monkeypatch.setattr(target.ort, "InferenceSession", FakeSession)
+    tensors = []
+
+    def preprocess(frame, size, _roi):
+        tensor = np.full((1, 3, size, size), frame[0, 0, 0], np.float32)
+        tensors.append(tensor)
+        return tensor
+
+    monkeypatch.setattr("visual_ai_agent.behavior.preprocess_bgr", preprocess)
+    monkeypatch.setattr(
+        target.BehaviorDetector,
+        "_predict_person",
+        lambda *_: {"candidates": [], "elapsed_ms": 0, "timings": {}},
+    )
+    record = {
+        "_onnx": Path("model.onnx"),
+        "_names": {0: "drinking", 1: "not_drinking"},
+        "preprocessing": {"imgsz": 4},
+    }
+    posture, drinking = target.OnnxClassifier(record), target.OnnxClassifier(record)
+    seen = []
+    posture.session.run = lambda _outputs, feed: (
+        seen.append(("posture", id(feed["images"]))) or [np.array([[0.9, 0.1]], dtype=np.float32)]
+    )
+    drinking.session.run = lambda _outputs, feed: (
+        seen.append(("drinking", id(feed["images"]))) or [np.array([[0.9, 0.1]], dtype=np.float32)]
+    )
+    detector = target.BehaviorDetector(posture, drinking, Path("fake.onnx"), person_wait_ms=100)
+    try:
+        detector.detect(np.ones((8, 8, 3), dtype=np.uint8))
+        assert len(tensors) == 1
+        assert sorted(seen) == sorted([("posture", id(tensors[0])), ("drinking", id(tensors[0]))])
+        assert detector.snapshot()["drinking_auxiliary_status"] == "ready"
+    finally:
+        assert detector.close()
+
+
+@pytest.mark.parametrize(
+    ("posture_preprocessing", "drinking_preprocessing"),
+    [
+        ({"imgsz": 4}, {"imgsz": 6}),
+        ({"imgsz": 4}, {"imgsz": 4, "roi": [0.0, 0.0, 0.5, 1.0]}),
+        (
+            {"imgsz": 4, "expected_source_frame_size": [8, 8]},
+            {"imgsz": 4, "expected_source_frame_size": [16, 8]},
+        ),
+    ],
+)
+def test_different_classifier_contracts_preprocess_independently(
+    monkeypatch: pytest.MonkeyPatch, posture_preprocessing, drinking_preprocessing
+) -> None:
+    class FlexibleSession(FakeSession):
+        def __init__(self, size):
+            super().__init__()
+            self.inputs[0].shape = [1, 3, size, size]
+
+        def run(self, _outputs, feed):
+            return [np.array([[0.9, 0.1]], dtype=np.float32)]
+
+    monkeypatch.setattr(
+        target.BehaviorDetector,
+        "_predict_person",
+        lambda *_: {"candidates": [], "elapsed_ms": 0, "timings": {}},
+    )
+    calls = []
+    monkeypatch.setattr(
+        "visual_ai_agent.behavior.preprocess_bgr",
+        lambda frame, size, roi: (
+            calls.append((size, roi)) or np.zeros((1, 3, size, size), np.float32)
+        ),
+    )
+
+    def classifier(preprocessing):
+        monkeypatch.setattr(
+            target.ort,
+            "InferenceSession",
+            lambda *_args, **_kwargs: FlexibleSession(preprocessing["imgsz"]),
+        )
+        record = {
+            "_onnx": Path("model.onnx"),
+            "_names": {0: "drinking", 1: "not_drinking"},
+            "preprocessing": preprocessing,
+        }
+        return target.OnnxClassifier(record)
+
+    # Source-size mismatch is a contract check; use direct identity comparison
+    # because deliberately running it would correctly reject one classifier.
+    posture, drinking = classifier(posture_preprocessing), classifier(drinking_preprocessing)
+    detector = target.BehaviorDetector(
+        posture, drinking, Path("fake.onnx"), auxiliary_mode="serial"
+    )
+    try:
+        assert detector.shared_classifier_preprocessing is False
+        if posture.expected_source_size != drinking.expected_source_size:
+            return
+        detector.detect(np.zeros((8, 8, 3), dtype=np.uint8))
+        assert len(calls) == 2
+    finally:
+        detector.close()
+
+
 def test_state_public_marks_person_gate_as_weak_auxiliary(tmp_path: Path) -> None:
     state = target.TestState(tmp_path, 30)
     public = state.public()
@@ -279,3 +418,37 @@ def test_optional_diagnostic_frame_does_not_change_classification(monkeypatch):
         finally:
             detector.close()
     assert results[0] == results[1]
+
+
+def test_observe_returns_statuses_and_timings_from_same_detection(monkeypatch):
+    monkeypatch.setattr(target.ort, "InferenceSession", FakeSession)
+    monkeypatch.setattr(
+        target.BehaviorDetector,
+        "_predict_person",
+        lambda *_: {
+            "candidates": [],
+            "elapsed_ms": 3,
+            "timings": {"person_onnx": 2},
+        },
+    )
+    posture = SimpleNamespace(
+        predict=lambda _frame: {"label": "seated", "preprocess_ms": 1, "inference_ms": 4}
+    )
+    drinking = SimpleNamespace(
+        predict=lambda _frame: {
+            "label": "not_drinking",
+            "preprocess_ms": 1,
+            "inference_ms": 4,
+        }
+    )
+    detector = target.BehaviorDetector(
+        posture, drinking, Path("fake.onnx"), auxiliary_mode="serial"
+    )
+    try:
+        result = detector.observe(np.ones((4, 4, 3), dtype=np.uint8), 1.0)
+        assert result["auxiliary_status"] == "ready"
+        assert result["drinking_auxiliary_status"] == "ready"
+        assert result["stage_times_ms"]["posture_preprocess"] == 1
+        assert result["stage_times_ms"]["person_onnx"] == 2
+    finally:
+        detector.close()

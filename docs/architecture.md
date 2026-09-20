@@ -136,3 +136,8 @@ SQLite 持久化最新观察、事件、任务、通知和用量/执行摘要；
 `ApplicationRuntime` 新增独立 `LaptopWorker`，与物品和行为订阅同一个 `SharedCamera`。`LaptopObservation` / `LaptopEvent` / `LaptopStore` 不混入行为时长；SQLite v4 迁移前备份，当前笔记本观察只保留一条，事件和证据持久化。七个原工具通过受控 scope/trigger 扩展查询和开合规则，不新增执行工具。加载需绑定独立验收、状态与在场模型及 SHA；当前没有合格 capability，默认关闭。契约和故障语义见[笔记本接入](laptop-product-integration.md)。
 
 姿态退出边缘证据独立于人体持续可见支持，只维护站立至空座的有限前态，不能恢复饮水、坐下或故障缺口；见[离座修复](behavior-exit-evidence-20260912.md)。饮水 r03 为可复现的实验候选，适用结果见[训练报告](drinking-training-20260912.md)。正式默认模型维持原配置，候选可用于显式验证，不等同于实机质量验收通过。
+
+
+### 行为实时性能与页面刷新（2026-09-20）
+
+SQLite v4 使用WAL＋FULL，各业务操作保持独立连接与显式事务；应用生命周期内另保留轻量连接，工作线程全部退出后关闭。既有非WAL数据库切换前一致备份，失败不静默继续。行为模型只有完整预处理契约相同才共享同帧张量；不改变250ms过期/连续性保护。Streamlit只执行当前标签页，概览常驻，历史证据按需读取；禁用每次重绘强制全量GC但保留Python自动GC。详细方法、恢复及实测限制见[性能专项](behavior-performance-20260920.md)。

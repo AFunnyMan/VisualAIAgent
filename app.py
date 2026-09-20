@@ -50,8 +50,19 @@ def time_label(value):
         return str(value)
 
 
-def show_evidence(evidence_id):
-    path = runtime.memory.evidence_path(evidence_id) if evidence_id else None
+def show_evidence(evidence_id, control_id=None):
+    if not evidence_id:
+        st.caption("此条证据图不可用；不会以其他图片替代。")
+        return
+    load = st.checkbox(
+        "加载本地证据图",
+        key=f"load-evidence-{evidence_id}-{control_id or 'default'}",
+        help="证据图片默认不读取；仅在需要查看时加载。",
+    )
+    if not load:
+        st.caption("证据图默认不加载；勾选后读取本地图片。")
+        return
+    path = runtime.memory.evidence_path(evidence_id)
     if path:
         st.image(str(path), caption=f"本地证据 · {evidence_id}", width="stretch")
     else:
@@ -375,7 +386,7 @@ with st.sidebar:
     st.caption("画面与截图留在本机。Agent 仅接收必要文字事实、时间和证据编号。")
 
 
-@st.fragment(run_every=0.5)
+@st.fragment(run_every=1)
 def overview():
     scene = runtime.memory.get_current_scene().data
     observation, jpeg = runtime.snapshot()
@@ -432,14 +443,17 @@ chat_tab, history_tab, watch_tab, behavior_tab, laptop_tab, rule_tab, usage_tab 
         "笔记本开合",
         "情境规则",
         "调用记录",
-    ]
+    ],
+    key="main-page",
+    on_change="rerun",
 )
 
-with chat_tab:
+
+def chat_page():
     st.subheader("向视觉记忆提问")
     st.caption("例如：最后在哪里看到手机？ / 如果杯子持续未检测到，请在半小时内提醒我。")
 
-    @st.fragment(run_every=0.5)
+    @st.fragment(run_every=1)
     def conversation():
         pending = st.session_state.get("pending_chat")
         if pending and pending["future"].done():
@@ -495,7 +509,13 @@ with chat_tab:
 
     conversation()
 
-with history_tab:
+
+if chat_tab.open:
+    with chat_tab:
+        chat_page()
+
+
+def history_page():
     chosen = st.selectbox("物品类别", list(LABELS), format_func=LABELS.get)
     found = runtime.memory.find_object(chosen)
     if found.ok and found.data.get("found"):
@@ -506,7 +526,7 @@ with history_tab:
             st.caption("来源：测试或回放输入")
         for candidate in data.get("candidates", []):
             st.write(f"{REGIONS[candidate['region']]} · 置信度 {candidate['confidence']:.0%}")
-        show_evidence(data.get("evidence_id"))
+        show_evidence(data.get("evidence_id"), f"last-seen-{chosen}")
     else:
         st.info("没有这个类别的历史记录。")
     st.subheader("最近七天事件")
@@ -519,11 +539,17 @@ with history_tab:
         with st.expander(f"{time_label(event['confirmed_at'])} · {label}"):
             st.write(f"事件编号：{event['event_id']}")
             st.caption("持续未检测到不说明原因，不能据此推断被谁拿走。")
-            show_evidence(event.get("evidence_id"))
+            show_evidence(event.get("evidence_id"), f"object-event-{event['event_id']}")
     if events.data.get("truncated"):
         st.caption("仅展示最近 20 条；可在对话中指定更短时间范围。")
 
-with watch_tab:
+
+if history_tab.open:
+    with history_tab:
+        history_page()
+
+
+def watch_page():
     st.subheader("关注任务")
     with st.form("create_watch"):
         cat = st.selectbox("关注物品", list(LABELS), format_func=LABELS.get)
@@ -569,22 +595,33 @@ with watch_tab:
             source = "Agent 工具提醒" if notice["source"] == "agent" else "本地规则降级提醒"
             st.caption(f"{time_label(notice['created_at'])} · {source} · 事件 {notice['event_id']}")
             with st.expander("查看提醒证据", key=f"notice-{notice['notification_id']}"):
-                show_evidence(notice.get("evidence_id"))
+                show_evidence(
+                    notice.get("evidence_id"), f"watch-notice-{notice['notification_id']}"
+                )
         if not notices:
             st.caption("暂无提醒。")
 
     watch_status()
 
-with behavior_tab:
-    behavior_panel(runtime, show_evidence, time_label)
 
-with laptop_tab:
-    laptop_panel(runtime, show_evidence, time_label)
+if watch_tab.open:
+    with watch_tab:
+        watch_page()
 
-with rule_tab:
-    rules_panel(runtime, show_result, show_evidence, time_label)
+if behavior_tab.open:
+    with behavior_tab:
+        behavior_panel(runtime, show_evidence, time_label)
 
-with usage_tab:
+if laptop_tab.open:
+    with laptop_tab:
+        laptop_panel(runtime, show_evidence, time_label)
+
+if rule_tab.open:
+    with rule_tab:
+        rules_panel(runtime, show_result, show_evidence, time_label)
+
+
+def usage_page():
     st.subheader("调用与限制")
     st.write("仅用户请求或相关关注事件唤醒 Agent。每次最多 3 次模型请求，自动运行每日有上限。")
     st.caption("Token 为提供商实际返回的用量；未知显示为空，不把失败或未返回用量记成零。")
@@ -601,3 +638,8 @@ with usage_tab:
             f"已知部分 Token：{summary['known_total_tokens']}；完整总量不可用，部分请求未返回用量。"
         )
     st.json(runtime.memory.list_agent_runs(limit=50))
+
+
+if usage_tab.open:
+    with usage_tab:
+        usage_page()

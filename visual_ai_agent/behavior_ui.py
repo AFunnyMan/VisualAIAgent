@@ -92,7 +92,7 @@ def behavior_panel(runtime, show_evidence, time_label):
                 f"{TRIGGERS.get(event['kind'], event['kind'])}"
             ):
                 st.caption(f"事件 {event['event_id']} · 来源 {event.get('source', 'unknown')}")
-                show_evidence(event.get("evidence_id"))
+                show_evidence(event.get("evidence_id"), f"behavior-event-{event['event_id']}")
         if not events.data.get("events"):
             st.caption("暂无确认行为事件。")
 
@@ -124,6 +124,10 @@ def laptop_panel(runtime, show_evidence, time_label):
         presence = observation.get("presence_verified")
         third.metric("画面确认", "电脑清晰可见" if presence else "未确认")
         st.caption(f"最近笔记本观察：{time_label(observation.get('observed_at'))}")
+
+    @st.fragment(run_every=5)
+    def history():
+        st.caption("笔记本历史事件每 5 秒更新；当前状态单独更新。")
         st.subheader("最近笔记本开合事件")
         end = utcnow()
         events = runtime.laptop.search_events(end - timedelta(days=7), end, limit=20)
@@ -137,11 +141,12 @@ def laptop_panel(runtime, show_evidence, time_label):
                     f"状态模型 {event['model_version']} · "
                     f"画面确认模型 {event['presence_model_version']}"
                 )
-                show_evidence(event.get("evidence_id"))
+                show_evidence(event.get("evidence_id"), f"laptop-event-{event['event_id']}")
         if not events.data.get("events"):
             st.caption("暂无确认的笔记本开合事件。")
 
     contents()
+    history()
 
 
 def _rule_fields(key, rule=None):
@@ -269,7 +274,7 @@ def rules_panel(runtime, show_result, show_evidence, time_label):
             source = "Agent 工具提醒" if notice["source"] == "agent" else "本地规则降级提醒"
             st.caption(f"{time_label(notice['created_at'])} · {source} · 事件 {notice['event_id']}")
             with st.expander("情境提醒证据", key=f"rule-notice-{notice['notification_id']}"):
-                show_evidence(notice.get("evidence_id"))
+                show_evidence(notice.get("evidence_id"), f"rule-notice-{notice['notification_id']}")
         if not notices:
             st.caption("暂无行为或情境提醒。")
 

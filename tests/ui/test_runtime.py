@@ -430,9 +430,7 @@ def test_unknown_or_failed_object_model_does_not_publish_identity(tmp_path, monk
         runtime.close()
 
 
-def test_explicit_preset_hash_is_checked_before_reusing_configured_detector(
-    tmp_path, monkeypatch
-):
+def test_explicit_preset_hash_is_checked_before_reusing_configured_detector(tmp_path, monkeypatch):
     import visual_ai_agent.runtime as module
     from visual_ai_agent.object_models import ObjectModelPreset
 
@@ -892,3 +890,29 @@ def test_behavior_trigger_boundary_excludes_late_committed_old_object_frame(tmp_
         assert runtime.last_error is None
     finally:
         runtime.close()
+
+
+def test_initialization_failure_closes_wal_connection_and_releases_instance(tmp_path, monkeypatch):
+    import visual_ai_agent.runtime as module
+
+    stores = []
+    original_store = module.MemoryStore
+    original_watches = module.WatchService
+
+    def tracked_store(*args, **kwargs):
+        store = original_store(*args, **kwargs)
+        stores.append(store)
+        return store
+
+    def failed_watches(_store):
+        raise RuntimeError("service initialization failed")
+
+    monkeypatch.setattr(module, "MemoryStore", tracked_store)
+    monkeypatch.setattr(module, "WatchService", failed_watches)
+    with pytest.raises(RuntimeError, match="service initialization failed"):
+        ApplicationRuntime(Config(data_dir=tmp_path))
+    assert stores[0]._keepalive_connection is None
+    monkeypatch.setattr(module, "WatchService", original_watches)
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path))
+    runtime.close()
+    assert stores[-1]._keepalive_connection is None
