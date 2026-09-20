@@ -1,0 +1,89 @@
+# 本地模型文件盘点（2026-09-17）
+
+扫描项目目录，排除虚拟环境、依赖包、uv 缓存；保留实验所需的 MobileCLIP Hugging Face 权重。文件数不等于独立模型数；包括导出格式与训练检查点。
+
+共 81 个文件：{'.onnx': 28, '.pt': 51, '.safetensors': 1, '.pth': 1}
+
+| 文件 | 大小 MiB |
+|---|---:|
+| [harness/artifacts/ab-20260907/clip/hf-cache/hub/models--timm--MobileCLIP2-S0-OpenCLIP/snapshots/095906d28bf54d7584dc411e8ffe448f34289e05/open_clip_model.safetensors](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/clip/hf-cache/hub/models--timm--MobileCLIP2-S0-OpenCLIP/blobs/ab91a1a0c4330d6b1913e24d5035dfdea15423316aaec649610c6b1c6ddd0e95) | 285.8 |
+| [harness/artifacts/ab-20260907/clip/mobileclip2-s0-image-encoder.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/clip/mobileclip2-s0-image-encoder.onnx) | 43.5 |
+| [harness/artifacts/ab-20260907/detectors/n-traditional.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/detectors/n-traditional.onnx) | 9.5 |
+| [harness/artifacts/ab-20260907/detectors/n-traditional.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/detectors/n-traditional.pt) | 5.3 |
+| [harness/artifacts/ab-20260907/detectors/s-e2e.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/detectors/s-e2e.onnx) | 36.5 |
+| [harness/artifacts/ab-20260907/detectors/s-e2e.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/detectors/s-e2e.pt) | 19.5 |
+| [harness/artifacts/ab-20260907/detectors/s-traditional.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/detectors/s-traditional.onnx) | 36.5 |
+| [harness/artifacts/ab-20260907/detectors/s-traditional.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/detectors/s-traditional.pt) | 19.5 |
+| [harness/artifacts/ab-20260907/detectors/yolo26s.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/detectors/yolo26s.pt) | 19.5 |
+| [harness/artifacts/ab-20260907/yoloe/yoloe-26n-seg-fixed.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/yoloe/yoloe-26n-seg-fixed.onnx) | 10.6 |
+| [harness/artifacts/ab-20260907/yoloe/yoloe-26n-seg.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/ab-20260907/yoloe/yoloe-26n-seg.pt) | 11.2 |
+| [harness/artifacts/behavior-20260909-r01/drinking-run/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260909-r01/drinking-run/weights/best.pt) | 11.5 |
+| [harness/artifacts/behavior-20260909-r01/drinking-run/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260909-r01/drinking-run/weights/last.onnx) | 5.9 |
+| [harness/artifacts/behavior-20260909-r01/drinking-run/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260909-r01/drinking-run/weights/last.pt) | 11.5 |
+| [harness/artifacts/behavior-20260909-r01/posture-run/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260909-r01/posture-run/weights/best.pt) | 11.5 |
+| [harness/artifacts/behavior-20260909-r01/posture-run/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260909-r01/posture-run/weights/last.onnx) | 5.9 |
+| [harness/artifacts/behavior-20260909-r01/posture-run/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260909-r01/posture-run/weights/last.pt) | 11.5 |
+| [harness/artifacts/behavior-20260909-r01/yolo26n-cls.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260909-r01/yolo26n-cls.pt) | 5.5 |
+| [harness/artifacts/behavior-20260910-r02/drinking-run/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260910-r02/drinking-run/weights/best.pt) | 11.5 |
+| [harness/artifacts/behavior-20260910-r02/drinking-run/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260910-r02/drinking-run/weights/last.onnx) | 5.9 |
+| [harness/artifacts/behavior-20260910-r02/drinking-run/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260910-r02/drinking-run/weights/last.pt) | 11.5 |
+| [harness/artifacts/behavior-20260910-r02/posture-run/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260910-r02/posture-run/weights/best.pt) | 11.5 |
+| [harness/artifacts/behavior-20260910-r02/posture-run/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260910-r02/posture-run/weights/last.onnx) | 5.9 |
+| [harness/artifacts/behavior-20260910-r02/posture-run/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260910-r02/posture-run/weights/last.pt) | 11.5 |
+| [harness/artifacts/behavior-20260910-r03/drinking-roi-run/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260910-r03/drinking-roi-run/weights/best.pt) | 11.5 |
+| [harness/artifacts/behavior-20260910-r03/drinking-roi-run/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260910-r03/drinking-roi-run/weights/last.onnx) | 5.9 |
+| [harness/artifacts/behavior-20260910-r03/drinking-roi-run/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260910-r03/drinking-roi-run/weights/last.pt) | 11.5 |
+| [harness/artifacts/behavior-20260911-r04/posture/posture-run/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260911-r04/posture/posture-run/weights/best.pt) | 11.5 |
+| [harness/artifacts/behavior-20260911-r04/posture/posture-run/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260911-r04/posture/posture-run/weights/last.onnx) | 5.9 |
+| [harness/artifacts/behavior-20260911-r04/posture/posture-run/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/behavior-20260911-r04/posture/posture-run/weights/last.pt) | 11.5 |
+| [harness/artifacts/drinking-20260912-r03/run/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/drinking-20260912-r03/run/weights/best.pt) | 11.5 |
+| [harness/artifacts/drinking-20260912-r03/run/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/drinking-20260912-r03/run/weights/last.onnx) | 5.9 |
+| [harness/artifacts/drinking-20260912-r03/run/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/drinking-20260912-r03/run/weights/last.pt) | 11.5 |
+| [harness/artifacts/finetune-20260909/runs/scene-yolo26n-r01/weights/best.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/finetune-20260909/runs/scene-yolo26n-r01/weights/best.onnx) | 9.4 |
+| [harness/artifacts/finetune-20260909/runs/scene-yolo26n-r01/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/finetune-20260909/runs/scene-yolo26n-r01/weights/best.pt) | 5.1 |
+| [harness/artifacts/finetune-20260909/runs/scene-yolo26n-r01/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/finetune-20260909/runs/scene-yolo26n-r01/weights/last.pt) | 5.1 |
+| [harness/artifacts/finetune-20260909/runs/scene-yolo26n-r02/weights/best.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/finetune-20260909/runs/scene-yolo26n-r02/weights/best.onnx) | 9.5 |
+| [harness/artifacts/finetune-20260909/runs/scene-yolo26n-r02/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/finetune-20260909/runs/scene-yolo26n-r02/weights/best.pt) | 5.3 |
+| [harness/artifacts/finetune-20260909/runs/scene-yolo26n-r02/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/finetune-20260909/runs/scene-yolo26n-r02/weights/last.pt) | 5.3 |
+| [harness/artifacts/finetune-20260909-r03/runs/scene-yolo26n-r03/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/finetune-20260909-r03/runs/scene-yolo26n-r03/weights/best.pt) | 5.3 |
+| [harness/artifacts/finetune-20260909-r03/runs/scene-yolo26n-r03/weights/deployment-best.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/finetune-20260909-r03/runs/scene-yolo26n-r03/weights/deployment-best.onnx) | 9.5 |
+| [harness/artifacts/finetune-20260909-r03/runs/scene-yolo26n-r03/weights/deployment-best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/finetune-20260909-r03/runs/scene-yolo26n-r03/weights/deployment-best.pt) | 13.8 |
+| [harness/artifacts/finetune-20260909-r03/runs/scene-yolo26n-r03/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/finetune-20260909-r03/runs/scene-yolo26n-r03/weights/last.pt) | 5.3 |
+| [harness/artifacts/keys-20260911-r01/runs/key-yolo26n-cpu12/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs/key-yolo26n-cpu12/weights/best.pt) | 13.3 |
+| [harness/artifacts/keys-20260911-r01/runs/key-yolo26n-cpu12/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs/key-yolo26n-cpu12/weights/last.pt) | 13.3 |
+| [harness/artifacts/keys-20260911-r01/runs-probe/key-cpu-1ep/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-probe/key-cpu-1ep/weights/best.pt) | 5.1 |
+| [harness/artifacts/keys-20260911-r01/runs-probe/key-cpu-1ep/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-probe/key-cpu-1ep/weights/last.pt) | 5.1 |
+| [harness/artifacts/keys-20260911-r01/runs-r02/key-yolo26n-cpu12/weights/best.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-r02/key-yolo26n-cpu12/weights/best.onnx) | 9.4 |
+| [harness/artifacts/keys-20260911-r01/runs-r02/key-yolo26n-cpu12/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-r02/key-yolo26n-cpu12/weights/best.pt) | 5.1 |
+| [harness/artifacts/keys-20260911-r01/runs-r02/key-yolo26n-cpu12/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-r02/key-yolo26n-cpu12/weights/last.pt) | 5.1 |
+| [harness/artifacts/keys-20260911-r01/runs-r03/key-yolo26n-cpu60/weights/best.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-r03/key-yolo26n-cpu60/weights/best.onnx) | 9.4 |
+| [harness/artifacts/keys-20260911-r01/runs-r03/key-yolo26n-cpu60/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-r03/key-yolo26n-cpu60/weights/best.pt) | 5.1 |
+| [harness/artifacts/keys-20260911-r01/runs-r03/key-yolo26n-cpu60/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-r03/key-yolo26n-cpu60/weights/last.pt) | 5.1 |
+| [harness/artifacts/keys-20260911-r01/runs-r04/key-yolo26n-mps100/weights/best.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-r04/key-yolo26n-mps100/weights/best.onnx) | 9.4 |
+| [harness/artifacts/keys-20260911-r01/runs-r04/key-yolo26n-mps100/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-r04/key-yolo26n-mps100/weights/best.pt) | 5.1 |
+| [harness/artifacts/keys-20260911-r01/runs-r04/key-yolo26n-mps100/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-r04/key-yolo26n-mps100/weights/last.onnx) | 9.4 |
+| [harness/artifacts/keys-20260911-r01/runs-r04/key-yolo26n-mps100/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/keys-20260911-r01/runs-r04/key-yolo26n-mps100/weights/last.pt) | 5.1 |
+| [harness/artifacts/laptop-20260911-r01/weights/best.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r01/weights/best.onnx) | 5.9 |
+| [harness/artifacts/laptop-20260911-r01/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r01/weights/best.pt) | 3.0 |
+| [harness/artifacts/laptop-20260911-r01/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r01/weights/last.pt) | 3.0 |
+| [harness/artifacts/laptop-20260911-r02/weights/best.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r02/weights/best.onnx) | 5.9 |
+| [harness/artifacts/laptop-20260911-r02/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r02/weights/best.pt) | 3.0 |
+| [harness/artifacts/laptop-20260911-r02/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r02/weights/last.pt) | 3.0 |
+| [harness/artifacts/laptop-20260911-r03/weights/best.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r03/weights/best.onnx) | 5.9 |
+| [harness/artifacts/laptop-20260911-r03/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r03/weights/best.pt) | 3.0 |
+| [harness/artifacts/laptop-20260911-r03/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r03/weights/last.pt) | 3.0 |
+| [harness/artifacts/laptop-20260911-r04/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r04/weights/best.pt) | 11.5 |
+| [harness/artifacts/laptop-20260911-r04/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r04/weights/last.onnx) | 5.9 |
+| [harness/artifacts/laptop-20260911-r04/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260911-r04/weights/last.pt) | 11.5 |
+| [harness/artifacts/laptop-20260912-r05-binary/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260912-r05-binary/weights/best.pt) | 11.5 |
+| [harness/artifacts/laptop-20260912-r05-binary/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260912-r05-binary/weights/last.onnx) | 5.9 |
+| [harness/artifacts/laptop-20260912-r05-binary/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260912-r05-binary/weights/last.pt) | 11.5 |
+| [harness/artifacts/laptop-20260912-r06-dense/weights/best.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260912-r06-dense/weights/best.pt) | 11.5 |
+| [harness/artifacts/laptop-20260912-r06-dense/weights/last.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260912-r06-dense/weights/last.onnx) | 5.9 |
+| [harness/artifacts/laptop-20260912-r06-dense/weights/last.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/laptop-20260912-r06-dense/weights/last.pt) | 11.5 |
+| [harness/artifacts/recognition-v2-20260907/local/yolo26m.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/recognition-v2-20260907/local/yolo26m.onnx) | 78.2 |
+| [harness/artifacts/recognition-v2-20260907/local/yolo26m.pt](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/recognition-v2-20260907/local/yolo26m.pt) | 42.2 |
+| [harness/artifacts/recognition-v2-20260907/rfdetr/models/rf-detr-nano.pth](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/recognition-v2-20260907/rfdetr/models/rf-detr-nano.pth) | 349.3 |
+| [harness/artifacts/recognition-v2-20260907/rfdetr/onnx/rfdetr-nano.onnx](/Users/fanxinhao/project/VisualAIAgent/harness/artifacts/recognition-v2-20260907/rfdetr/onnx/rfdetr-nano.onnx) | 102.8 |
+| [models/yolo26n-e2e.onnx](/Users/fanxinhao/project/VisualAIAgent/models/yolo26n-e2e.onnx) | 9.5 |
+| [models/yolo26n.pt](/Users/fanxinhao/project/VisualAIAgent/models/yolo26n.pt) | 5.3 |
