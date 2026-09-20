@@ -2,7 +2,7 @@
 
 from dataclasses import asdict, is_dataclass
 from datetime import datetime, timedelta
-from pathlib import Path
+from html import escape
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
@@ -11,8 +11,13 @@ import streamlit as st
 from visual_ai_agent.behavior_ui import behavior_panel, laptop_panel, rules_panel
 from visual_ai_agent.config import Config
 from visual_ai_agent.models import utcnow
-from visual_ai_agent.object_models import OBJECT_MODEL_PRESETS, get_object_model_preset
 from visual_ai_agent.runtime import ApplicationRuntime
+from visual_ai_agent.ui_controls import (
+    observation_preferences,
+    render_camera_settings,
+    start_observation,
+)
+from visual_ai_agent.ui_theme import brand_html, inject_theme, status_html
 
 st.set_page_config(page_title="视觉记忆 · VisualAIAgent", page_icon="◉", layout="wide")
 
@@ -82,308 +87,87 @@ except Exception as exc:
     st.error(f"本地服务启动失败（{type(exc).__name__}）。请检查配置，或关闭已运行的同目录实例。")
     st.stop()
 
-st.title("视觉记忆")
-st.caption("手机、杯子、瓶子 · 本地观察与证据 · 一个会调用工具的 Agent")
+inject_theme()
+observation_preferences(runtime)
+# A full page run has already consumed any navigation request from a fragment.
+st.session_state.pop("navigation_requested", None)
+
+PAGES = {
+    "工作台": ("home", "看见当下，记住重要时刻"),
+    "记忆": ("inventory_2", "回顾物品出现的位置与真实证据"),
+    "提醒": ("notifications", "管理关注任务与情境提醒"),
+    "行为统计": ("bar_chart", "查看有效观察区间与行为事件"),
+    "设置": ("settings", "设备、模型与调用记录"),
+}
+
+
+def navigate(page):
+    st.session_state["navigation"] = page
+    st.session_state["navigation_requested"] = True
+
 
 with st.sidebar:
-    st.subheader("观察控制")
-    camera_index = st.number_input(
-        "摄像头编号", min_value=0, max_value=20, value=runtime.config.camera_index, step=1
+    st.html(brand_html())
+    page = st.radio(
+        "页面导航",
+        list(PAGES),
+        key="navigation",
+        label_visibility="collapsed",
+        format_func=lambda name: f":material/{PAGES[name][0]}: {name}",
     )
-    speed = st.selectbox(
-        "采样档位",
-        ["标准 · 每秒一次", "省电 · 每两秒一次"],
-        index=0 if runtime.config.sample_interval == 1 else 1,
+    with st.container(key="sidebar-footer"):
+        st.caption("画面与截图保存在本机")
+        st.caption("Agent 仅接收必要文字事实")
+
+
+@st.fragment(run_every=1)
+def connection_status():
+    scene = runtime.memory.get_current_scene().data
+    status = scene.get("effective_status", "stopped")
+    tone = (
+        "accent"
+        if status == "running"
+        else ("error" if status in {"disconnected", "error"} else "muted")
     )
-    resolutions = [(640, 480), (1280, 720), (1920, 1080)]
-    configured_resolution = (runtime.config.camera_width, runtime.config.camera_height)
-    resolution = st.selectbox(
-        "采集清晰度",
-        resolutions,
-        index=resolutions.index(configured_resolution),
-        format_func=lambda value: f"{value[0]} × {value[1]}",
+    agent = "Agent 已配置" if runtime.config.agent_connected else "Agent 未连接"
+    st.html(
+        '<div class="vaa-header-status">'
+        + status_html(STATES.get(status, "当前未知"), tone)
+        + status_html(agent, "muted")
+        + "</div>"
     )
-    model_options = ["configured", *(preset.id for preset in OBJECT_MODEL_PRESETS)]
-    configured_path = runtime.config.model_path.expanduser().resolve()
-    configured_model_id = next(
-        (
-            preset.id
-            for preset in OBJECT_MODEL_PRESETS
-            if get_object_model_preset(preset.id).path == configured_path
-        ),
-        "configured",
-    )
-    model_labels = {"configured": "沿用配置文件中的模型"}
-    model_labels.update({preset.id: preset.label for preset in OBJECT_MODEL_PRESETS})
-    selected_object_model_id = st.selectbox(
-        "物品识别模型",
-        model_options,
-        index=model_options.index(configured_model_id),
-        format_func=model_labels.get,
-        help="选择后点击开始观察才会生效。切换会停止旧观察并重建模型；微调候选尚未完成独立验收。",
-    )
-    selected_object_model = (
-        get_object_model_preset(selected_object_model_id)
-        if selected_object_model_id != "configured"
-        else None
-    )
-    selected_model_path = selected_object_model.path if selected_object_model else configured_path
-    if not selected_model_path.is_file():
-        st.warning("所选物品模型文件不在本机，请先准备该模型后再开始观察。")
-    if selected_object_model and selected_object_model.experimental:
-        st.caption("所选为固定场景微调候选；用于测试，不代表质量验收已通过。")
-    st.caption(f"待启用模型：{model_labels[selected_object_model_id]}")
-    cup_scale_recheck = st.checkbox(
-        "增强杯子检测（本地复查）",
-        value=runtime.config.cup_scale_recheck,
-        help="会增加一次本地运算，仅对当前观察画面起作用；开启不保证所有杯子都能检出。",
-    )
-    silver_object_ignore = st.checkbox(
-        "忽略底部银色物体（固定机位）",
-        value=runtime.config.silver_object_ignore,
-        help=(
-            "仅用于已确认的机位、1920 × 1080 完整画面；相机移动后请关闭。"
-            "会忽略该位置的底边手机候选。"
-        ),
-    )
-    with st.expander("观察范围"):
-        configured_region = runtime.config.observation_region
-        range_mode = st.radio(
-            "范围",
-            ["完整画面", "自定义"],
-            index=1 if configured_region else 0,
-            horizontal=True,
-        )
-        initial_region = configured_region or (0.0, 0.0, 1.0, 1.0)
-        region_left = st.number_input(
-            "左边界（%）",
-            0.0,
-            99.99,
-            initial_region[0] * 100,
-            1.0,
-            format="%.2f",
-        )
-        region_top = st.number_input(
-            "上边界（%）",
-            0.0,
-            99.99,
-            initial_region[1] * 100,
-            1.0,
-            format="%.2f",
-        )
-        region_right = st.number_input(
-            "右边界（%）",
-            0.01,
-            100.0,
-            initial_region[2] * 100,
-            1.0,
-            format="%.2f",
-        )
-        region_bottom = st.number_input(
-            "下边界（%）",
-            0.01,
-            100.0,
-            initial_region[3] * 100,
-            1.0,
-            format="%.2f",
-        )
-        st.caption(
-            "只判断预览范围；物品移出范围只表示在当前画面中持续未检测到，不代表它从整个环境中消失。"
-        )
-    selected_region = (
-        (0.0, 0.0, 1.0, 1.0)
-        if range_mode == "完整画面"
-        else (
-            region_left / 100,
-            region_top / 100,
-            region_right / 100,
-            region_bottom / 100,
-        )
-    )
-    with st.expander("实验行为识别", expanded=False):
-        behavior_enabled = st.checkbox(
-            "启用在座与疑似饮水识别",
-            value=runtime.config.behavior_enabled,
-            help="使用当前固定机位的实验模型；不代表动作质量已经通过验收。",
-        )
-        posture_default = runtime.config.behavior_posture_manifest
-        drinking_default = runtime.config.behavior_drinking_manifest
-        known_root = Path("harness/artifacts/behavior-20260910-r02")
-        if (
-            posture_default is None
-            and (known_root / "posture-run/training-manifest.json").is_file()
+
+
+with st.container(key="workspace-header"):
+    title, status, controls = st.columns([2.2, 2, 1.9], vertical_alignment="center")
+    with title:
+        st.title(page)
+        st.caption(PAGES[page][1])
+    with controls:
+        start, stop = st.columns(2)
+        if start.button(
+            "开始观察",
+            type="primary",
+            width="stretch",
+            help="应用设置页中已选择的参数；若参数改变，将重新启动观察。",
         ):
-            posture_default = known_root / "posture-run/training-manifest.json"
-        if (
-            drinking_default is None
-            and (known_root / "drinking-run/training-manifest.json").is_file()
-        ):
-            drinking_default = known_root / "drinking-run/training-manifest.json"
-        posture_manifest = st.text_input("姿态模型清单", value=str(posture_default or ""))
-        drinking_manifest = st.text_input("饮水模型清单", value=str(drinking_default or ""))
-        st.caption("沿用当前固定机位；视角或取景范围变化后不能沿用旧场景的质量结论。")
-        behavior_kwargs = dict(
-            behavior_enabled=behavior_enabled,
-            behavior_posture_manifest=Path(posture_manifest) if posture_manifest.strip() else None,
-            behavior_drinking_manifest=Path(drinking_manifest)
-            if drinking_manifest.strip()
-            else None,
-        )
-    with st.expander("实验笔记本开合", expanded=False):
-        laptop_enabled = st.checkbox(
-            "启用笔记本开合识别",
-            value=runtime.config.laptop_enabled,
-            help=(
-                "只有经独立验证能确认电脑仍在画面中且清晰可见的实验模型才能加载；"
-                "当前训练模型不会自动启用。"
-            ),
-        )
-        laptop_manifest = st.text_input(
-            "笔记本能力清单",
-            value=str(runtime.config.laptop_capability_manifest or ""),
-            help="请选择完整验收后的实验能力清单，不能选择单独的开合分类训练清单。",
-        )
-        st.caption("未验收、遮挡、电脑移出画面或画面过期时一律显示未知。")
-        laptop_kwargs = dict(
-            laptop_enabled=laptop_enabled,
-            laptop_capability_manifest=(Path(laptop_manifest) if laptop_manifest.strip() else None),
-        )
-    left, right = st.columns(2)
-    if left.button("开始观察", type="primary", width="stretch"):
-        if range_mode == "自定义" and (region_left >= region_right or region_top >= region_bottom):
-            st.error("观察范围无效：左边界须小于右边界，上边界须小于下边界。")
-        else:
-            requested_interval = 1.0 if speed.startswith("标准") else 2.0
-            requested_settings = (
-                int(camera_index),
-                resolution[0],
-                resolution[1],
-                None if selected_region == (0.0, 0.0, 1.0, 1.0) else selected_region,
-                requested_interval,
-                cup_scale_recheck,
-                silver_object_ignore,
-            )
-            active_settings = runtime.diagnostics()["camera_settings"]
-            active_object_model = runtime.diagnostics().get("active_object_model")
-            object_model_changed = bool(
-                active_object_model
-                and Path(active_object_model["path"]).resolve() != selected_model_path
-            )
-            active_observation, _ = runtime.snapshot()
-            needs_reconnect = active_observation is not None and active_observation.status in {
-                "disconnected",
-                "error",
-            }
-            active_behavior = runtime.diagnostics().get("behavior_settings")
-            behavior_changed = bool(
-                active_behavior
-                and (
-                    active_behavior[0] != behavior_enabled
-                    or active_behavior[1] != behavior_kwargs["behavior_posture_manifest"]
-                    or active_behavior[2] != behavior_kwargs["behavior_drinking_manifest"]
-                )
-            )
-            active_laptop = runtime.diagnostics().get("laptop_settings")
-            laptop_changed = bool(
-                active_laptop
-                and (
-                    active_laptop[0] != laptop_enabled
-                    or active_laptop[1] != laptop_kwargs["laptop_capability_manifest"]
-                )
-            )
-            if needs_reconnect or (
-                runtime.camera_running
-                and (
-                    active_settings != requested_settings
-                    or behavior_changed
-                    or laptop_changed
-                    or object_model_changed
-                )
-            ):
-                stopped = runtime.stop_camera()
-                if not stopped.ok:
-                    show_result(stopped)
-                else:
-                    show_result(
-                        runtime.start_camera(
-                            int(camera_index),
-                            requested_interval,
-                            resolution=resolution,
-                            observation_region=selected_region,
-                            cup_scale_recheck=cup_scale_recheck,
-                            silver_object_ignore=silver_object_ignore,
-                            object_model_id=(
-                                selected_object_model_id
-                                if selected_object_model_id != "configured"
-                                else None
-                            ),
-                            **behavior_kwargs,
-                            **laptop_kwargs,
-                        )
-                    )
+            result = start_observation(runtime)
+            if result.ok:
+                st.toast("观察已开始")
             else:
-                show_result(
-                    runtime.start_camera(
-                        int(camera_index),
-                        requested_interval,
-                        resolution=resolution,
-                        observation_region=selected_region,
-                        cup_scale_recheck=cup_scale_recheck,
-                        silver_object_ignore=silver_object_ignore,
-                        object_model_id=(
-                            selected_object_model_id
-                            if selected_object_model_id != "configured"
-                            else None
-                        ),
-                        **behavior_kwargs,
-                        **laptop_kwargs,
-                    )
-                )
-    if right.button("停止观察", width="stretch"):
-        show_result(runtime.stop_camera())
-    active_object_model = runtime.diagnostics().get("active_object_model")
-    if active_object_model:
-        st.info(f"当前实际启用：{active_object_model['label']}")
-        st.caption(f"模型校验标识：{active_object_model['sha256'][:12]}")
-    else:
-        st.caption("当前实际启用：无（尚未开始或已停止观察）")
-    st.caption("启动后使用非镜像坐标。停止、断连或过期画面均表示当前未知。")
-    active_settings = runtime.diagnostics()["camera_settings"]
-    if active_settings:
-        (
-            active_camera,
-            active_width,
-            active_height,
-            active_region,
-            active_interval,
-            active_cup_recheck,
-            active_silver_ignore,
-        ) = active_settings
-        region_text = (
-            "完整画面"
-            if active_region is None
-            else "左 {:.0%}、上 {:.0%}、右 {:.0%}、下 {:.0%}".format(*active_region)
-        )
-        st.caption(
-            f"当前启用设置（请求）：摄像头 {active_camera} · "
-            f"{active_width} × {active_height} · "
-            f"{region_text} · 每 {active_interval:g} 秒采样 · "
-            f"杯子增强{'已开启' if active_cup_recheck else '未开启'} · "
-            f"银色物体忽略{'已开启' if active_silver_ignore else '未开启'}"
-        )
-        active_observation, _ = runtime.snapshot()
-        if active_observation and active_observation.width and active_observation.height:
-            st.caption(f"当前预览尺寸：{active_observation.width} × {active_observation.height}")
-    st.divider()
-    if runtime.config.agent_connected:
-        st.success("Agent 已配置")
-        st.caption("实际连接结果将在请求后显示。")
-    else:
-        st.warning("Agent 未连接")
-        st.caption(
-            "在本地 .env 配置 API 地址、模型名称和 Key 后重启应用。视觉与历史查询可独立使用。"
-        )
-    st.caption("画面与截图留在本机。Agent 仅接收必要文字事实、时间和证据编号。")
+                st.session_state["observation_error"] = result.error
+        if stop.button("停止观察", width="stretch"):
+            result = runtime.stop_camera()
+            if result.ok:
+                st.session_state.pop("observation_error", None)
+                st.toast("观察已停止")
+            else:
+                st.session_state["observation_error"] = result.error
+    with status:
+        connection_status()
+
+if st.session_state.get("observation_error"):
+    st.error(st.session_state.pop("observation_error"))
 
 
 @st.fragment(run_every=0.2)
@@ -395,7 +179,7 @@ def live_preview():
             kind = "跟踪框" if preview.tracked else "最近检测框"
             st.caption(
                 f"流畅预览 · {kind} · 识别于 {preview.detection_age_seconds:.1f} 秒前。"
-                "跟踪仅用于显示；物品事实以右侧识别结果为准。"
+                "跟踪仅用于显示，当前物品以识别结果为准。"
             )
         else:
             st.caption("流畅预览 · 当前无可靠框选；物品识别按原采样档位更新。")
@@ -406,68 +190,70 @@ def live_preview():
     elif preview.status in ("stale", "paused"):
         st.warning("预览已暂停或画面过期；当前画面不可确认。")
     else:
-        st.info("准备好摄像头和模型后，点击「开始观察」。")
+        st.html(
+            '<div class="vaa-preview-empty"><div><strong>等待开始观察</strong>'
+            "<p>连接摄像头，点击右上角「开始观察」</p></div></div>"
+        )
 
 
 @st.fragment(run_every=1)
 def overview():
     scene = runtime.memory.get_current_scene().data
     observation, _ = runtime.snapshot()
-    st.metric("观察状态", STATES.get(scene.get("effective_status"), "尚未开始"))
-    st.caption(
-        f"Agent 队列 {runtime.diagnostics()['queued_requests']} · "
-        f"自动调用日上限 {runtime.config.daily_auto_limit}"
-    )
     if runtime.last_error:
         st.error(runtime.last_error)
-    st.subheader("最新观察")
+    st.subheader("当前物品")
     raw = scene.get("observation") or {}
-    st.caption(f"观察时间：{time_label(raw.get('observed_at'))}")
     if not scene.get("current"):
-        st.write("当前状态未知")
+        st.caption("当前状态未知 · 等待有效观察")
     elif raw.get("detections"):
-        for detection in raw["detections"]:
-            st.write(
-                f"**{LABELS[detection['category']]}** · "
-                f"{REGIONS[detection['region']]} · "
-                f"置信度 {detection['confidence']:.0%}"
-            )
-        st.caption("同类多件均为候选，不代表已识别具体身份。")
-    else:
-        st.write("这次有效采样未检测到目标类别。")
-    if observation and observation.inference_ms is not None:
-        st.caption(
-            f"最近推理 {observation.inference_ms:.0f} ms · "
-            f"实际画面 {observation.width} × {observation.height}"
+        rows = "".join(
+            "<tr>"
+            f"<td>{escape(LABELS.get(d['category'], d['category']))}</td>"
+            f"<td>{escape(REGIONS.get(d['region'], d['region']))}</td>"
+            f"<td>{escape(time_label(raw.get('observed_at')))}</td>"
+            "</tr>"
+            for d in raw["detections"]
         )
-
-
-image_col, fact_col = st.columns([1.65, 1])
-with image_col:
-    live_preview()
-with fact_col:
-    overview()
-chat_tab, history_tab, watch_tab, behavior_tab, laptop_tab, rule_tab, usage_tab = st.tabs(
-    [
-        "对话",
-        "历史与证据",
-        "关注与提醒",
-        "行为与统计",
-        "笔记本开合",
-        "情境规则",
-        "调用记录",
-    ],
-    key="main-page",
-    on_change="rerun",
-)
+        st.html(
+            '<table class="vaa-object-table"><thead><tr><th>物品</th><th>位置</th>'
+            "<th>观察时间</th></tr></thead><tbody>" + rows + "</tbody></table>"
+        )
+        if len({d["category"] for d in raw["detections"]}) < len(raw["detections"]):
+            st.caption("同类多件均为候选，不代表已识别具体身份。")
+    else:
+        st.caption("这次有效采样未检测到目标类别。")
+    with st.expander("识别详情"):
+        st.caption(f"观察时间：{time_label(raw.get('observed_at'))}")
+        if scene.get("current"):
+            for detection in raw.get("detections", []):
+                st.write(
+                    f"{LABELS[detection['category']]} · {REGIONS[detection['region']]} · "
+                    f"置信度 {detection['confidence']:.0%}"
+                )
+        st.caption("同类多件均为候选；停止、断连或过期均表示当前未知。")
+        if observation and observation.inference_ms is not None:
+            st.caption(
+                f"最近推理 {observation.inference_ms:.0f} ms · "
+                f"实际画面 {observation.width} × {observation.height}"
+            )
+    model = runtime.diagnostics().get("active_object_model")
+    if model:
+        st.caption(f"实际模型：{model['label']}")
+    else:
+        st.caption("实际模型：尚未启用")
 
 
 def chat_page():
-    st.subheader("向视觉记忆提问")
-    st.caption("例如：最后在哪里看到手机？ / 如果杯子持续未检测到，请在半小时内提醒我。")
+    st.subheader("与视觉记忆对话")
+    st.caption("查询物品，回顾事件，设置提醒")
 
     @st.fragment(run_every=1 if st.session_state.get("pending_chat") else None)
     def conversation():
+        if st.session_state.pop("navigation_requested", False):
+            # A shortcut inside this fragment must rebuild the application shell,
+            # not just redraw the conversation with a changed sidebar value.
+            st.rerun(scope="app")
         pending = st.session_state.get("pending_chat")
         if pending and pending["future"].done():
             try:
@@ -480,36 +266,57 @@ def chat_page():
             st.session_state.pop("pending_chat", None)
             # Rebuild once to stop the timer after the request has completed.
             st.rerun()
-        for interaction in runtime.memory.list_chat_interactions(limit=5):
-            with st.chat_message("user"):
-                st.write(interaction["user_message"])
-            with st.chat_message("assistant"):
-                st.write(interaction["assistant_message"])
-        if pending:
-            with st.chat_message("user"):
-                st.write(pending["message"])
-            st.info("Agent 正在处理；画面仍持续刷新。")
-        if st.session_state.get("chat_error"):
-            st.error(st.session_state.pop("chat_error"))
-        last = st.session_state.get("last_agent_result")
-        if last:
-            if last.get("status") not in ("completed", "fallback_notified"):
-                st.warning(last.get("message", "请求未完成"))
-            with st.expander("本次已执行工具与用量"):
-                st.json(
-                    {
-                        key: last.get(key)
-                        for key in (
-                            "status",
-                            "request_attempts",
-                            "input_tokens",
-                            "output_tokens",
-                            "tool_calls",
-                        )
-                    }
+        interactions = runtime.memory.list_chat_interactions(limit=5)
+        with st.container(height=360, border=False, key="chat-transcript"):
+            if not interactions and not pending:
+                st.html(
+                    '<div class="vaa-chat-empty"><strong>从一个问题开始</strong>'
+                    "<p>最后在哪里看到手机？<br>杯子持续未检测到时，提醒我。</p></div>"
                 )
+            for interaction in interactions:
+                with st.chat_message("user"):
+                    st.write(interaction["user_message"])
+                with st.chat_message("assistant"):
+                    st.write(interaction["assistant_message"])
+            if pending:
+                with st.chat_message("user"):
+                    st.write(pending["message"])
+                st.info("Agent 正在处理；画面仍持续刷新。")
+            if st.session_state.get("chat_error"):
+                st.error(st.session_state.pop("chat_error"))
+            last = st.session_state.get("last_agent_result")
+            if last:
+                if last.get("status") not in ("completed", "fallback_notified"):
+                    st.warning(last.get("message", "请求未完成"))
+                with st.expander("本次已执行工具与用量"):
+                    st.json(
+                        {
+                            key: last.get(key)
+                            for key in (
+                                "status",
+                                "request_attempts",
+                                "input_tokens",
+                                "output_tokens",
+                                "tool_calls",
+                            )
+                        }
+                    )
+        if not runtime.config.agent_connected:
+            st.warning("Agent 未连接")
+            st.caption("请在设置中查看连接说明；本地观察与记忆仍可使用。")
+        shortcuts = st.columns(2)
+        shortcuts[0].button(
+            "查找物品", icon=":material/search:", on_click=navigate, args=("记忆",), width="stretch"
+        )
+        shortcuts[1].button(
+            "设置提醒",
+            icon=":material/notifications:",
+            on_click=navigate,
+            args=("提醒",),
+            width="stretch",
+        )
         text = st.chat_input(
-            "输入查询或关注请求",
+            "问问刚才发生了什么…",
             disabled=bool(pending) or not runtime.config.agent_connected,
             max_chars=8000,
         )
@@ -522,11 +329,6 @@ def chat_page():
                 st.error(str(exc))
 
     conversation()
-
-
-if chat_tab.open:
-    with chat_tab:
-        chat_page()
 
 
 def history_page():
@@ -556,11 +358,6 @@ def history_page():
             show_evidence(event.get("evidence_id"), f"object-event-{event['event_id']}")
     if events.data.get("truncated"):
         st.caption("仅展示最近 20 条；可在对话中指定更短时间范围。")
-
-
-if history_tab.open:
-    with history_tab:
-        history_page()
 
 
 def watch_page():
@@ -618,26 +415,13 @@ def watch_page():
     watch_status()
 
 
-if watch_tab.open:
-    with watch_tab:
-        watch_page()
-
-if behavior_tab.open:
-    with behavior_tab:
-        behavior_panel(runtime, show_evidence, time_label)
-
-if laptop_tab.open:
-    with laptop_tab:
-        laptop_panel(runtime, show_evidence, time_label)
-
-if rule_tab.open:
-    with rule_tab:
-        rules_panel(runtime, show_result, show_evidence, time_label)
-
-
 def usage_page():
     st.subheader("调用与限制")
     st.write("仅用户请求或相关关注事件唤醒 Agent。每次最多 3 次模型请求，自动运行每日有上限。")
+    st.caption(
+        f"Agent 队列 {runtime.diagnostics()['queued_requests']} · "
+        f"自动调用日上限 {runtime.config.daily_auto_limit}"
+    )
     st.caption("Token 为提供商实际返回的用量；未知显示为空，不把失败或未返回用量记成零。")
     today = utcnow().astimezone(ZoneInfo(runtime.config.timezone)).date()
     summary = runtime.memory.get_usage_summary(today, runtime.config.timezone)
@@ -654,6 +438,99 @@ def usage_page():
     st.json(runtime.memory.list_agent_runs(limit=50))
 
 
-if usage_tab.open:
-    with usage_tab:
-        usage_page()
+@st.fragment(run_every=5)
+def recent_activity():
+    end = utcnow()
+    items = []
+    for category, label in LABELS.items():
+        result = runtime.memory.search_events(category, end - timedelta(days=7), end, limit=3)
+        for event in result.data.get("events", []):
+            if event["kind"] == "appeared":
+                region = "、".join(REGIONS.get(value, value) for value in event["regions"])
+                message = f"{label}出现在画面{region}"
+            else:
+                message = f"画面中持续未检测到{label}"
+            if event.get("source") in {"test", "replay"}:
+                message += "（测试或回放）"
+            items.append((event["confirmed_at"], message))
+    for notice in runtime.watches.list_notifications(limit=3).data.get("notifications", []):
+        items.append((notice["created_at"], "提醒 · " + notice["message"]))
+    for notice in runtime.rules.list_notifications(limit=3).data.get("notifications", []):
+        items.append((notice["created_at"], "情境提醒 · " + notice["message"]))
+    items.sort(key=lambda item: datetime.fromisoformat(item[0]), reverse=True)
+    if not items:
+        st.caption("暂无动态。开始观察后，已确认的物品事件和提醒会出现在这里。")
+    for timestamp, message in items[:3]:
+        st.html(
+            '<div class="vaa-activity-row"><span class="vaa-activity-time">'
+            + escape(time_label(timestamp))
+            + '</span><span class="vaa-activity-text">'
+            + escape(message)
+            + "</span></div>"
+        )
+
+
+if page == "工作台":
+    with st.container(key="workspace-grid"):
+        image_col, chat_col = st.columns([1.25, 1], gap="medium")
+        with image_col, st.container(key="camera-panel"):
+            heading, badge = st.columns([3, 1])
+            heading.subheader("实时画面")
+            with badge:
+                st.html(status_html("本地处理", "muted"))
+            live_preview()
+            overview()
+        with chat_col, st.container(key="chat-panel"):
+            chat_page()
+    with st.container(key="activity-panel"):
+        heading, link = st.columns([4, 1.5])
+        heading.subheader("最近动态")
+        link.button(
+            "查看物品记忆",
+            icon=":material/arrow_forward:",
+            on_click=navigate,
+            args=("记忆",),
+            type="tertiary",
+        )
+        recent_activity()
+elif page == "记忆":
+    with st.container(key="settings-panel"):
+        history_page()
+elif page == "提醒":
+    watch_tab, rule_tab = st.tabs(
+        ["关注与提醒", "情境规则"], key="reminder-page", on_change="rerun"
+    )
+    if watch_tab.open:
+        with watch_tab, st.container(key="settings-panel"):
+            watch_page()
+    if rule_tab.open:
+        with rule_tab, st.container(key="settings-panel"):
+            rules_panel(runtime, show_result, show_evidence, time_label)
+elif page == "行为统计":
+    behavior_tab, laptop_tab = st.tabs(
+        ["行为与统计", "笔记本开合"], key="behavior-page", on_change="rerun"
+    )
+    if behavior_tab.open:
+        with behavior_tab, st.container(key="settings-panel"):
+            behavior_panel(runtime, show_evidence, time_label)
+    if laptop_tab.open:
+        with laptop_tab, st.container(key="settings-panel"):
+            laptop_panel(runtime, show_evidence, time_label)
+elif page == "设置":
+    settings_tab, usage_tab = st.tabs(
+        ["设备与模型", "调用记录"], key="settings-page", on_change="rerun"
+    )
+    if settings_tab.open:
+        with settings_tab, st.container(key="settings-panel"):
+            render_camera_settings(runtime)
+            st.divider()
+            st.subheader("Agent 连接")
+            if runtime.config.agent_connected:
+                st.info("Agent 已配置；实际连接结果将在请求后显示。")
+            else:
+                st.warning("Agent 未连接")
+                st.caption("在本地 .env 配置 API 地址、模型名称和 Key 后重启应用。")
+            st.caption("画面与截图留在本机。Agent 仅接收必要文字事实、时间和证据编号。")
+    if usage_tab.open:
+        with usage_tab, st.container(key="settings-panel"):
+            usage_page()

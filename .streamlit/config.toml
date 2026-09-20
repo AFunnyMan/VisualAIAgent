@@ -9,9 +9,13 @@ gatherUsageStats = false
 [theme]
 base = "light"
 primaryColor = "#147D73"
-backgroundColor = "#F5F7F5"
+backgroundColor = "#F5F6F4"
 secondaryBackgroundColor = "#FFFFFF"
-textColor = "#182C2A"
+textColor = "#20312E"
+baseRadius = "medium"
+buttonRadius = "medium"
+borderColor = "#DDE4E1"
+showWidgetBorder = true
 
 [runner]
 # Frequent fragments share a process with real-time vision. Keep Python's

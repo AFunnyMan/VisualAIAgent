@@ -1,22 +1,33 @@
+from concurrent.futures import Future
+from datetime import timedelta
 from pathlib import Path
 from types import MethodType
 
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from visual_ai_agent.models import SceneObservation, ToolResult, utcnow
+from visual_ai_agent.agent import AgentRunResult
+from visual_ai_agent.models import Detection, SceneObservation, ToolResult, utcnow
 
 
-def _switch_page(app, label):
-    # AppTest 1.63 doesn't expose the browser's tab-selection action. Resetting
-    # the keyed tab widget reproduces the value sent by the frontend.
-    app.session_state.reset_state_value("main-page", label)
+def _switch_page(app, label, *, tab=None):
+    app.session_state.reset_state_value("navigation", label)
+    if tab is not None:
+        tab_key = {
+            "提醒": "reminder-page",
+            "行为统计": "behavior-page",
+            "设置": "settings-page",
+        }[label]
+        app.session_state.reset_state_value(tab_key, tab)
     app.run()
 
 
-def _run_on_page(app, label):
-    app.session_state.reset_state_value("main-page", label)
-    app.run()
+def _run_on_page(app, label, *, tab=None):
+    _switch_page(app, label, tab=tab)
+
+
+def _open_settings(app):
+    _switch_page(app, "设置", tab="设备与模型")
 
 
 @pytest.fixture
@@ -51,7 +62,7 @@ def test_disconnected_page_and_no_history(app):
     assert not app.exception
     assert any("Agent 未连接" in item.value for item in app.warning)
     assert app.chat_input[0].disabled
-    _switch_page(app, "历史与证据")
+    _switch_page(app, "记忆")
     assert any("没有这个类别的历史记录" in item.value for item in app.info)
 
 
@@ -90,12 +101,12 @@ def test_historical_evidence_image_loads_only_after_explicit_checkbox(tmp_path, 
                 ),
             )
         monkeypatch.setattr(st, "image", tracked_image)
-        _switch_page(tested_app, "历史与证据")
+        _switch_page(tested_app, "记忆")
         assert not tested_app.exception
         assert image_calls == []
         checkbox = next(item for item in tested_app.checkbox if item.label == "加载本地证据图")
         checkbox.check()
-        _run_on_page(tested_app, "历史与证据")
+        _run_on_page(tested_app, "记忆")
         assert not tested_app.exception
         assert len(image_calls) == 1
         assert evidence_id in image_calls[0][1]["caption"]
@@ -107,18 +118,18 @@ def test_historical_evidence_image_loads_only_after_explicit_checkbox(tmp_path, 
 
 def test_manual_watch_create_cancel_survives_reruns(app):
     assert not app.exception
-    _switch_page(app, "关注与提醒")
+    _switch_page(app, "提醒", tab="关注与提醒")
     app.button(key="FormSubmitter:create_watch-创建关注").click()
-    _run_on_page(app, "关注与提醒")
+    _run_on_page(app, "提醒", tab="关注与提醒")
     assert not app.exception
     cancel = [button for button in app.button if button.label == "取消"]
     assert len(cancel) == 1
-    _switch_page(app, "历史与证据")
-    _switch_page(app, "关注与提醒")
+    _switch_page(app, "记忆")
+    _switch_page(app, "提醒", tab="关注与提醒")
     assert len([button for button in app.button if button.label == "取消"]) == 1
     cancel = [button for button in app.button if button.label == "取消"][0]
     cancel.click()
-    _run_on_page(app, "关注与提醒")
+    _run_on_page(app, "提醒", tab="关注与提醒")
     assert not app.exception
     assert not [button for button in app.button if button.label == "取消"]
     assert any("已取消" in item.value for item in app.markdown)
@@ -128,6 +139,195 @@ def test_missing_model_does_not_open_camera(app):
     next(button for button in app.button if button.label == "开始观察").click().run()
     assert not app.exception
     assert any("启动失败" in item.value for item in app.error)
+
+
+def test_sidebar_navigation_keeps_toolbar_global_and_settings_local(app):
+    for page in ("工作台", "记忆", "提醒", "行为统计", "设置"):
+        _switch_page(app, page)
+        labels = [button.label for button in app.button]
+        assert "开始观察" in labels
+        assert "停止观察" in labels
+        camera_inputs = [item for item in app.number_input if item.label == "摄像头编号"]
+        assert bool(camera_inputs) is (page == "设置")
+
+    _switch_page(app, "设置", tab="调用记录")
+    assert {item.label for item in app.tabs} == {"设备与模型", "调用记录"}
+    assert not [item for item in app.number_input if item.label == "摄像头编号"]
+    assert any(item.label == "今日模型请求尝试" for item in app.metric)
+
+
+def test_home_shortcuts_navigate_to_memory_and_reminders(app):
+    next(item for item in app.button if item.label == "查找物品").click().run()
+    assert app.session_state["navigation"] == "记忆"
+    assert any(item.label == "物品类别" for item in app.selectbox)
+
+    _switch_page(app, "工作台")
+    next(item for item in app.button if item.label == "设置提醒").click().run()
+    assert app.session_state["navigation"] == "提醒"
+    assert {item.label for item in app.tabs} == {"关注与提醒", "情境规则"}
+
+
+def test_unapplied_camera_choices_survive_navigation_without_camera_actions(tmp_path, monkeypatch):
+    tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
+    try:
+        _open_settings(tested_app)
+        next(item for item in tested_app.number_input if item.label == "摄像头编号").set_value(
+            3
+        ).run()
+        next(item for item in tested_app.selectbox if item.label == "采集清晰度").set_value(
+            (1280, 720)
+        ).run()
+        calls.clear()
+
+        _switch_page(tested_app, "记忆")
+        _switch_page(tested_app, "工作台")
+        _open_settings(tested_app)
+
+        assert (
+            next(item.value for item in tested_app.number_input if item.label == "摄像头编号") == 3
+        )
+        assert next(item.value for item in tested_app.selectbox if item.label == "采集清晰度") == (
+            1280,
+            720,
+        )
+        assert calls == []
+    finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()
+
+
+def test_hidden_pages_do_not_execute_preview_or_behavior_statistics(tmp_path, monkeypatch):
+    tested_app, created, _calls, st = _configured_app(tmp_path, monkeypatch)
+    runtime = created[0]
+    preview_calls = []
+    statistics_calls = []
+    original_preview = runtime.preview_snapshot
+    original_statistics = runtime.behavior.statistics
+
+    def tracked_preview():
+        preview_calls.append(True)
+        return original_preview()
+
+    def tracked_statistics(chosen_date):
+        statistics_calls.append(chosen_date)
+        return original_statistics(chosen_date)
+
+    runtime.preview_snapshot = tracked_preview
+    runtime.behavior.statistics = tracked_statistics
+    try:
+        _switch_page(tested_app, "记忆")
+        _switch_page(tested_app, "设置", tab="调用记录")
+        assert preview_calls == []
+        assert statistics_calls == []
+
+        _switch_page(tested_app, "行为统计", tab="行为与统计")
+        assert preview_calls == []
+        assert len(statistics_calls) == 1
+    finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()
+
+
+def test_workbench_does_not_fabricate_events_and_stale_detection_is_not_current(
+    tmp_path, monkeypatch
+):
+    tested_app, created, _calls, st = _configured_app(tmp_path, monkeypatch)
+    try:
+        runtime = created[0]
+        old = utcnow() - timedelta(minutes=5)
+        runtime.memory.ingest(
+            SceneObservation(
+                observed_at=old,
+                monotonic_at=0,
+                status="running",
+                fresh=True,
+                detections=[
+                    Detection(
+                        category="cell phone",
+                        confidence=0.95,
+                        bbox=(0.1, 0.1, 0.4, 0.4),
+                        region="left",
+                    )
+                ],
+                source="test",
+            ),
+            None,
+        )
+        tested_app.run()
+
+        assert any("当前状态未知" in item.value for item in tested_app.caption)
+        assert not any("95%" in item.value for item in tested_app.markdown)
+        for category in ("cell phone", "cup", "bottle"):
+            events = runtime.memory.search_events(
+                category, utcnow() - timedelta(days=1), utcnow()
+            ).data["events"]
+            assert events == []
+    finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()
+
+
+def test_pending_chat_survives_navigation_and_completes_without_resubmission(tmp_path, monkeypatch):
+    monkeypatch.setenv("VAA_API_KEY", "offline-test-key")
+    monkeypatch.setenv("VAA_API_BASE_URL", "https://offline.invalid/v1")
+    monkeypatch.setenv("VAA_AGENT_MODEL", "offline-test-model")
+    tested_app, created, _calls, st = _configured_app(tmp_path, monkeypatch)
+    future = Future()
+    submissions = []
+    runtime = created[0]
+
+    def fake_submit(message, request_id=None):
+        submissions.append((message, request_id))
+        return future
+
+    runtime.submit_user = fake_submit
+    try:
+        assert not tested_app.chat_input[0].disabled
+        tested_app.chat_input[0].set_value("手机最后在哪里？").run()
+
+        assert len(submissions) == 1
+        assert tested_app.chat_input[0].disabled
+        assert tested_app.session_state["pending_chat"]["future"] is future
+
+        _switch_page(tested_app, "记忆")
+        assert len(submissions) == 1
+        runtime.memory.append_chat_interaction(
+            "offline-request",
+            "手机最后在哪里？",
+            "最近一次记录在左侧。",
+        )
+        future.set_result(
+            AgentRunResult(
+                run_id="offline-run",
+                request_id="offline-request",
+                kind="user",
+                status="completed",
+                message="最近一次记录在左侧。",
+                request_attempts=1,
+                input_tokens=5,
+                output_tokens=6,
+                total_tokens=11,
+                usage_complete=True,
+            )
+        )
+
+        _switch_page(tested_app, "工作台")
+        assert len(submissions) == 1
+        assert "pending_chat" not in tested_app.session_state.filtered_state
+        assert not tested_app.chat_input[0].disabled
+        assert any("最近一次记录在左侧。" in item.value for item in tested_app.markdown)
+
+        tested_app.run()
+        _switch_page(tested_app, "记忆")
+        _switch_page(tested_app, "工作台")
+        assert len(submissions) == 1
+    finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()
 
 
 def _configured_app(tmp_path, monkeypatch, *, region="", fake_camera=False):
@@ -205,6 +405,7 @@ def test_fractional_configured_region_is_preserved(tmp_path, monkeypatch):
         tmp_path, monkeypatch, region="0.1234,0.2345,0.8765,0.9876"
     )
     try:
+        _open_settings(tested_app)
         assert not tested_app.exception
         values = {item.label: item.value for item in tested_app.number_input}
         assert values["左边界（%）"] == pytest.approx(12.34)
@@ -220,6 +421,7 @@ def test_fractional_configured_region_is_preserved(tmp_path, monkeypatch):
 def test_changed_camera_settings_stop_then_start_with_selected_values(tmp_path, monkeypatch):
     tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
     try:
+        _open_settings(tested_app)
         next(button for button in tested_app.button if button.label == "开始观察").click().run()
         assert not tested_app.exception
         next(item for item in tested_app.selectbox if item.label == "采集清晰度").set_value(
@@ -250,6 +452,7 @@ def test_cup_recheck_checkbox_uses_config_and_restarts_when_changed(tmp_path, mo
     monkeypatch.setenv("VAA_CUP_SCALE_RECHECK", "true")
     tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
     try:
+        _open_settings(tested_app)
         checkbox = next(
             item for item in tested_app.checkbox if item.label == "增强杯子检测（本地复查）"
         )
@@ -285,8 +488,11 @@ def _disconnect_running_camera(tested_app, runtime):
 def test_same_settings_disconnected_camera_stops_then_restarts(tmp_path, monkeypatch):
     tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
     try:
+        _open_settings(tested_app)
         _disconnect_running_camera(tested_app, created[0])
+        _switch_page(tested_app, "工作台")
         assert any("摄像头已断开" in item.value for item in tested_app.warning)
+        _open_settings(tested_app)
         selected_resolution = next(
             item.value for item in tested_app.selectbox if item.label == "采集清晰度"
         )
@@ -309,6 +515,7 @@ def test_same_settings_disconnected_camera_stops_then_restarts(tmp_path, monkeyp
 def test_disconnected_camera_stop_failure_does_not_restart(tmp_path, monkeypatch):
     tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
     try:
+        _open_settings(tested_app)
         runtime = created[0]
         _disconnect_running_camera(tested_app, runtime)
 
@@ -333,28 +540,26 @@ def test_disconnected_camera_stop_failure_does_not_restart(tmp_path, monkeypatch
 
 def test_behavior_and_rule_panels_preserve_single_runtime(app):
     assert not app.exception
-    assert any(item.label == "行为与统计" for item in app.tabs)
-    assert any(item.label == "情境规则" for item in app.tabs)
-    assert any(item.label == "笔记本开合" for item in app.tabs)
+    assert not app.tabs
     assert not [item for item in app.info if "当前行为不可确认" in item.value]
-    _switch_page(app, "行为与统计")
+    _switch_page(app, "行为统计", tab="行为与统计")
+    assert {item.label for item in app.tabs} == {"行为与统计", "笔记本开合"}
     assert any("当前行为不可确认" in item.value for item in app.info)
-    assert not next(item for item in app.checkbox if item.label == "启用在座与疑似饮水识别").value
-    _switch_page(app, "笔记本开合")
-    assert not next(item for item in app.checkbox if item.label == "启用笔记本开合识别").value
+    _switch_page(app, "行为统计", tab="笔记本开合")
     assert any("笔记本开合实验未启用" in item.value for item in app.info)
-    _switch_page(app, "情境规则")
+    _switch_page(app, "提醒", tab="情境规则")
+    assert {item.label for item in app.tabs} == {"关注与提醒", "情境规则"}
     assert any("休息提醒未启用" in item.value for item in app.info)
     app.button(key="FormSubmitter:create_context_rule-创建情境规则").click()
-    _run_on_page(app, "情境规则")
+    _run_on_page(app, "提醒", tab="情境规则")
     assert not app.exception
     assert len([button for button in app.button if button.label == "取消规则"]) == 1
-    _switch_page(app, "行为与统计")
-    _switch_page(app, "情境规则")
+    _switch_page(app, "行为统计", tab="行为与统计")
+    _switch_page(app, "提醒", tab="情境规则")
     assert not app.exception
     assert len([button for button in app.button if button.label == "取消规则"]) == 1
     next(button for button in app.button if button.label == "取消规则").click()
-    _run_on_page(app, "情境规则")
+    _run_on_page(app, "提醒", tab="情境规则")
     assert not app.exception
     assert not [button for button in app.button if button.label == "取消规则"]
 
@@ -362,6 +567,7 @@ def test_behavior_and_rule_panels_preserve_single_runtime(app):
 def test_silver_ignore_checkbox_forwards_and_displays_correct_setting(tmp_path, monkeypatch):
     tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
     try:
+        _open_settings(tested_app)
         next(item for item in tested_app.selectbox if item.label == "采集清晰度").set_value(
             (1920, 1080)
         ).run()
@@ -391,6 +597,30 @@ def test_silver_ignore_checkbox_forwards_and_displays_correct_setting(tmp_path, 
         st.cache_resource.clear()
 
 
+def test_complete_runtime_behavior_and_laptop_settings_do_not_cause_false_restart(
+    tmp_path, monkeypatch
+):
+    tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
+    try:
+        _open_settings(tested_app)
+        next(button for button in tested_app.button if button.label == "开始观察").click().run()
+        diagnostics = created[0].diagnostics()
+        assert len(diagnostics["behavior_settings"]) == 7
+        assert len(diagnostics["laptop_settings"]) == 3
+
+        calls.clear()
+        _switch_page(tested_app, "记忆")
+        _switch_page(tested_app, "设置", tab="设备与模型")
+        next(button for button in tested_app.button if button.label == "开始观察").click().run()
+
+        assert [call[0] for call in calls] == ["start"]
+        assert created[0].camera_running
+    finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()
+
+
 def test_object_model_selection_only_applies_on_start(tmp_path, monkeypatch):
     import hashlib
 
@@ -409,6 +639,7 @@ def test_object_model_selection_only_applies_on_start(tmp_path, monkeypatch):
     monkeypatch.setattr("visual_ai_agent.runtime.OBJECT_MODEL_PRESETS", (preset,))
     tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
     try:
+        _open_settings(tested_app)
 
         def start():
             next(b for b in tested_app.button if b.label == "开始观察").click().run()
