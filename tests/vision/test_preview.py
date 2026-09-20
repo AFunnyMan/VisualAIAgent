@@ -46,7 +46,7 @@ def test_tracks_display_box_across_a_translated_frame() -> None:
     assert abs(second.detection_age_seconds - 0.2) < 1e-6
     decoded = cv2.imdecode(np.frombuffer(second.jpeg, np.uint8), cv2.IMREAD_COLOR)
     assert decoded.shape[1] == 160
-    assert decoded[82, 97, 1] > 120
+    assert decoded[82, 97].max() > 120
 
 
 def test_drops_box_when_visual_features_disappear() -> None:
@@ -137,4 +137,4 @@ def test_downscales_large_frame_and_detection_coordinates_to_working_size() -> N
     decoded = cv2.imdecode(np.frombuffer(result.jpeg, np.uint8), cv2.IMREAD_COLOR)
     assert decoded.shape[:2] == (540, 960)
     # The source x1=480 becomes x=240 in the 960-wide preview.
-    assert decoded[135, 240, 1] > 120
+    assert decoded[135, 240].max() > 120

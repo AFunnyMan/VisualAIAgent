@@ -11,9 +11,10 @@ from dataclasses import dataclass
 
 import cv2
 import numpy as np
+import supervision as sv
 from numpy.typing import NDArray
 
-from visual_ai_agent.models import SceneObservation
+from visual_ai_agent.models import CATEGORIES, SceneObservation
 
 Frame = NDArray[np.uint8]
 
@@ -34,6 +35,7 @@ class _DisplayBox:
     bbox: NDArray[np.float32]
     points: NDArray[np.float32]
     tracked: bool = False
+    region: str = ""
 
 
 class PreviewRenderer:
@@ -189,6 +191,7 @@ class PreviewRenderer:
                     confidence=detection.confidence,
                     bbox=np.array((x1, y1, x2, y2), dtype=np.float32),
                     points=points.astype(np.float32),
+                    region=detection.region,
                 )
             )
         return boxes
@@ -251,27 +254,23 @@ class PreviewRenderer:
             if moved[2] - moved[0] < 3 or moved[3] - moved[1] < 3:
                 continue
             tracked.append(
-                _DisplayBox(box.category, box.confidence, moved, new.reshape(-1, 1, 2), True)
+                _DisplayBox(
+                    box.category, box.confidence, moved, new.reshape(-1, 1, 2), True, box.region
+                )
             )
         return tracked
 
     def _draw(self, frame: Frame, detection_age: float | None) -> Frame:
+        # Match the original detector preview: category colors, solid label
+        # backgrounds and contrasting text. Tracking age stays in the UI caption.
         output = frame.copy()
-        for box in self._boxes:
-            x1, y1, x2, y2 = (int(round(value)) for value in box.bbox)
-            color = (50, 210, 80)
-            cv2.rectangle(output, (x1, y1), (x2, y2), color, 2)
-            age = 0.0 if detection_age is None else detection_age
-            source = "tracked" if box.tracked else "recent detection"
-            label = f"{box.category} {box.confidence:.0%} | {source} {age:.1f}s"
-            cv2.putText(
-                output,
-                label,
-                (x1, max(18, y1 - 7)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.52,
-                color,
-                2,
-                cv2.LINE_AA,
-            )
-        return output
+        if not self._boxes:
+            return output
+        detections = sv.Detections(
+            xyxy=np.asarray([box.bbox for box in self._boxes], dtype=np.float32),
+            confidence=np.asarray([box.confidence for box in self._boxes], dtype=np.float32),
+            class_id=np.asarray([CATEGORIES.index(box.category) for box in self._boxes]),
+        )
+        labels = [f"{box.category} {box.confidence:.2f} ({box.region})" for box in self._boxes]
+        output = sv.BoxAnnotator().annotate(scene=output, detections=detections)
+        return sv.LabelAnnotator().annotate(scene=output, detections=detections, labels=labels)
