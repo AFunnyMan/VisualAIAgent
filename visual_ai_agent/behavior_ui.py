@@ -56,11 +56,18 @@ def behavior_panel(runtime, show_evidence, time_label):
             "当前疑似饮水", "疑似饮水" if drinking else ("未确认" if drinking is False else "未知")
         )
         if not current.get("current"):
-            st.info("当前行为不可确认。启用实验行为模型并开始观察后，才会累计有效区间。")
+            if diagnostics.get("behavior_running"):
+                st.info("行为识别正在运行，但最新结果尚未确认或已过期；当前暂不累计有效时长。")
+            else:
+                st.info("当前行为不可确认。启用实验行为模型并开始观察后，才会累计有效区间。")
         observation = current.get("observation") or {}
         if observation.get("error"):
             st.caption(f"观察说明：{observation['error']}")
         st.caption(f"最近行为观察：{time_label(observation.get('observed_at'))}")
+
+    @st.fragment(run_every=5)
+    def history():
+        st.caption("累计统计与事件每 5 秒更新；当前姿态单独更新。")
         stats = runtime.behavior.statistics(chosen_date)
         if not stats.ok:
             st.error(stats.error)
@@ -90,6 +97,7 @@ def behavior_panel(runtime, show_evidence, time_label):
             st.caption("暂无确认行为事件。")
 
     contents()
+    history()
 
 
 def laptop_panel(runtime, show_evidence, time_label):

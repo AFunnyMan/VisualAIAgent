@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 
 from visual_ai_agent.context_rules import ContextRuleService
@@ -285,6 +286,51 @@ def test_seated_duration_unknown_resets_continuity_but_left_seat_rearms(tmp_path
     clock.value += timedelta(seconds=0.25)
     assert service.process_observation({**base_observation, "timestamp": clock.value}) == []
     assert rule["enabled"] == 1
+
+
+def test_observation_without_active_duration_rule_skips_write_transaction(tmp_path):
+    clock = Clock()
+    store = MemoryStore(tmp_path, clock=clock)
+    service = ContextRuleService(store, timezone="UTC", clock=clock)
+    service.create_rule("sat_down", request_id="event-only", message="坐下")
+
+    def reject_transaction(*, immediate=False):
+        raise AssertionError(f"unexpected write transaction (immediate={immediate})")
+
+    store._transaction = reject_transaction
+    assert (
+        service.process_observation({"timestamp": BASE, "posture": "seated", "fresh": True}) == []
+    )
+
+
+def test_duration_rule_is_rechecked_after_read_probe(tmp_path):
+    clock = Clock()
+    store = MemoryStore(tmp_path, clock=clock)
+    service = ContextRuleService(store, timezone="UTC", clock=clock)
+    rule = service.create_rule(
+        "seated_duration", request_id="concurrent-cancel", message="休息", seated_minutes=1
+    ).data["rule"]
+    original_transaction = store._transaction
+    cancelled = False
+
+    @contextmanager
+    def cancel_before_transaction(*, immediate=False):
+        nonlocal cancelled
+        if immediate and not cancelled:
+            cancelled = True
+            with original_transaction(immediate=True) as connection:
+                connection.execute(
+                    "UPDATE context_rules SET enabled=0 WHERE rule_id=?", (rule["rule_id"],)
+                )
+        with original_transaction(immediate=immediate) as connection:
+            yield connection
+
+    store._transaction = cancel_before_transaction
+    assert (
+        service.process_observation({"timestamp": BASE, "posture": "seated", "fresh": True}) == []
+    )
+    with store._read_connection() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM context_rule_state").fetchone()[0] == 0
 
 
 def test_notification_and_recovery_are_idempotent(tmp_path):

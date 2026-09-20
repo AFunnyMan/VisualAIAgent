@@ -574,6 +574,21 @@ class ContextRuleService:
             separators=(",", ":"),
         )
         jobs = []
+        # Most installations have no seated-duration rule. Avoid taking a write
+        # reservation for every camera observation in that common case. A rule
+        # created concurrently after this read is ordered after this observation;
+        # active rules found here are re-read in the write transaction below so
+        # a concurrent update or cancellation cannot advance stale rule state.
+        with self.store._read_connection() as connection:
+            has_duration_rule = connection.execute(
+                """SELECT 1 FROM context_rules r
+                   JOIN context_rule_versions v
+                     ON v.rule_id=r.rule_id AND v.version=r.version
+                   WHERE r.enabled=1 AND r.status='active'
+                     AND v.trigger='seated_duration' LIMIT 1"""
+            ).fetchone()
+        if has_duration_rule is None:
+            return jobs
         with self.store._transaction(immediate=True) as connection:
             rules = connection.execute(
                 """SELECT r.enabled,r.status,r.version,v.* FROM context_rules r
