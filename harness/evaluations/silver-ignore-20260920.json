@@ -1,0 +1,547 @@
+{
+  "scope": "Cached real ONNX detections through actual SilverObjectIgnoreDetector and MemoryStore; dummy frame supplies dimensions only; no new inference or image evidence",
+  "samples_per_model": 401,
+  "videos": {
+    "18-31-52": {
+      "r03": {
+        "removed_boxes": 0,
+        "events": [],
+        "invalid_tail_events": 0
+      },
+      "r04": {
+        "removed_boxes": 12,
+        "events": [],
+        "invalid_tail_events": 0
+      },
+      "r05": {
+        "removed_boxes": 3,
+        "events": [],
+        "invalid_tail_events": 0
+      }
+    },
+    "18-33-50": {
+      "r03": {
+        "removed_boxes": 6,
+        "events": [
+          {
+            "seconds": 8.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 40.0,
+            "category": "cup",
+            "kind": "missing"
+          }
+        ],
+        "invalid_tail_events": 0
+      },
+      "r04": {
+        "removed_boxes": 13,
+        "events": [
+          {
+            "seconds": 7.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      },
+      "r05": {
+        "removed_boxes": 14,
+        "events": [
+          {
+            "seconds": 7.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      }
+    },
+    "18-34-32": {
+      "r03": {
+        "removed_boxes": 25,
+        "events": [
+          {
+            "seconds": 5.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      },
+      "r04": {
+        "removed_boxes": 28,
+        "events": [
+          {
+            "seconds": 5.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      },
+      "r05": {
+        "removed_boxes": 29,
+        "events": [
+          {
+            "seconds": 5.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      }
+    },
+    "18-35-06": {
+      "r03": {
+        "removed_boxes": 18,
+        "events": [
+          {
+            "seconds": 4.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 8.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      },
+      "r04": {
+        "removed_boxes": 16,
+        "events": [
+          {
+            "seconds": 4.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 8.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      },
+      "r05": {
+        "removed_boxes": 19,
+        "events": [
+          {
+            "seconds": 4.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 8.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      }
+    },
+    "18-49-25": {
+      "r03": {
+        "removed_boxes": 39,
+        "events": [
+          {
+            "seconds": 2.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 18.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 27.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 40.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 50.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 67.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 75.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 91.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 96.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      },
+      "r04": {
+        "removed_boxes": 68,
+        "events": [
+          {
+            "seconds": 2.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 18.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 27.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 40.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 50.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 67.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 75.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 91.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 96.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      },
+      "r05": {
+        "removed_boxes": 72,
+        "events": [
+          {
+            "seconds": 2.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 18.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 27.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 40.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 50.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 67.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 75.0,
+            "category": "cup",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 91.0,
+            "category": "cup",
+            "kind": "missing"
+          },
+          {
+            "seconds": 96.0,
+            "category": "cup",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      }
+    },
+    "18-51-14": {
+      "r03": {
+        "removed_boxes": 79,
+        "events": [
+          {
+            "seconds": 6.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 23.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "seconds": 33.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 52.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "seconds": 67.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 102.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "seconds": 131.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      },
+      "r04": {
+        "removed_boxes": 116,
+        "events": [
+          {
+            "seconds": 6.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 23.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "seconds": 33.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 52.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "seconds": 66.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 103.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "seconds": 131.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      },
+      "r05": {
+        "removed_boxes": 115,
+        "events": [
+          {
+            "seconds": 6.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 23.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "seconds": 33.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 52.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "seconds": 66.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          },
+          {
+            "seconds": 102.0,
+            "category": "cell phone",
+            "kind": "missing"
+          },
+          {
+            "seconds": 131.0,
+            "category": "cell phone",
+            "kind": "appeared"
+          }
+        ],
+        "invalid_tail_events": 0
+      }
+    }
+  },
+  "fresh_inference_checks": [
+    {
+      "model": "r03",
+      "video": "18-31-52",
+      "second": 16,
+      "identical_to_cached_filter": true,
+      "classes": []
+    },
+    {
+      "model": "r03",
+      "video": "18-49-25",
+      "second": 26,
+      "identical_to_cached_filter": true,
+      "classes": [
+        "cup"
+      ]
+    },
+    {
+      "model": "r03",
+      "video": "18-51-14",
+      "second": 12,
+      "identical_to_cached_filter": true,
+      "classes": []
+    },
+    {
+      "model": "r03",
+      "video": "18-51-14",
+      "second": 54,
+      "identical_to_cached_filter": true,
+      "classes": []
+    },
+    {
+      "model": "r04",
+      "video": "18-31-52",
+      "second": 16,
+      "identical_to_cached_filter": true,
+      "classes": []
+    },
+    {
+      "model": "r04",
+      "video": "18-49-25",
+      "second": 26,
+      "identical_to_cached_filter": true,
+      "classes": [
+        "cup"
+      ]
+    },
+    {
+      "model": "r04",
+      "video": "18-51-14",
+      "second": 12,
+      "identical_to_cached_filter": true,
+      "classes": [
+        "cell phone"
+      ]
+    },
+    {
+      "model": "r04",
+      "video": "18-51-14",
+      "second": 54,
+      "identical_to_cached_filter": true,
+      "classes": []
+    },
+    {
+      "model": "r05",
+      "video": "18-31-52",
+      "second": 16,
+      "identical_to_cached_filter": true,
+      "classes": []
+    },
+    {
+      "model": "r05",
+      "video": "18-49-25",
+      "second": 26,
+      "identical_to_cached_filter": true,
+      "classes": [
+        "cup"
+      ]
+    },
+    {
+      "model": "r05",
+      "video": "18-51-14",
+      "second": 12,
+      "identical_to_cached_filter": true,
+      "classes": [
+        "cell phone"
+      ]
+    },
+    {
+      "model": "r05",
+      "video": "18-51-14",
+      "second": 54,
+      "identical_to_cached_filter": true,
+      "classes": []
+    }
+  ],
+  "policy": {
+    "enabled_by_default": false,
+    "resolution": [
+      1920,
+      1080
+    ],
+    "category": "cell phone",
+    "box_containment": [
+      720,
+      960,
+      1180,
+      1080
+    ],
+    "center_x": [
+      740,
+      1040
+    ],
+    "bottom_min_y": 1078,
+    "scope": "Fixed user-exempt object location; not all borders or all silver objects; not identity recognition"
+  },
+  "production_weights_changed": false,
+  "independent_acceptance": false,
+  "truth_correction": "Original stable phone interval 6..18 used timestamp-seek overview; sequential replay frame1080 (18s nominal) is already empty and frame1020 (17s) is hand-occluded. Preserve old counts; do not claim 31 stable normal positives. Event windows and restored second missing unchanged."
+}

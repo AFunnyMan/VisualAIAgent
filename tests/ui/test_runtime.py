@@ -379,7 +379,8 @@ def test_cup_recheck_wraps_reused_detector_and_participates_in_settings(tmp_path
     try:
         started = runtime.start_camera()
         assert started.ok
-        assert started.data["settings"][-1] is True
+        assert started.data["settings"][5] is True
+        assert started.data["settings"][6] is False
         assert workers[-1].detector is wrappers[-1]
         assert runtime.start_camera().data["status"] == "already_running"
         assert len(wrappers) == 1
@@ -392,6 +393,97 @@ def test_cup_recheck_wraps_reused_detector_and_participates_in_settings(tmp_path
         assert workers[-1].detector is base_detector
         assert len(wrappers) == 1
         assert runtime._detector is base_detector
+    finally:
+        runtime.close()
+
+
+def test_silver_ignore_requires_fixed_full_hd_view_and_wraps_cup_detector(tmp_path, monkeypatch):
+    import visual_ai_agent.runtime as module
+
+    base_detector = object()
+    cup_wrappers = []
+    silver_wrappers = []
+    workers = []
+
+    class FakeCupWrapper:
+        def __init__(self, detector):
+            assert detector is base_detector
+            cup_wrappers.append(self)
+
+    class FakeSilverWrapper:
+        def __init__(self, detector):
+            assert detector is cup_wrappers[-1]
+            silver_wrappers.append(self)
+
+    class FakeWorker:
+        running = False
+
+        def __init__(self, detector, *_args, **_kwargs):
+            self.detector = detector
+            workers.append(self)
+
+        def start(self):
+            self.running = True
+
+        def stop(self):
+            self.running = False
+
+        def snapshot(self):
+            return None, None
+
+    monkeypatch.setattr(module, "CameraSource", lambda **_kwargs: object())
+    monkeypatch.setattr(module, "YoloOnnxDetector", lambda *_args, **_kwargs: base_detector)
+    monkeypatch.setattr(module, "CupScaleRecheckDetector", FakeCupWrapper)
+    monkeypatch.setattr(module, "SilverObjectIgnoreDetector", FakeSilverWrapper)
+    monkeypatch.setattr(module, "VisionWorker", FakeWorker)
+    runtime = ApplicationRuntime(
+        Config(
+            data_dir=tmp_path,
+            camera_width=1920,
+            camera_height=1080,
+            cup_scale_recheck=True,
+        )
+    )
+    baseline_resets = []
+    monkeypatch.setattr(
+        runtime.memory, "reset_event_baseline", lambda: baseline_resets.append(True)
+    )
+    try:
+        assert runtime.start_camera(silver_object_ignore=True).ok
+        assert workers[-1].detector is silver_wrappers[-1]
+        assert runtime.start_camera(silver_object_ignore=True).data["status"] == "already_running"
+
+        changed = runtime.start_camera(silver_object_ignore=False)
+        assert not changed.ok
+        assert "先停止" in changed.error
+        assert runtime.stop_camera().ok
+        assert runtime.start_camera(silver_object_ignore=False).ok
+        assert workers[-1].detector is cup_wrappers[-1]
+        assert baseline_resets == [True]
+    finally:
+        runtime.close()
+
+
+@pytest.mark.parametrize(
+    ("resolution", "observation_region"),
+    [((1280, 720), None), ((1920, 1080), (0.0, 0.0, 0.9, 1.0))],
+)
+def test_silver_ignore_rejects_wrong_resolution_or_cropped_view(
+    tmp_path, monkeypatch, resolution, observation_region
+):
+    import visual_ai_agent.runtime as module
+
+    monkeypatch.setattr(module, "YoloOnnxDetector", lambda *_args, **_kwargs: object())
+    runtime = ApplicationRuntime(Config(data_dir=tmp_path))
+    try:
+        result = runtime.start_camera(
+            resolution=resolution,
+            observation_region=observation_region,
+            silver_object_ignore=True,
+        )
+        assert not result.ok
+        assert "1920x1080 全画面机位" in result.error
+        assert runtime._vision is None
     finally:
         runtime.close()
 

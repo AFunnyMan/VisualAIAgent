@@ -36,6 +36,7 @@ from visual_ai_agent.vision import (
     CameraSource,
     CupScaleRecheckDetector,
     SharedCamera,
+    SilverObjectIgnoreDetector,
     VisionWorker,
     YoloOnnxDetector,
 )
@@ -58,10 +59,10 @@ class ApplicationRuntime:
         self._shared_camera = None
         self._detector = None
         self._active_camera_settings: (
-            tuple[int, int, int, tuple[float, float, float, float] | None, float, bool] | None
+            tuple[int, int, int, tuple[float, float, float, float] | None, float, bool, bool] | None
         ) = None
         self._last_view_key: (
-            tuple[int, int, int, tuple[float, float, float, float] | None, bool] | None
+            tuple[int, int, int, tuple[float, float, float, float] | None, bool, bool] | None
         ) = None
         self._active_behavior_settings = None
         self._active_laptop_settings = None
@@ -252,6 +253,7 @@ class ApplicationRuntime:
         resolution: tuple[int, int] | None = None,
         observation_region: tuple[float, float, float, float] | None = None,
         cup_scale_recheck: bool | None = None,
+        silver_object_ignore: bool | None = None,
         behavior_enabled: bool | None = None,
         behavior_posture_manifest=None,
         behavior_drinking_manifest=None,
@@ -265,6 +267,7 @@ class ApplicationRuntime:
                 resolution,
                 observation_region,
                 cup_scale_recheck,
+                silver_object_ignore,
                 behavior_enabled,
                 behavior_posture_manifest,
                 behavior_drinking_manifest,
@@ -279,6 +282,7 @@ class ApplicationRuntime:
         resolution,
         observation_region,
         cup_scale_recheck,
+        silver_object_ignore,
         behavior_enabled,
         behavior_posture_manifest,
         behavior_drinking_manifest,
@@ -315,6 +319,11 @@ class ApplicationRuntime:
                         if cup_scale_recheck is None
                         else cup_scale_recheck
                     ),
+                    silver_object_ignore=(
+                        self.config.silver_object_ignore
+                        if silver_object_ignore is None
+                        else silver_object_ignore
+                    ),
                     behavior_enabled=(
                         self.config.behavior_enabled
                         if behavior_enabled is None
@@ -346,6 +355,7 @@ class ApplicationRuntime:
                     config.observation_region,
                     config.sample_interval,
                     config.cup_scale_recheck,
+                    config.silver_object_ignore,
                 )
                 behavior_settings = (
                     config.behavior_enabled,
@@ -377,6 +387,17 @@ class ApplicationRuntime:
                             error="观察设置已更改，请先停止观察，再重新开始。",
                         )
                     return ToolResult(ok=False, error="上一次摄像头工作线程尚未完成停止清理。")
+                if config.silver_object_ignore and (
+                    config.observation_region is not None
+                    or (config.camera_width, config.camera_height) != (1920, 1080)
+                ):
+                    return ToolResult(
+                        ok=False,
+                        error=(
+                            "银白物体忽略仅适用于固定的 1920x1080 全画面机位；"
+                            "请关闭裁剪并使用该分辨率。"
+                        ),
+                    )
                 if self._detector is None:
                     self._detector = YoloOnnxDetector(
                         config.model_path,
@@ -384,7 +405,7 @@ class ApplicationRuntime:
                         expected_sha256=config.model_sha256 or None,
                     )
                 self.memory.set_max_gap_seconds(config.sample_interval * 2.5)
-                view_key = (*settings[:4], settings[5])
+                view_key = (*settings[:4], settings[5], settings[6])
                 if self._last_view_key is not None and view_key != self._last_view_key:
                     self.memory.reset_event_baseline()
                 source = CameraSource(
@@ -405,6 +426,8 @@ class ApplicationRuntime:
                     if config.cup_scale_recheck
                     else self._detector
                 )
+                if config.silver_object_ignore:
+                    active_detector = SilverObjectIgnoreDetector(active_detector)
                 self._vision = VisionWorker(
                     active_detector,
                     vision_source,

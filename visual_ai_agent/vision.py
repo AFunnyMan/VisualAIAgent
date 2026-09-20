@@ -751,6 +751,37 @@ class CupScaleRecheckDetector:
         return sorted([*primary, *cups], key=lambda item: item.confidence, reverse=True)
 
 
+class SilverObjectIgnoreDetector:
+    """Ignore phone candidates on the user-exempt silver corner in one fixed view.
+
+    This is a spatial exclusion, not object identity or a general border filter.
+    It is valid only for the uncropped 1920x1080 view reviewed on 2026-09-20.
+    A camera move requires disabling/recalibrating the exclusion.
+    """
+
+    def __init__(self, detector: Detector) -> None:
+        self.detector = detector
+
+    def detect(self, frame_bgr: Frame) -> list[Detection]:
+        detections = self.detector.detect(frame_bgr)
+        if frame_bgr.shape[:2] != (1080, 1920):
+            return detections
+        retained = []
+        for detection in detections:
+            x1, y1, x2, y2 = detection.bbox
+            center_x = (x1 + x2) / 2
+            on_silver_corner = (
+                detection.category == "cell phone"
+                and 720 <= x1 < x2 <= 1180
+                and 960 <= y1 < y2 <= 1080
+                and 740 <= center_x <= 1040
+                and y2 >= 1078
+            )
+            if not on_silver_corner:
+                retained.append(detection)
+        return retained
+
+
 def annotate_frame(frame: Frame, detections: list[Detection]) -> Frame:
     """Draw local detections with Supervision, preserving all same-class candidates."""
     if not detections:

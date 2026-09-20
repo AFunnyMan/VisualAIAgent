@@ -270,3 +270,35 @@ def test_behavior_and_rule_panels_preserve_single_runtime(app):
     next(button for button in app.button if button.label == "取消规则").click().run()
     assert not app.exception
     assert not [button for button in app.button if button.label == "取消规则"]
+
+
+def test_silver_ignore_checkbox_forwards_and_displays_correct_setting(tmp_path, monkeypatch):
+    tested_app, created, calls, st = _configured_app(tmp_path, monkeypatch, fake_camera=True)
+    try:
+        next(item for item in tested_app.selectbox if item.label == "采集清晰度").set_value(
+            (1920, 1080)
+        ).run()
+        next(
+            item for item in tested_app.checkbox if item.label == "忽略底部银色物体（固定机位）"
+        ).check().run()
+        next(button for button in tested_app.button if button.label == "开始观察").click().run()
+        assert not tested_app.exception
+        assert calls[-1][2]["silver_object_ignore"] is True
+        assert calls[-1][2]["cup_scale_recheck"] is False
+        assert any(
+            "杯子增强未开启 · 银色物体忽略已开启" in item.value for item in tested_app.caption
+        )
+        calls.clear()
+        next(button for button in tested_app.button if button.label == "开始观察").click().run()
+        assert [call[0] for call in calls] == ["start"]
+        next(
+            item for item in tested_app.checkbox if item.label == "忽略底部银色物体（固定机位）"
+        ).uncheck().run()
+        calls.clear()
+        next(button for button in tested_app.button if button.label == "开始观察").click().run()
+        assert [call[0] for call in calls] == ["stop", "start"]
+        assert calls[-1][2]["silver_object_ignore"] is False
+    finally:
+        for instance in created:
+            instance.close()
+        st.cache_resource.clear()

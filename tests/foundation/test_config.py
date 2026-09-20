@@ -82,6 +82,17 @@ def test_environment_loads_strict_cup_scale_recheck(monkeypatch):
         Config.from_env(dotenv_path=None)
 
 
+def test_silver_object_ignore_is_off_by_default_and_env_is_strict(monkeypatch):
+    assert Config().silver_object_ignore is False
+    with pytest.raises(ValueError, match="silver_object_ignore"):
+        Config(silver_object_ignore=1)  # type: ignore[arg-type]
+    monkeypatch.setenv("VAA_SILVER_OBJECT_IGNORE", "TRUE")
+    assert Config.from_env(dotenv_path=None).silver_object_ignore is True
+    monkeypatch.setenv("VAA_SILVER_OBJECT_IGNORE", "1")
+    with pytest.raises(ValueError, match="VAA_SILVER_OBJECT_IGNORE"):
+        Config.from_env(dotenv_path=None)
+
+
 def test_laptop_experiment_is_off_by_default_and_uses_only_explicit_capability(monkeypatch):
     assert Config().laptop_enabled is False
     assert Config().laptop_capability_manifest is None

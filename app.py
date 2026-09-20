@@ -96,6 +96,14 @@ with st.sidebar:
         value=runtime.config.cup_scale_recheck,
         help="会增加一次本地运算，仅对当前观察画面起作用；开启不保证所有杯子都能检出。",
     )
+    silver_object_ignore = st.checkbox(
+        "忽略底部银色物体（固定机位）",
+        value=runtime.config.silver_object_ignore,
+        help=(
+            "仅用于已确认的机位、1920 × 1080 完整画面；相机移动后请关闭。"
+            "会忽略该位置的底边手机候选。"
+        ),
+    )
     with st.expander("观察范围"):
         configured_region = runtime.config.observation_region
         range_mode = st.radio(
@@ -211,6 +219,7 @@ with st.sidebar:
                 None if selected_region == (0.0, 0.0, 1.0, 1.0) else selected_region,
                 requested_interval,
                 cup_scale_recheck,
+                silver_object_ignore,
             )
             active_settings = runtime.diagnostics()["camera_settings"]
             active_observation, _ = runtime.snapshot()
@@ -250,6 +259,7 @@ with st.sidebar:
                             resolution=resolution,
                             observation_region=selected_region,
                             cup_scale_recheck=cup_scale_recheck,
+                            silver_object_ignore=silver_object_ignore,
                             **behavior_kwargs,
                             **laptop_kwargs,
                         )
@@ -262,6 +272,7 @@ with st.sidebar:
                         resolution=resolution,
                         observation_region=selected_region,
                         cup_scale_recheck=cup_scale_recheck,
+                        silver_object_ignore=silver_object_ignore,
                         **behavior_kwargs,
                         **laptop_kwargs,
                     )
@@ -278,6 +289,7 @@ with st.sidebar:
             active_region,
             active_interval,
             active_cup_recheck,
+            active_silver_ignore,
         ) = active_settings
         region_text = (
             "完整画面"
@@ -288,7 +300,8 @@ with st.sidebar:
             f"当前启用设置（请求）：摄像头 {active_camera} · "
             f"{active_width} × {active_height} · "
             f"{region_text} · 每 {active_interval:g} 秒采样 · "
-            f"杯子增强{'已开启' if active_cup_recheck else '未开启'}"
+            f"杯子增强{'已开启' if active_cup_recheck else '未开启'} · "
+            f"银色物体忽略{'已开启' if active_silver_ignore else '未开启'}"
         )
         active_observation, _ = runtime.snapshot()
         if active_observation and active_observation.width and active_observation.height:

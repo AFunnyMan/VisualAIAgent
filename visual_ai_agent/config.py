@@ -41,6 +41,7 @@ class Config:
     camera_height: int = 480
     observation_region: tuple[float, float, float, float] | None = None
     cup_scale_recheck: bool = False
+    silver_object_ignore: bool = False
     behavior_enabled: bool = False
     behavior_posture_manifest: Path | None = None
     behavior_drinking_manifest: Path | None = None
@@ -56,6 +57,8 @@ class Config:
         ZoneInfo(self.timezone)
         if not isinstance(self.cup_scale_recheck, bool):
             raise ValueError("cup_scale_recheck must be a boolean")
+        if not isinstance(self.silver_object_ignore, bool):
+            raise ValueError("silver_object_ignore must be a boolean")
         if not isinstance(self.behavior_enabled, bool):
             raise ValueError("behavior_enabled must be a boolean")
         if not isinstance(self.laptop_enabled, bool):
@@ -149,6 +152,7 @@ class Config:
             camera_height=int(os.getenv("VAA_CAMERA_HEIGHT", "480")),
             observation_region=observation_region,  # type: ignore[arg-type]
             cup_scale_recheck=_strict_bool_env("VAA_CUP_SCALE_RECHECK", False),
+            silver_object_ignore=_strict_bool_env("VAA_SILVER_OBJECT_IGNORE", False),
             behavior_enabled=_strict_bool_env("VAA_BEHAVIOR_ENABLED", False),
             behavior_posture_manifest=(
                 Path(value)
