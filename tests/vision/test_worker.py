@@ -484,3 +484,36 @@ def test_worker_reports_source_failure_as_nonfresh() -> None:
     assert error.fresh is False
     assert error.detections == []
     assert error.error == "synthetic open failure"
+
+
+def test_preview_uses_new_frames_without_extra_detection_or_events():
+    source = ContinuousSource()
+    detector = DetectingDetector()
+    observations = []
+    ready = threading.Event()
+
+    def callback(observation, _jpeg):
+        observations.append(observation)
+        if observation.fresh:
+            ready.set()
+
+    worker = VisionWorker(detector, source, callback, inference_interval=10)
+    worker.start()
+    try:
+        assert ready.wait(2)
+        first = worker.preview_snapshot()
+        count = len(observations)
+        assert first.jpeg
+        assert worker.preview_snapshot() is first
+        time.sleep(0.22)
+        second = worker.preview_snapshot()
+        assert second.jpeg and second.jpeg != first.jpeg
+        assert detector.calls == 1
+        assert len(observations) == count
+        source.status = "disconnected"
+        disconnected = worker.preview_snapshot()
+        assert disconnected.jpeg is None
+        assert disconnected.status == "disconnected"
+    finally:
+        worker.stop()
+    assert worker.preview_snapshot().jpeg is None

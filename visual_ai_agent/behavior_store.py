@@ -350,27 +350,65 @@ class BehaviorStore:
         coverage_start: datetime | None = None
         coverage_end: datetime | None = None
         with self.store._read_connection() as connection:
-            rows = connection.execute(
-                """SELECT * FROM behavior_intervals
-                   WHERE ended_at > ? AND started_at < ? ORDER BY started_at""",
-                (_iso(start_utc), _iso(end_utc)),
-            ).fetchall()
+            # Timestamps are stored in canonical UTC ISO form.  Convert them to
+            # integer microseconds so SQLite can clip and aggregate the whole day
+            # without materialising every historical interval in Python.  Avoid
+            # julianday here: its floating-point representation loses precision
+            # at sub-millisecond interval boundaries.
+            start_iso, end_iso = _iso(start_utc), _iso(end_utc)
+            start_us = int(start_utc.timestamp() * 1_000_000)
+            end_us = int(end_utc.timestamp() * 1_000_000)
+            aggregate = connection.execute(
+                """WITH interval_us AS (
+                       SELECT posture, drinking, started_at, ended_at,
+                              CAST(strftime('%s', substr(started_at, 1, 19) || '+00:00') AS INTEGER)
+                                  * 1000000
+                                  + CASE WHEN substr(started_at, 20, 1) = '.'
+                                         THEN CAST(substr(started_at, 21, 6) AS INTEGER)
+                                         ELSE 0 END AS started_us,
+                              CAST(strftime('%s', substr(ended_at, 1, 19) || '+00:00') AS INTEGER)
+                                  * 1000000
+                                  + CASE WHEN substr(ended_at, 20, 1) = '.'
+                                         THEN CAST(substr(ended_at, 21, 6) AS INTEGER)
+                                         ELSE 0 END AS ended_us
+                       FROM behavior_intervals
+                       WHERE ended_at > ? AND started_at < ?
+                   ), clipped AS (
+                       SELECT posture, drinking, started_at, ended_at,
+                              MAX(started_us, ?) AS clipped_start_us,
+                              MIN(ended_us, ?) AS clipped_end_us
+                       FROM interval_us
+                   )
+                   SELECT
+                       COALESCE(SUM(CASE WHEN posture = 'seated'
+                           THEN MAX(0, clipped_end_us - clipped_start_us) ELSE 0 END), 0),
+                       COALESCE(SUM(CASE WHEN posture = 'standing'
+                           THEN MAX(0, clipped_end_us - clipped_start_us) ELSE 0 END), 0),
+                       COALESCE(SUM(CASE WHEN posture = 'empty'
+                           THEN MAX(0, clipped_end_us - clipped_start_us) ELSE 0 END), 0),
+                       COALESCE(SUM(CASE WHEN posture = 'unknown'
+                           THEN MAX(0, clipped_end_us - clipped_start_us) ELSE 0 END), 0),
+                       COALESCE(SUM(CASE WHEN drinking
+                           THEN MAX(0, clipped_end_us - clipped_start_us) ELSE 0 END), 0),
+                       MIN(started_at), MAX(ended_at)
+                   FROM clipped""",
+                (start_iso, end_iso, start_us, end_us),
+            ).fetchone()
             event_rows = connection.execute(
                 """SELECT kind, COUNT(*) AS count FROM behavior_events
                    WHERE confirmed_at >= ? AND confirmed_at < ? GROUP BY kind""",
-                (_iso(start_utc), _iso(end_utc)),
+                (start_iso, end_iso),
             ).fetchall()
-        for row in rows:
-            row_start = max(_datetime(row["started_at"]), start_utc)
-            row_end = min(_datetime(row["ended_at"]), end_utc)
-            assert row_start is not None and row_end is not None
-            seconds = max(0.0, (row_end - row_start).total_seconds())
-            if row["posture"] in totals:
-                totals[row["posture"]] += seconds
-            if row["drinking"]:
-                drinking_seconds += seconds
-            coverage_start = row_start if coverage_start is None else min(coverage_start, row_start)
-            coverage_end = row_end if coverage_end is None else max(coverage_end, row_end)
+        assert aggregate is not None
+        for index, name in enumerate(totals):
+            totals[name] = int(aggregate[index]) / 1_000_000
+        drinking_seconds = int(aggregate[4]) / 1_000_000
+        if aggregate[5] is not None:
+            first_start = _datetime(aggregate[5])
+            last_end = _datetime(aggregate[6])
+            assert first_start is not None and last_end is not None
+            coverage_start = max(first_start, start_utc)
+            coverage_end = min(last_end, end_utc)
         data: dict[str, Any] = {
             "local_date": selected.isoformat(),
             "timezone": self.timezone,

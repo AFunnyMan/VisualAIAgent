@@ -161,6 +161,17 @@ def _configured_app(tmp_path, monkeypatch, *, region="", fake_camera=False):
             def snapshot(self):
                 return self.observation, None
 
+            def preview_snapshot(self):
+                from visual_ai_agent.preview import PreviewSnapshot
+
+                return PreviewSnapshot(
+                    None,
+                    self.observation.status if self.observation else "stopped",
+                    0.0,
+                    None,
+                    False,
+                )
+
         monkeypatch.setattr(runtime_module, "CameraSource", lambda **_kwargs: object())
         monkeypatch.setattr(runtime_module, "YoloOnnxDetector", lambda *_args, **_kwargs: object())
         monkeypatch.setattr(runtime_module, "VisionWorker", FakeWorker)

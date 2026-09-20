@@ -122,6 +122,44 @@ def test_statistics_splits_interval_at_local_midnight(tmp_path) -> None:
     assert behavior.statistics(date(2026, 1, 2)).data["seated_seconds"] == 0.1
 
 
+def test_statistics_sql_aggregation_preserves_clipping_and_unknown_semantics(tmp_path) -> None:
+    memory = MemoryStore(tmp_path, clock=lambda: BASE)
+    behavior = BehaviorStore(memory, timezone="America/New_York")
+    rows = [
+        # The selected DST-transition day runs from 05:00 UTC to 04:00 UTC.
+        ("2026-03-08T04:59:59.999999+00:00", "2026-03-08T05:00:00.000001+00:00", "seated", 0),
+        # Fractions close to the next second must not be rounded up while the
+        # explicit microseconds are added separately.
+        ("2026-03-08T05:00:00.999500+00:00", "2026-03-08T05:00:01.000001+00:00", "seated", 0),
+        ("2026-03-08T05:00:01.999999+00:00", "2026-03-08T05:00:02.000001+00:00", "seated", 0),
+        ("2026-03-08T05:00:00+00:00", "2026-03-08T05:00:00.123456+00:00", "unknown", None),
+        ("2026-03-08T06:00:00+00:00", "2026-03-08T07:00:00+00:00", "standing", 1),
+        # An unrecognised posture contributes to coverage and drinking, but not
+        # observed_seconds, matching the previous row-by-row implementation.
+        ("2026-03-08T08:00:00+00:00", "2026-03-08T08:00:02+00:00", "other", 1),
+        ("2026-03-09T03:59:59+00:00", "2026-03-09T04:00:00.000001+00:00", "empty", 0),
+        ("2026-03-09T04:00:00+00:00", "2026-03-09T04:00:01+00:00", "seated", 1),
+    ]
+    with memory._transaction(immediate=True) as connection:
+        connection.executemany(
+            """INSERT INTO behavior_intervals(
+                   started_at, ended_at, duration_seconds, posture, drinking,
+                   model_version, scene_id, continuity_id
+               ) VALUES (?, ?, 0, ?, ?, 'behavior-r03', 'desk-1', 'test')""",
+            rows,
+        )
+
+    stats = behavior.statistics(date(2026, 3, 8)).data
+    assert stats["seated_seconds"] == 0.000504
+    assert stats["standing_seconds"] == 3600
+    assert stats["empty_seconds"] == 1
+    assert stats["unknown_seconds"] == 0.123456
+    assert stats["drinking_seconds"] == 3602
+    assert stats["observed_seconds"] == pytest.approx(3601.12396)
+    assert stats["coverage_start"] == "2026-03-08T05:00:00+00:00"
+    assert stats["coverage_end"] == "2026-03-09T04:00:00+00:00"
+
+
 def test_current_is_session_scoped_and_future_sample_is_unknown(tmp_path) -> None:
     clock = Clock(BASE)
     memory = MemoryStore(tmp_path, clock=clock)

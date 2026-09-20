@@ -35,6 +35,7 @@ from visual_ai_agent.laptop_store import LaptopStore
 from visual_ai_agent.memory import MemoryStore
 from visual_ai_agent.models import SceneObservation, ToolResult, utcnow
 from visual_ai_agent.object_models import OBJECT_MODEL_PRESETS, get_object_model_preset
+from visual_ai_agent.preview import PreviewSnapshot
 from visual_ai_agent.vision import (
     CameraSource,
     CupScaleRecheckDetector,
@@ -724,6 +725,12 @@ class ApplicationRuntime:
         if self._vision:
             return self._vision.snapshot()
         return None, None
+
+    def preview_snapshot(self) -> PreviewSnapshot:
+        worker = self._vision
+        if worker is not None:
+            return worker.preview_snapshot()
+        return PreviewSnapshot(None, "stopped", 0.0, None, False)
 
     def ingest_behavior(self, observation, jpeg: bytes | None = None) -> None:
         """Persist behavior and enqueue only newly claimed local rule jobs."""

@@ -30,6 +30,7 @@ import supervision as sv
 from numpy.typing import NDArray
 
 from visual_ai_agent.models import CATEGORIES, CameraStatus, Detection, SceneObservation
+from visual_ai_agent.preview import PreviewRenderer, PreviewSnapshot
 
 if hasattr(ort, "disable_telemetry_events"):
     ort.disable_telemetry_events()
@@ -847,6 +848,10 @@ class VisionWorker:
         self._capture_thread: threading.Thread | None = None
         self._inference_thread: threading.Thread | None = None
         self._capture_close_error: str | None = None
+        self._preview_lock = threading.Lock()
+        self._preview_renderer = PreviewRenderer()
+        self._preview_result: PreviewSnapshot | None = None
+        self._preview_rendered_at = float("-inf")
 
     @property
     def running(self) -> bool:
@@ -909,6 +914,37 @@ class VisionWorker:
                 observation.model_copy(deep=True) if observation is not None else None,
                 jpeg,
             )
+
+    def preview_snapshot(self) -> PreviewSnapshot:
+        """Render at most 5 fps across viewers, without inference or persistence."""
+        with self._preview_lock:
+            now = time.monotonic()
+            with self._condition:
+                latest = self._latest
+                observation = self._snapshot[0]
+            status = self.source.status
+            if self._stop.is_set() or status != "running" or latest is None:
+                self._preview_renderer = PreviewRenderer()
+                self._preview_result = None
+                return PreviewSnapshot(
+                    None, "stopped" if self._stop.is_set() else status, 0.0, None, False
+                )
+            if now - latest.monotonic_at > 0.5:
+                self._preview_renderer = PreviewRenderer()
+                self._preview_result = None
+                return PreviewSnapshot(None, "stale", now - latest.monotonic_at, None, False)
+            if self._preview_result is not None and now - self._preview_rendered_at < 0.19:
+                return self._preview_result
+            result = self._preview_renderer.render(
+                frame=latest.frame,
+                sequence=latest.sequence,
+                monotonic_at=latest.monotonic_at,
+                observation=observation,
+                now=now,
+            )
+            self._preview_result = result
+            self._preview_rendered_at = now
+            return result
 
     def _capture_loop(self) -> None:
         try:

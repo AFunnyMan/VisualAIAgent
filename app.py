@@ -386,54 +386,67 @@ with st.sidebar:
     st.caption("画面与截图留在本机。Agent 仅接收必要文字事实、时间和证据编号。")
 
 
+@st.fragment(run_every=0.2)
+def live_preview():
+    preview = runtime.preview_snapshot()
+    if preview.jpeg:
+        st.image(preview.jpeg, output_format="JPEG", width="stretch")
+        if preview.detection_age_seconds is not None:
+            kind = "跟踪框" if preview.tracked else "最近检测框"
+            st.caption(
+                f"流畅预览 · {kind} · 识别于 {preview.detection_age_seconds:.1f} 秒前。"
+                "跟踪仅用于显示；物品事实以右侧识别结果为准。"
+            )
+        else:
+            st.caption("流畅预览 · 当前无可靠框选；物品识别按原采样档位更新。")
+    elif preview.status == "disconnected":
+        st.warning("摄像头已断开。请检查连接后，点击「开始观察」重新连接。")
+    elif preview.status == "error":
+        st.warning("摄像头观察异常。请检查设备后，点击「开始观察」重试。")
+    elif preview.status in ("stale", "paused"):
+        st.warning("预览已暂停或画面过期；当前画面不可确认。")
+    else:
+        st.info("准备好摄像头和模型后，点击「开始观察」。")
+
+
 @st.fragment(run_every=1)
 def overview():
     scene = runtime.memory.get_current_scene().data
-    observation, jpeg = runtime.snapshot()
-    a, b, c = st.columns(3)
-    a.metric("观察状态", STATES.get(scene.get("effective_status"), "尚未开始"))
-    b.metric("Agent 队列", runtime.diagnostics()["queued_requests"])
-    c.metric("自动调用日上限", runtime.config.daily_auto_limit)
+    observation, _ = runtime.snapshot()
+    st.metric("观察状态", STATES.get(scene.get("effective_status"), "尚未开始"))
+    st.caption(
+        f"Agent 队列 {runtime.diagnostics()['queued_requests']} · "
+        f"自动调用日上限 {runtime.config.daily_auto_limit}"
+    )
     if runtime.last_error:
         st.error(runtime.last_error)
-    image_col, fact_col = st.columns([1.65, 1])
-    with image_col:
-        if jpeg:
-            st.image(jpeg, channels="RGB", width="stretch")
-            if not scene.get("current"):
-                st.warning("上方为最后预览，当前画面无效，不能据此判断物品是否仍在。")
-        else:
-            effective_status = scene.get("effective_status")
-            if effective_status == "disconnected":
-                st.warning("摄像头已断开。请检查连接后，点击「开始观察」重新连接。")
-            elif effective_status == "error":
-                st.warning("摄像头观察异常。请检查设备后，点击「开始观察」重试。")
-            else:
-                st.info("准备好摄像头和模型后，点击「开始观察」。")
-    with fact_col:
-        st.subheader("最新观察")
-        raw = scene.get("observation") or {}
-        st.caption(f"观察时间：{time_label(raw.get('observed_at'))}")
-        if not scene.get("current"):
-            st.write("当前状态未知")
-        elif raw.get("detections"):
-            for detection in raw["detections"]:
-                st.write(
-                    f"**{LABELS[detection['category']]}** · "
-                    f"{REGIONS[detection['region']]} · "
-                    f"置信度 {detection['confidence']:.0%}"
-                )
-            st.caption("同类多件均为候选，不代表已识别具体身份。")
-        else:
-            st.write("这次有效采样未检测到目标类别。")
-        if observation and observation.inference_ms is not None:
-            st.caption(
-                f"最近推理 {observation.inference_ms:.0f} ms · "
-                f"实际画面 {observation.width} × {observation.height}"
+    st.subheader("最新观察")
+    raw = scene.get("observation") or {}
+    st.caption(f"观察时间：{time_label(raw.get('observed_at'))}")
+    if not scene.get("current"):
+        st.write("当前状态未知")
+    elif raw.get("detections"):
+        for detection in raw["detections"]:
+            st.write(
+                f"**{LABELS[detection['category']]}** · "
+                f"{REGIONS[detection['region']]} · "
+                f"置信度 {detection['confidence']:.0%}"
             )
+        st.caption("同类多件均为候选，不代表已识别具体身份。")
+    else:
+        st.write("这次有效采样未检测到目标类别。")
+    if observation and observation.inference_ms is not None:
+        st.caption(
+            f"最近推理 {observation.inference_ms:.0f} ms · "
+            f"实际画面 {observation.width} × {observation.height}"
+        )
 
 
-overview()
+image_col, fact_col = st.columns([1.65, 1])
+with image_col:
+    live_preview()
+with fact_col:
+    overview()
 chat_tab, history_tab, watch_tab, behavior_tab, laptop_tab, rule_tab, usage_tab = st.tabs(
     [
         "对话",
@@ -453,7 +466,7 @@ def chat_page():
     st.subheader("向视觉记忆提问")
     st.caption("例如：最后在哪里看到手机？ / 如果杯子持续未检测到，请在半小时内提醒我。")
 
-    @st.fragment(run_every=1)
+    @st.fragment(run_every=1 if st.session_state.get("pending_chat") else None)
     def conversation():
         pending = st.session_state.get("pending_chat")
         if pending and pending["future"].done():
@@ -465,7 +478,8 @@ def chat_page():
             except Exception:
                 st.session_state["chat_error"] = "本次请求未完成，请检查调用记录后重试。"
             st.session_state.pop("pending_chat", None)
-            pending = None
+            # Rebuild once to stop the timer after the request has completed.
+            st.rerun()
         for interaction in runtime.memory.list_chat_interactions(limit=5):
             with st.chat_message("user"):
                 st.write(interaction["user_message"])
