@@ -823,3 +823,16 @@ r01开发验证：起身/坐下各1/1、离座0/1、饮水2/4。新增开发视�
 - AppTest全页运行未暴露的片段快捷导航问题在真实浏览器发现：加入请求标记与全应用重绘后，「查找物品」实际进入记忆且侧栏同步选中，「设置提醒」进入提醒；实际检查关注/情境规则、行为/笔记本、设备/调用记录入口。审查中「查看全部」语义和队列/具体日上限丢失已修正，见[审查](code_review/ui-workbench-20260921.md)。
 - 本机正常重启服务并恢复R05、720p、杯复查开启/银色忽略关闭及原行为模型，真实预览960×540 JPEG加载、杯/手机框与当前列表可见；停止后显示未知且清空当前物品，恢复后继续running。30.08秒只读轮询取得289条不同行为观察全running，读取时帧龄最大173.34ms；轮询非完整流，也不是长期性能或识别准确率验收。启动暖机过期保留，不放宽保护门限。
 - 首次热加载遇旧Runtime资源锁，用正常停止/重启解决，未删除数据库或锁文件。最终服务仅通过进程环境沿用此前实际R05，`.env`、权重和识别阈值未修改；浏览器临时尺寸已复原，工作台保留打开并恢复观察。未主动调用云API、训练或Windows实机验收；今日调用页面显示请求/自动运行均0。提交前远程main与本地HEAD同为86a6a66。
+
+## 2026-10-20 17:35—18:00 +08 — 独立复现目录整理与验证
+
+- 用户批准在新目录实际整理，创建本机私人 `reproducibility_bundle/`，普通独立文件复制，无原材料移动/删除、无正式业务源码修改、无重新训练/摄像头/API调用。入口见[交付说明](../docs/reproducibility-bundle.md)、[实施记录](../docs/reproducibility-bundle-plan-20261020.md)、[上下文](context/reproducibility-bundle-20261020.md)。四个打包工具、对应测试和脱敏说明入库，私人交付包已忽略。
+- 完整保留原始视频/图片、人工标签及修订、23个冻结数据集条目、官方检测/分类初始化、历史PT/ONNX与来源许可、源码/uv.lock、23份训练配方与依赖。21份材料就绪、2份错误钥匙实验隔离拒训；R05→R03依赖保留。首轮18,813文件，补齐说明后18,816文件，约12.087 GiB逻辑大小；环境/缓存另计。18,457份原data/models/artifact材料再次读取SHA全部与冻结记录一致，副本无软/硬链接。未为节省空间删除任何原目录内容。
+- 23份训练数据指纹按原训练器算法重算匹配；有效配方要求指纹一致，独立验证器绑定原训练记录后重算，不能靠更新普通复制SHA掩盖标签变更。原JSON原样保留，重定位到work；运行适配仅工作副本模型路径、隐式行为查找与最后一级images→labels。审查发现与修复见[审查](code_review/reproducibility-bundle-20261020.md)，专项复审无剩余P1/P2。
+- 首次联网使用独立Python3.11.16、包内uv缓存，`uv sync --locked --project reproducibility_bundle/source --group dev --python 3.11.16` 安装81个包。沙箱网络最初无法解析下载域名，获准联网后安装成功，不复用原业务虚拟环境。实际prepare生成576份工作清单；448MiB原COCO来源JSON保留字节但不转换为工作清单。21配方check-only全部通过、2无效配方预期拒绝，三profile启动计划通过，不开始训练。
+- `reproducibility_bundle/source/.venv/bin/python reproducibility_bundle/tools/verify.py --bundle reproducibility_bundle --replay --reference-root "$PWD" --output reproducibility_bundle/reports/verification.json` 通过：18,813/18,813文件、23数据集、有效训练指纹；29个ONNX CPU Session成功。22个模型条目中受现有运行器支持的在3张既有开发图上对比原权重与副本；旧三类/钥匙专用头明确load_only，不能据此宣称接入现产品。
+- 生产CupScaleRecheckDetector与EventStateMachine在三段20260909 development视频顺序解码、1Hz共61采样，R03/R04/R05迁移前后检测与规范化事件时间序列一致；三个片段各0/1/2事件，末尾stale/paused/disconnected/stopped不产生虚假移出。未打开新的holdout。124警告保留：120旧R01 label_path、1公共manifest历史SHA与现存快照差异、3视频实际解码比声明各少1帧；不改旧记录或假称恢复了不存在的旧公共manifest。
+- 实际三组Streamlit AppTest通过，单Runtime、camera_running=false、agent_runs=0、Agent未连接可见。8511仅本机HTTP健康200/ok，测试进程正常结束、端口释放；初次沙箱禁止监听失败记录另存，获准本地监听后实际通过。未影响原8501服务。
+- 整个新包临时移至 `/private/tmp/VisualAIAgent 复现 images 20261020`，重建source环境并prepare，审计钩子禁止读取原项目后21配方预检、三profile页面和实际物品推理全部通过；finally放回，重新离线安装环境并prepare恢复路径，启动计划再次通过。移动的是新副本，无原材料改动。详见私人包reports/relocation.json。
+- 最终全量 `.venv/bin/pytest -q` 为511 passed、1 skipped、5 deselected/20.71秒，Ruff与8个Python文件format check通过。随后仅扩充目录说明生成内容，定向 `pytest -q tests/test_build_reproducibility_bundle.py` 6 passed/0.28秒，静态/格式及diff检查通过；最初新增说明行过长已修正。末次无回放完整性 `tools/verify.py --bundle reproducibility_bundle --output reproducibility_bundle/reports/verification-final.json` 为18,816/18,816、0错误、121历史元数据警告，通过；完整回放证据保留在verification.json。
+- 实际报告、file-map、checksums、新旧分类/原目录保留量表、可省略项及分享排除说明都在包内。只读核对远程main与本地业务基线同为eb50913；提交与同步结果以Git实际记录为准。没有从头复训，不保证换设备产生逐位同权重或相同精度；Windows实机、真实USB/API及新独立质量验收未执行。包内work与source/.venv为本机生成，分享排除这两处及自行创建的.env。

@@ -45,3 +45,6 @@ Thumbs.db
 
 # ONNX Runtime import-time telemetry session cache
 /:memory:.ses
+
+# Private reproducibility handoff: includes original scene media and model weights
+/reproducibility_bundle/
